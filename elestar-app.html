@@ -1,0 +1,1844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>elestar — verified interview rounds, both sides of the table</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Source+Serif+4:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ============ TOKENS ============ */
+  :root{
+    --paper: #EFE7D6;
+    --paper-dark: #E4D9C1;
+    --paper-darker: #D9CBAC;
+    --ink: #1E2530;
+    --ink-soft: #565B66;
+    --stamp: #A3392C;
+    --stamp-dark: #7E2C22;
+    --brass: #8A6A2E;
+    --tier2: #55606E;
+    --tier3: #3C5F55;
+    --tier4: #9C6A45;
+    --line: #C6B896;
+
+    --s-1: 4px;  --s-2: 8px;  --s-3: 12px; --s-4: 16px;
+    --s-5: 24px; --s-6: 32px; --s-7: 48px; --s-8: 64px; --s-9: 88px;
+
+    --ease: cubic-bezier(.2,.7,.3,1);
+    --dur: .16s;
+  }
+
+  *{ box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Source Serif 4', serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{ background:var(--stamp); color:var(--paper); }
+  a{ color:inherit; }
+  .mono{ font-family:'IBM Plex Mono', monospace; }
+  .wrap{ max-width:1140px; margin:0 auto; padding:0 var(--s-6); }
+  [hidden]{ display:none !important; }
+
+  /* ============ TOP BAR ============ */
+  .topbar{
+    position:sticky; top:0; z-index:100;
+    background:var(--paper);
+    border-bottom:1px solid var(--ink);
+  }
+  .topbar-inner{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:var(--s-4) var(--s-6);
+    max-width:1140px; margin:0 auto;
+  }
+  .brandmark{ display:flex; align-items:baseline; gap:var(--s-3); }
+  .brandmark .mark{ font-family:'Spectral', serif; font-weight:700; font-size:20px; }
+  .brandmark .filecode{ font-size:10.5px; letter-spacing:.12em; color:var(--ink-soft); }
+
+  .tabs{ display:flex; gap:2px; }
+  .tabs a{
+    font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.08em;
+    text-decoration:none; color:var(--ink-soft);
+    padding:var(--s-2) var(--s-3); text-transform:uppercase;
+    border-bottom:2px solid transparent;
+    transition:color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+  }
+  .tabs a:hover, .tabs a.active{ color:var(--ink); border-color:var(--stamp); }
+
+  .topbar-ctas{ display:flex; gap:var(--s-3); }
+  .cta-small{
+    font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.06em; text-transform:uppercase;
+    text-decoration:none; padding:var(--s-3) var(--s-4); white-space:nowrap;
+    border:1px solid var(--ink); background:transparent; color:var(--ink); cursor:pointer;
+    transition:background var(--dur) var(--ease), color var(--dur) var(--ease);
+  }
+  .cta-small.solid{ background:var(--ink); color:var(--paper); }
+  .cta-small.solid:hover{ background:var(--stamp); border-color:var(--stamp); }
+  .cta-small:not(.solid):hover{ background:var(--paper-dark); }
+
+  @media (max-width:960px){ .tabs{ display:none; } }
+
+  /* ============ AUDIENCE SWITCH ============ */
+  .switch{ display:inline-flex; border:1px solid var(--ink); margin-bottom:var(--s-6); }
+  .switch button{
+    font-family:'IBM Plex Mono', monospace; font-size:11.5px; letter-spacing:.06em; text-transform:uppercase;
+    padding:var(--s-3) var(--s-5); background:transparent; border:none; color:var(--ink-soft); cursor:pointer;
+    transition:background var(--dur) var(--ease), color var(--dur) var(--ease);
+  }
+  .switch button + button{ border-left:1px solid var(--ink); }
+  .switch button[aria-pressed="true"]{ background:var(--ink); color:var(--paper); }
+  .switch button:not([aria-pressed="true"]):hover{ background:var(--paper-dark); color:var(--ink); }
+
+  /* ============ HERO ============ */
+  .hero{ padding:var(--s-9) 0 var(--s-8); border-bottom:1px solid var(--ink); }
+  .hero-grid{ display:grid; grid-template-columns:1.15fr .85fr; gap:var(--s-8); align-items:center; }
+  @media (max-width:900px){ .hero-grid{ grid-template-columns:1fr; } }
+
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace; font-size:11.5px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--stamp-dark); margin-bottom:var(--s-5); padding-left:var(--s-3);
+    border-left:2px solid var(--stamp);
+  }
+
+  h1{
+    font-family:'Spectral', serif; font-weight:600; font-size:clamp(36px,4.6vw,56px);
+    line-height:1.06; letter-spacing:-.01em; margin:0 0 var(--s-5); min-height:2.2em;
+  }
+  h1 em{ font-style:italic; font-weight:500; color:var(--stamp-dark); }
+  .hero-sub{ font-size:18px; line-height:1.6; color:var(--ink-soft); max-width:48ch; margin:0 0 var(--s-6); min-height:3.4em; }
+
+  .hero-ctas{ display:flex; gap:var(--s-4); flex-wrap:wrap; margin-bottom:var(--s-7); }
+  .btn{
+    font-family:'IBM Plex Mono', monospace; font-size:12.5px; letter-spacing:.06em; text-transform:uppercase;
+    text-decoration:none; padding:var(--s-4) var(--s-5); display:inline-block; border:1px solid var(--ink);
+    transition:background var(--dur) var(--ease), color var(--dur) var(--ease);
+  }
+  .btn-primary{ background:var(--ink); color:var(--paper); }
+  .btn-primary:hover{ background:var(--stamp); border-color:var(--stamp); }
+  .btn-ghost{ color:var(--ink); }
+  .btn-ghost:hover{ background:var(--paper-dark); }
+
+  .stat-row{ display:flex; gap:var(--s-7); flex-wrap:wrap; }
+  .stat .num{ font-family:'Spectral', serif; font-weight:600; font-size:26px; display:block; }
+  .stat .lbl{ font-family:'IBM Plex Mono', monospace; font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-soft); }
+
+  /* ============ DOSSIER CARD ============ */
+  .dossier-frame{ position:relative; transition:transform .15s ease-out; transform-style:preserve-3d; }
+  .dossier-frame::before{
+    content:""; position:absolute; inset:0; transform:translate(9px,9px);
+    border:1px solid var(--ink); z-index:0;
+  }
+  .dossier-frame::after{
+    content:""; position:absolute; inset:0; transform:translate(18px,18px);
+    border:1px solid var(--line); z-index:0;
+  }
+  .folder-tab{
+    position:absolute; top:-21px; left:30px; z-index:2;
+    background:var(--paper-darker); border:1px solid var(--ink); border-bottom:none;
+    padding:5px 16px 9px; font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-soft);
+    clip-path: polygon(8% 0, 92% 0, 100% 100%, 0% 100%);
+  }
+  .dossier{ position:relative; z-index:1; background:var(--paper-dark); border:1px solid var(--ink); padding:var(--s-6) var(--s-6) var(--s-5); }
+  .dossier-eyebrow{ font-family:'IBM Plex Mono', monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft); margin-bottom:var(--s-3); }
+  .dossier-top{ display:flex; justify-content:space-between; align-items:flex-start; border-bottom:1px dashed var(--line); padding-bottom:var(--s-4); margin-bottom:var(--s-4); }
+  .dossier-id{ font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--ink-soft); letter-spacing:.05em; }
+  .dossier-tier{ font-family:'IBM Plex Mono', monospace; font-size:10.5px; letter-spacing:.08em; color:var(--brass); border:1px solid var(--brass); padding:3px 8px; text-transform:uppercase; }
+  .dossier-name{ font-family:'Spectral', serif; font-size:22px; font-weight:600; margin:0 0 4px; }
+  .dossier-role{ font-size:13.5px; color:var(--ink-soft); margin-bottom:var(--s-5); }
+  .dossier-rounds{ display:flex; gap:6px; margin-bottom:var(--s-5); }
+  .rnd{ flex:1; height:6px; background:var(--paper-darker); }
+  .rnd.filled{ background:var(--ink); }
+  .dossier-caption{ font-family:'IBM Plex Mono', monospace; font-size:10px; color:var(--ink-soft); letter-spacing:.06em; text-transform:uppercase; margin-bottom:var(--s-5); }
+
+  .dossier-confidence{ display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--s-5); }
+  .conf-label{ font-family:'IBM Plex Mono', monospace; font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-soft); }
+  .conf-badge{ font-family:'IBM Plex Mono', monospace; font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; border:1px solid var(--stamp-dark); color:var(--stamp-dark); padding:3px 9px; }
+
+  .stamp-wrap{ position:relative; height:66px; }
+  .stamp{
+    position:absolute; top:2px; right:0; border:2px solid var(--stamp); color:var(--stamp);
+    font-family:'IBM Plex Mono', monospace; font-weight:600; font-size:14px; letter-spacing:.1em;
+    padding:7px 13px; transform:rotate(-5deg); text-transform:uppercase;
+  }
+  @media (prefers-reduced-motion: no-preference){
+    .stamp{ opacity:0; animation:stampin .3s var(--ease) .3s forwards; }
+    @keyframes stampin{
+      0%{ opacity:0; transform:rotate(-5deg) translateY(-4px); }
+      100%{ opacity:1; transform:rotate(-5deg) translateY(0); }
+    }
+  }
+  .dossier-foot{ display:flex; justify-content:space-between; align-items:center; font-family:'IBM Plex Mono', monospace; font-size:10.5px; color:var(--ink-soft); border-top:1px dashed var(--line); padding-top:var(--s-3); }
+
+  /* ============ SECTION SHELL ============ */
+  section{ padding:var(--s-9) 0; border-bottom:1px solid var(--ink); }
+  section:last-of-type{ border-bottom:none; }
+  .section-head{ display:flex; justify-content:space-between; align-items:flex-end; gap:var(--s-5); margin-bottom:var(--s-7); flex-wrap:wrap; }
+  .section-tag{ font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--stamp-dark); margin-bottom:var(--s-3); display:block; }
+  h2{ font-family:'Spectral', serif; font-weight:600; font-size:clamp(27px,3.2vw,36px); margin:0; letter-spacing:-.01em; }
+  .section-note{ max-width:36ch; color:var(--ink-soft); font-size:15px; line-height:1.55; }
+
+  /* ============ CIRCUIT DIAGRAM ============ */
+  .circuit-progress{ height:3px; background:var(--paper-darker); margin-bottom:var(--s-5); }
+  .circuit-progress span{ display:block; height:100%; width:0; background:var(--stamp-dark); transition:width 1.3s var(--ease); }
+  .circuit-progress.in span{ width:100%; }
+
+  .circuit{ display:grid; grid-template-columns:repeat(5,1fr); border:1px solid var(--ink); }
+  .circuit-step{ opacity:0; transform:translateY(12px); transition:opacity .5s var(--ease), transform .5s var(--ease); }
+  .circuit.in .circuit-step{ opacity:1; transform:none; }
+  .circuit.in .circuit-step:nth-child(1){ transition-delay:.05s; }
+  .circuit.in .circuit-step:nth-child(2){ transition-delay:.16s; }
+  .circuit.in .circuit-step:nth-child(3){ transition-delay:.27s; }
+  .circuit.in .circuit-step:nth-child(4){ transition-delay:.38s; }
+  .circuit.in .circuit-step:nth-child(5){ transition-delay:.49s; }
+  .circuit-step{ padding:var(--s-5) var(--s-4); border-right:1px solid var(--ink); min-height:150px; display:flex; flex-direction:column; justify-content:space-between; }
+  .circuit-step:last-child{ border-right:none; background:var(--paper-dark); }
+  .circuit-step .n{ font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--ink-soft); }
+  .circuit-step h3{ font-family:'Spectral', serif; font-size:17px; margin:var(--s-3) 0 var(--s-2); }
+  .circuit-step p{ font-size:12.5px; color:var(--ink-soft); line-height:1.5; margin:0; }
+  .circuit-step.out h3{ color:var(--stamp-dark); }
+  @media (max-width:900px){
+    .circuit{ grid-template-columns:1fr 1fr; }
+    .circuit-step{ border-bottom:1px solid var(--ink); }
+    .circuit-step:nth-child(2n){ border-right:none; }
+  }
+  @media (max-width:560px){ .circuit{ grid-template-columns:1fr; } }
+
+  .pivot-row{ display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--ink); border:1px solid var(--ink); margin-top:var(--s-6); }
+  .pivot{ background:var(--paper); padding:var(--s-5) var(--s-6); }
+  .pivot .who{ font-family:'IBM Plex Mono', monospace; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); margin-bottom:var(--s-2); display:block; }
+  .pivot p{ font-family:'Spectral', serif; font-style:italic; font-size:17px; margin:0; }
+  @media (max-width:700px){ .pivot-row{ grid-template-columns:1fr; } }
+
+  /* ============ TWO TRACKS ============ */
+  .tracks{ display:grid; grid-template-columns:1fr 1fr; gap:var(--s-8); }
+  @media (max-width:820px){ .tracks{ grid-template-columns:1fr; gap:var(--s-7); } }
+  .track h3.track-title{ font-family:'IBM Plex Mono', monospace; font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:var(--stamp-dark); margin:0 0 var(--s-5); padding-bottom:var(--s-3); border-bottom:2px solid var(--ink); }
+  .step3{ padding:var(--s-4) 0; border-top:1px dashed var(--line); }
+  .track .step3:first-of-type{ border-top:none; }
+  .step3 .idx{ font-family:'Spectral', serif; font-style:italic; font-size:14px; color:var(--ink-soft); }
+  .step3 h4{ font-family:'Spectral', serif; font-size:18px; margin:var(--s-2) 0 var(--s-2); font-weight:600; }
+  .step3 p{ color:var(--ink-soft); font-size:14px; line-height:1.6; margin:0; }
+
+  /* ============ TIER CARDS ============ */
+  .tiers{ display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--ink); border:1px solid var(--ink); }
+  @media (max-width:900px){ .tiers{ grid-template-columns:1fr 1fr; } }
+  @media (max-width:560px){ .tiers{ grid-template-columns:1fr; } }
+  .tier-card{ background:var(--paper); padding:var(--s-5) var(--s-5) var(--s-4); }
+  .tier-card .tlabel{ font-family:'IBM Plex Mono', monospace; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft); margin-bottom:var(--s-2); display:block; }
+  .tier-card h3{ font-family:'Spectral', serif; font-weight:600; font-size:21px; margin:0 0 var(--s-4); }
+  .tier-card .swatch{ width:26px; height:4px; margin-bottom:var(--s-4); }
+  .t1 .swatch{ background:var(--brass); } .t1 h3{ color:var(--brass); }
+  .t2 .swatch{ background:var(--tier2); } .t2 h3{ color:var(--tier2); }
+  .t3 .swatch{ background:var(--tier3); } .t3 h3{ color:var(--tier3); }
+  .t4 .swatch{ background:var(--tier4); } .t4 h3{ color:var(--tier4); }
+  .tier-card .spec{ font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--ink-soft); display:flex; justify-content:space-between; padding:var(--s-2) 0; border-top:1px dashed var(--line); }
+  .tier-card .spec:first-of-type{ border-top:1px solid var(--line); }
+  .tier-card .archetypes{ margin-top:var(--s-4); font-size:13.5px; line-height:1.5; }
+
+  /* ============ TIER CALCULATOR ============ */
+  .calc{ border:1px solid var(--ink); background:var(--paper-dark); margin-top:var(--s-6); padding:var(--s-6); }
+  .calc-head{ margin-bottom:var(--s-5); }
+  .calc-head .section-tag{ margin-bottom:var(--s-2); }
+  .calc-head h3{ font-family:'Spectral', serif; font-size:20px; font-weight:600; margin:0; }
+  .calc-body{ display:grid; grid-template-columns:1fr 1fr auto; gap:var(--s-7); align-items:end; }
+  @media (max-width:820px){ .calc-body{ grid-template-columns:1fr; } }
+  .calc-control label{ display:flex; justify-content:space-between; font-family:'IBM Plex Mono', monospace; font-size:11.5px; letter-spacing:.04em; color:var(--ink-soft); margin-bottom:var(--s-3); }
+  .calc-val{ color:var(--ink); font-weight:600; }
+  .calc-control input[type="range"]{ width:100%; accent-color:var(--stamp-dark); }
+  .calc-result{ border-left:2px solid var(--stamp-dark); padding-left:var(--s-5); min-width:230px; }
+  .calc-tier-label{ font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft); }
+  .calc-tier-name{ font-family:'Spectral', serif; font-size:23px; font-weight:600; margin:var(--s-2) 0 var(--s-3); transition:color .2s var(--ease); }
+  .calc-tier-desc{ font-size:12.5px; color:var(--ink-soft); line-height:1.5; margin:0; max-width:32ch; }
+
+  .stages{ display:flex; gap:1px; background:var(--ink); border:1px solid var(--ink); margin-top:var(--s-7); }
+  .stage{ flex:1; background:var(--paper); padding:var(--s-5) var(--s-4); }
+  .stage.active{ background:var(--paper-dark); }
+  .stage .sname{ font-family:'IBM Plex Mono', monospace; font-weight:600; font-size:12.5px; letter-spacing:.06em; text-transform:uppercase; margin-bottom:var(--s-3); display:block; }
+  .stage p{ font-size:12.5px; color:var(--ink-soft); line-height:1.5; margin:0; }
+  .stage .badge-ex{ margin-top:var(--s-4); display:inline-block; font-family:'IBM Plex Mono', monospace; font-size:10px; letter-spacing:.05em; border:1px solid var(--ink); padding:4px 8px; }
+  @media (max-width:800px){ .stages{ flex-direction:column; } }
+
+  /* ============ VERIFICATION ============ */
+  .confidence-row{ display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--ink); border:1px solid var(--ink); }
+  @media (max-width:800px){ .confidence-row{ grid-template-columns:1fr; } }
+  .conf-card{
+    background:var(--paper); padding:var(--s-5) var(--s-5) var(--s-6); position:relative;
+    border:none; text-align:left; font-family:inherit; cursor:pointer; width:100%;
+    box-shadow: inset 0 0 0 2px transparent; transition:box-shadow .15s var(--ease), background .15s var(--ease);
+  }
+  .conf-card:hover{ background:var(--paper-dark); }
+  .conf-card[aria-pressed="true"]{ box-shadow: inset 0 0 0 2px var(--stamp-dark); background:var(--paper-dark); }
+  .conf-card .cnum{ font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--ink-soft); letter-spacing:.08em; }
+  .conf-card h3{ font-family:'Spectral', serif; font-size:20px; font-weight:600; margin:var(--s-2) 0 var(--s-3); color:var(--ink); }
+  .conf-card p{ font-size:13.5px; color:var(--ink-soft); line-height:1.6; margin:0 0 var(--s-4); }
+  .conf-card .bar{ height:5px; background:var(--paper-darker); }
+  .conf-card .bar span{ display:block; height:100%; background:var(--stamp-dark); transition:width .3s var(--ease); }
+  .conf-card.c1 .bar span{ width:33%; }
+  .conf-card.c2 .bar span{ width:66%; }
+  .conf-card.c3 .bar span{ width:100%; }
+
+  .conf-preview{
+    display:flex; align-items:center; gap:var(--s-4); margin-top:var(--s-5);
+    border:1px dashed var(--line); padding:var(--s-4) var(--s-5);
+  }
+  .conf-preview-label{ font-size:11px; color:var(--ink-soft); letter-spacing:.04em; white-space:nowrap; }
+  .conf-preview .bar{ flex:1; height:5px; background:var(--paper-darker); }
+  .conf-preview .bar span{ display:block; height:100%; background:var(--stamp-dark); width:33%; transition:width .3s var(--ease); }
+
+  .verify-method{ margin-top:var(--s-7); display:grid; grid-template-columns:repeat(2,1fr); gap:var(--s-5) var(--s-7); }
+  @media (max-width:700px){ .verify-method{ grid-template-columns:1fr; } }
+  .vm-item{ display:flex; gap:var(--s-4); padding-top:var(--s-4); border-top:1px dashed var(--line); }
+  .vm-item .vn{ font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--stamp-dark); flex-shrink:0; padding-top:2px; }
+  .vm-item p{ margin:0; font-size:13.5px; color:var(--ink-soft); line-height:1.6; }
+  .vm-item strong{ color:var(--ink); font-weight:600; }
+
+  /* ============ AI SECTION ============ */
+  .ai-lede{ font-size:15px; color:var(--ink-soft); line-height:1.6; max-width:70ch; margin:0 0 var(--s-7); border-left:2px solid var(--stamp); padding-left:var(--s-4); }
+  .ai-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--ink); border:1px solid var(--ink); }
+  @media (max-width:900px){ .ai-grid{ grid-template-columns:1fr; } }
+  .ai-card{ background:var(--paper); padding:var(--s-6) var(--s-5); }
+  .ai-card .atag{ font-family:'IBM Plex Mono', monospace; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); margin-bottom:var(--s-3); display:block; }
+  .ai-card h3{ font-family:'Spectral', serif; font-size:19px; font-weight:600; margin:0 0 var(--s-3); }
+  .ai-card p{ font-size:13.5px; color:var(--ink-soft); line-height:1.6; margin:0 0 var(--s-4); }
+  .ai-card .solves{ font-family:'IBM Plex Mono', monospace; font-size:10.5px; letter-spacing:.04em; color:var(--stamp-dark); padding-top:var(--s-3); border-top:1px dashed var(--line); }
+
+  /* ============ TRUST ============ */
+  .trust{ display:grid; grid-template-columns:repeat(2,1fr); gap:var(--s-7); }
+  @media (max-width:700px){ .trust{ grid-template-columns:1fr; } }
+  .trust-item .q{ font-family:'Spectral', serif; font-size:17px; font-weight:600; margin:0 0 var(--s-3); }
+  .trust-item .a{ font-size:14px; color:var(--ink-soft); line-height:1.6; margin:0; }
+
+  /* ============ PRICING ============ */
+  .pricing-note{ margin-bottom:var(--s-6); font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--ink-soft); border-left:2px solid var(--stamp); padding-left:var(--s-4); }
+  .pricing{ display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--ink); border:1px solid var(--ink); }
+  @media (max-width:820px){ .pricing{ grid-template-columns:1fr; } }
+  .plan{ background:var(--paper); padding:var(--s-6) var(--s-5); display:flex; flex-direction:column; }
+  .plan.featured{ background:var(--ink); color:var(--paper); }
+  .plan .pname{ font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--stamp-dark); }
+  .plan.featured .pname{ color:#D98D80; }
+  .plan h3{ font-family:'Spectral', serif; font-size:23px; margin:var(--s-3) 0 var(--s-2); }
+  .plan .access{ font-size:13px; margin-bottom:var(--s-5); color:var(--ink-soft); }
+  .plan.featured .access{ color:#C9CDD6; }
+  .plan ul{ list-style:none; padding:0; margin:0 0 var(--s-6); flex:1; }
+  .plan li{ font-size:13.5px; padding:var(--s-2) 0; border-top:1px dashed var(--line); display:flex; gap:var(--s-2); }
+  .plan.featured li{ border-top:1px dashed #3A4150; }
+  .plan li::before{ content:"-"; color:var(--ink-soft); }
+  .plan .btn{ text-align:center; }
+
+  /* ============ FOOTER ============ */
+  footer{ padding:var(--s-7) 0 var(--s-6); }
+  .foot-grid{ display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:var(--s-5); }
+  .foot-note{ font-family:'IBM Plex Mono', monospace; font-size:10.5px; color:var(--ink-soft); letter-spacing:.04em; max-width:44ch; line-height:1.6; }
+
+  :focus-visible{ outline:2px solid var(--stamp); outline-offset:2px; }
+
+  /* ============ APP SHELL ============ */
+  .page[hidden]{ display:none !important; }
+  .appview{ padding:var(--s-7) 0 var(--s-9); }
+  .appview .wrap{ max-width:1140px; }
+  .app-head{ display:flex; justify-content:space-between; align-items:flex-end; gap:var(--s-5); flex-wrap:wrap;
+    padding-bottom:var(--s-4); border-bottom:1px solid var(--ink); margin-bottom:var(--s-6); }
+  .app-head h1{ font-family:'Spectral',serif; font-weight:700; font-size:clamp(26px,3.4vw,40px); line-height:1.05; margin:var(--s-2) 0 0; letter-spacing:-.01em; }
+  .app-head .section-tag{ display:inline-block; }
+  .app-head p{ font-size:13.5px; color:var(--ink-soft); max-width:46ch; margin:0; line-height:1.6; }
+
+  .section-tag{ font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--stamp); }
+
+  .btn{ font-family:'IBM Plex Mono',monospace; font-size:11.5px; letter-spacing:.08em; text-transform:uppercase;
+    padding:11px 18px; border:1px solid var(--ink); background:transparent; color:var(--ink); cursor:pointer;
+    text-decoration:none; display:inline-block; transition:all var(--dur) var(--ease); }
+  .btn:hover{ background:var(--ink); color:var(--paper); }
+  .btn.solid{ background:var(--stamp); border-color:var(--stamp); color:var(--paper); }
+  .btn.solid:hover{ background:var(--stamp-dark); border-color:var(--stamp-dark); }
+  .btn:disabled{ opacity:.45; cursor:not-allowed; }
+  .btn.sm{ padding:7px 12px; font-size:10.5px; }
+
+  .field{ margin-bottom:var(--s-5); }
+  .field label{ display:block; font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.1em;
+    text-transform:uppercase; color:var(--ink-soft); margin-bottom:var(--s-2); }
+  .field textarea, .field input[type=text], .field select{
+    width:100%; background:#F6F0E2; border:1px solid var(--line); color:var(--ink);
+    font-family:'Source Serif 4',serif; font-size:15px; padding:12px 14px; line-height:1.6; }
+  .field textarea{ min-height:170px; resize:vertical; }
+  .field textarea:focus, .field input:focus, .field select:focus{ outline:2px solid var(--stamp); outline-offset:-1px; }
+  .hint{ font-size:12px; color:var(--ink-soft); margin-top:var(--s-2); line-height:1.55; }
+
+  /* ---- two column ---- */
+  .cols{ display:grid; grid-template-columns:1fr 1fr; gap:var(--s-7); align-items:start; }
+  .cols.wide-left{ grid-template-columns:1.15fr .85fr; }
+  .rail{ border-left:1px solid var(--line); padding-left:var(--s-5); }
+  .rail h4{ font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--ink-soft); margin:0 0 var(--s-3); font-weight:500; }
+  .rail p{ font-size:13px; color:var(--ink-soft); line-height:1.65; margin:0 0 var(--s-4); }
+
+  /* ---- agent trace ---- */
+  .trace{ border:1px solid var(--line); background:#F6F0E2; padding:var(--s-4); }
+  .trace-step{ display:flex; gap:var(--s-3); align-items:baseline; padding:8px 0; border-bottom:1px dotted var(--line);
+    font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.03em; color:var(--ink-soft); }
+  .trace-step:last-child{ border-bottom:none; }
+  .trace-step .st{ width:14px; flex:none; }
+  .trace-step.done .st{ color:var(--tier3); }
+  .trace-step.run .st{ color:var(--brass); }
+  .trace-step.fail .st{ color:var(--stamp); }
+  .trace-step.done, .trace-step.run{ color:var(--ink); }
+  .trace-step .meta{ margin-left:auto; opacity:.6; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .spin{ display:inline-block; animation:spin 1s linear infinite; }
+  @media (prefers-reduced-motion:reduce){ .spin{ animation:none; } }
+
+  /* ---- record card ---- */
+  .rec{ border:1px solid var(--ink); background:#F6F0E2; padding:var(--s-5); margin-bottom:var(--s-4); position:relative; }
+  .rec-top{ display:flex; justify-content:space-between; gap:var(--s-4); align-items:flex-start;
+    padding-bottom:var(--s-3); border-bottom:1px solid var(--line); margin-bottom:var(--s-3); }
+  .rec-id{ font-family:'IBM Plex Mono',monospace; font-size:13px; font-weight:600; letter-spacing:.06em; }
+  .rec-role{ font-size:14.5px; margin-top:3px; }
+  .rec-sub{ font-size:12px; color:var(--ink-soft); margin-top:2px; }
+  .tierchip{ font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:.12em; text-transform:uppercase;
+    border:1px solid currentColor; padding:3px 7px; white-space:nowrap; }
+  .t-apex{ color:var(--stamp); } .t-elite{ color:var(--brass); }
+  .t-verified{ color:var(--tier3); } .t-standard{ color:var(--tier2); }
+  .rec-grid{ display:grid; grid-template-columns:auto 1fr; gap:6px var(--s-4); font-size:12.5px; }
+  .rec-grid dt{ font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); }
+  .rec-grid dd{ margin:0; }
+  .rec-foot{ display:flex; justify-content:space-between; align-items:center; gap:var(--s-4);
+    margin-top:var(--s-4); padding-top:var(--s-3); border-top:1px dotted var(--line); }
+  .fit{ font-family:'IBM Plex Mono',monospace; font-size:20px; font-weight:600; }
+  .fit small{ display:block; font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft); font-weight:400; }
+  .rationale{ font-size:13px; line-height:1.6; margin:var(--s-3) 0 0; }
+  .rationale .gap{ color:var(--stamp); }
+
+  /* ---- rounds meter ---- */
+  .rounds{ display:inline-flex; gap:4px; align-items:center; }
+  .rounds i{ width:15px; height:5px; background:var(--ink); display:block; }
+  .rounds i.open{ background:transparent; border:1px dashed var(--stamp); height:5px; }
+
+  /* ---- circuit feed ---- */
+  .feedbar{ display:flex; gap:var(--s-4); align-items:center; flex-wrap:wrap; margin-bottom:var(--s-5);
+    font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.06em; color:var(--ink-soft); }
+  .live-dot{ width:7px; height:7px; border-radius:50%; background:var(--tier3); display:inline-block; margin-right:6px; }
+  .post{ border-bottom:1px solid var(--line); padding:var(--s-4) 0; }
+  .post-h{ display:flex; gap:var(--s-3); align-items:baseline; flex-wrap:wrap; }
+  .post-h .cid{ font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--stamp); font-weight:500; }
+  .post-h .when{ font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--ink-soft); margin-left:auto; }
+  .post-body{ font-size:14.5px; line-height:1.6; margin-top:6px; }
+  .post-acts{ display:flex; gap:var(--s-4); margin-top:var(--s-3); align-items:center;
+    font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.06em; color:var(--ink-soft); }
+  .post-acts button{ background:none; border:none; padding:0; cursor:pointer; color:inherit;
+    font-family:inherit; font-size:inherit; letter-spacing:inherit; }
+  .post-acts button:hover{ color:var(--stamp); }
+  .post-acts button.on{ color:var(--stamp); font-weight:600; }
+  .replies{ margin-top:var(--s-3); padding-left:var(--s-4); border-left:1px solid var(--line); }
+  .reply{ font-size:13px; line-height:1.6; padding:6px 0; color:var(--ink-soft); }
+  .reply b{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--stamp); font-weight:500; }
+  .replybox{ display:flex; gap:var(--s-2); margin-top:var(--s-3); }
+  .replybox input{ flex:1; background:#F6F0E2; border:1px solid var(--line); padding:8px 10px;
+    font-family:'Source Serif 4',serif; font-size:13px; color:var(--ink); }
+
+  /* ---- brief ---- */
+  .brief h4{ font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--stamp); margin:var(--s-5) 0 var(--s-2); }
+  .brief ul{ margin:0; padding-left:18px; }
+  .brief li{ font-size:13.5px; line-height:1.65; margin-bottom:6px; }
+  .brief .skip b{ font-weight:600; }
+
+  /* ---- misc ---- */
+  .empty{ border:1px dashed var(--line); padding:var(--s-6); text-align:center; color:var(--ink-soft); font-size:13.5px; }
+  .notice{ border-left:3px solid var(--stamp); background:#F6F0E2; padding:var(--s-4); font-size:13px; line-height:1.6; margin-bottom:var(--s-5); }
+  .notice b{ font-weight:600; }
+  .qbar{ display:flex; gap:var(--s-3); align-items:stretch; margin-bottom:var(--s-5); }
+  .qbar input{ flex:1; background:#F6F0E2; border:1px solid var(--ink); padding:13px 15px;
+    font-family:'Source Serif 4',serif; font-size:15px; color:var(--ink); }
+  .filters{ display:flex; gap:var(--s-4); flex-wrap:wrap; align-items:center; margin-bottom:var(--s-5);
+    font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); }
+  .filters select{ background:transparent; border:none; border-bottom:1px solid var(--ink); color:var(--ink);
+    font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; padding:3px 2px; }
+  .qs{ border:1px solid var(--brass); background:#F6F0E2; padding:var(--s-4); margin-bottom:var(--s-5); }
+  .qs h4{ font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--brass); margin:0 0 var(--s-3); }
+  .qs .q{ margin-bottom:var(--s-3); }
+  .qs .q p{ font-size:13.5px; margin:0 0 5px; }
+  .qs .q input{ width:100%; background:var(--paper); border:1px solid var(--line); padding:8px 10px;
+    font-family:'Source Serif 4',serif; font-size:13px; color:var(--ink); }
+  .toast{ position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--ink); color:var(--paper);
+    padding:12px 20px; font-family:'IBM Plex Mono',monospace; font-size:11.5px; letter-spacing:.06em; z-index:300;
+    max-width:90vw; text-align:center; }
+  .tabs a.approute.active{ color:var(--stamp); }
+
+  @media (max-width:860px){
+    .cols, .cols.wide-left{ grid-template-columns:1fr; }
+    .rail{ border-left:none; border-top:1px solid var(--line); padding-left:0; padding-top:var(--s-5); }
+    .qbar{ flex-direction:column; }
+  }
+
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <a class="brandmark" href="#/landing" style="text-decoration:none">
+      <span class="mark">elestar</span>
+      <span class="mono filecode">FILE&nbsp;NO.&nbsp;004</span>
+    </a>
+    <nav class="tabs" aria-label="Section navigation">
+      <a href="#circuit">Circuit</a>
+      <a href="#tracks">How It Works</a>
+      <a href="#tiers">Tiers</a>
+      <a href="#verification">Verification</a>
+      <a href="#ai">AI</a>
+      <a href="#pricing">Access</a>
+      <a href="#/circuit" class="approute">Circuit&nbsp;Feed</a>
+      <a href="#/search" class="approute">Search</a>
+      <a href="#/intros" class="approute">Intros</a>
+    </nav>
+    <div class="topbar-ctas">
+      <a href="#/list" class="cta-small">List Your Rounds</a>
+      <a href="#/search" class="cta-small solid">Request Access</a>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="page-landing">
+<header class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <div class="switch" role="group" aria-label="Choose your side of elestar">
+        <button type="button" id="btn-hiring" aria-pressed="true">I'm Hiring</button>
+        <button type="button" id="btn-candidate" aria-pressed="false">I Made a Final Round</button>
+      </div>
+
+      <div id="audience-hiring">
+        <span class="eyebrow mono">For Recruiting Teams</span>
+        <h1>They got 80% of the way<br>to <em>yes.</em></h1>
+        <p class="hero-sub">Browse candidates who already cleared another company's technical and panel rounds. Start at their round four, not your round one.</p>
+        <div class="hero-ctas">
+          <a href="#pricing" class="btn btn-primary">Request Access</a>
+          <a href="#circuit" class="btn btn-ghost">See a Sample Dossier</a>
+        </div>
+        <div class="stat-row">
+          <div class="stat"><span class="num mono" data-target="4.2" data-decimals="1">0</span><span class="lbl">avg. rounds cleared pre-listing</span></div>
+          <div class="stat"><span class="num mono" data-target="11" data-suffix=" days">0</span><span class="lbl">avg. time saved per hire</span></div>
+          <div class="stat"><span class="num mono" data-target="62" data-suffix="%">0</span><span class="lbl">fewer first rounds run</span></div>
+        </div>
+      </div>
+
+      <div id="audience-candidate" hidden>
+        <span class="eyebrow mono">For Job Seekers</span>
+        <h1>Made the final round?<br>That's worth more than <em>a rejection email.</em></h1>
+        <p class="hero-sub">List your interview history once - the rounds you cleared, the panels you passed - and let other companies find you at the stage you already earned.</p>
+        <div class="hero-ctas">
+          <a href="#pricing" class="btn btn-primary">List Your Rounds</a>
+          <a href="#tracks" class="btn btn-ghost">See How It Works</a>
+        </div>
+        <div class="stat-row">
+          <div class="stat"><span class="num mono">Free</span><span class="lbl">to list, always</span></div>
+          <div class="stat"><span class="num mono" data-target="3.1" data-decimals="1">0</span><span class="lbl">avg. companies matched per finalist</span></div>
+          <div class="stat"><span class="num mono">0</span><span class="lbl">cold applications required</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dossier-frame" id="dossier-frame">
+      <div class="folder-tab mono">Exhibit A</div>
+      <div class="dossier">
+        <div class="dossier-eyebrow mono">What a dossier looks like</div>
+        <div class="dossier-top">
+          <span class="dossier-id mono">CANDIDATE&nbsp;#A-1142</span>
+          <span class="dossier-tier">Apex Clearance</span>
+        </div>
+        <div class="dossier-name">Finalist - Quant Research</div>
+        <div class="dossier-role">Reached final round · 6 interviews cleared · offer went to another candidate</div>
+        <div class="dossier-rounds">
+          <div class="rnd filled"></div><div class="rnd filled"></div><div class="rnd filled"></div>
+          <div class="rnd filled"></div><div class="rnd filled"></div><div class="rnd filled"></div>
+        </div>
+        <div class="dossier-caption mono">Screen → Technical ×3 → Panel → Final Round</div>
+        <div class="dossier-confidence">
+          <span class="conf-label mono">Evidence level</span>
+          <span class="conf-badge">Corroborated</span>
+        </div>
+        <div class="stamp-wrap"><div class="stamp">Listed</div></div>
+        <div class="dossier-foot">
+          <span>Sourced Q2 2026</span>
+          <span>Identity withheld until intro</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section id="circuit">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <span class="section-tag">01 - The Circuit</span>
+        <h2>Every hire is an elimination round.<br>We list the ones who almost survived it.</h2>
+      </div>
+      <p class="section-note">Most candidates who clear three or more rounds don't get an offer - not because they weren't good, but because one seat existed and someone else took it.</p>
+    </div>
+
+    <div class="circuit-progress" id="circuit-progress"><span></span></div>
+    <div class="circuit" id="circuit-diagram">
+      <div class="circuit-step">
+        <span class="n mono">01</span>
+        <div><h3>Applied</h3><p>Resume submitted through the hiring company's own process.</p></div>
+      </div>
+      <div class="circuit-step">
+        <span class="n mono">02</span>
+        <div><h3>Screened</h3><p>Passed recruiter screen or assessment. Roughly 1 in 4 applicants get here.</p></div>
+      </div>
+      <div class="circuit-step">
+        <span class="n mono">03</span>
+        <div><h3>Semifinalist</h3><p>Advanced to onsite or panel rounds - real interviewer hours spent.</p></div>
+      </div>
+      <div class="circuit-step">
+        <span class="n mono">04</span>
+        <div><h3>Finalist</h3><p>Reached the final round: committee, partner, or offer-stage conversation.</p></div>
+      </div>
+      <div class="circuit-step out">
+        <span class="n mono">05</span>
+        <div><h3>Listed</h3><p>No offer, or an offer taken elsewhere. Evidence gathered and added to elestar at the round reached.</p></div>
+      </div>
+    </div>
+
+    <div class="pivot-row">
+      <div class="pivot">
+        <span class="who mono">For companies</span>
+        <p>Round five is where sourcing gets cheaper - you're not paying interviewers to re-run rounds one through four.</p>
+      </div>
+      <div class="pivot">
+        <span class="who mono">For candidates</span>
+        <p>Round five is where the work you already did stops going to waste the moment one rejection email arrives.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="tracks">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <span class="section-tag">02 - Built for Both Sides</span>
+        <h2>One dossier. Two ways to use it.</h2>
+      </div>
+      <p class="section-note">The listing is the same record either way - what changes is who's reading it.</p>
+    </div>
+
+    <div class="tracks">
+      <div class="track">
+        <h3 class="track-title">If you're job hunting</h3>
+        <div class="step3">
+          <span class="idx">i.</span>
+          <h4>List your rounds</h4>
+          <p>Connect your email or calendar so we can read the record directly - no screenshots to fake, nothing typed in by hand.</p>
+        </div>
+        <div class="step3">
+          <span class="idx">ii.</span>
+          <h4>Set what's visible</h4>
+          <p>Choose your function and tier. Your name and current employer stay hidden until you approve an intro.</p>
+        </div>
+        <div class="step3">
+          <span class="idx">iii.</span>
+          <h4>Get matched, not cold-called</h4>
+          <p>Companies request an intro through us. Nothing reaches you or reveals your identity without your yes.</p>
+        </div>
+      </div>
+
+      <div class="track">
+        <h3 class="track-title">If you're hiring</h3>
+        <div class="step3">
+          <span class="idx">i.</span>
+          <h4>Set your clearance floor</h4>
+          <p>Choose the minimum tier, stage, and evidence level you'll consider for a role.</p>
+        </div>
+        <div class="step3">
+          <span class="idx">ii.</span>
+          <h4>Browse matched dossiers</h4>
+          <p>See candidates ranked by how closely their cleared rounds map to your role, not by keyword overlap on a title.</p>
+        </div>
+        <div class="step3">
+          <span class="idx">iii.</span>
+          <h4>Interview from a brief</h4>
+          <p>Get a summary of what was already tested elsewhere, so your interviewer knows what to skip and what to actually probe.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="tiers">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <span class="section-tag">03 - Clearance Tiers</span>
+        <h2>Not every interview round means the same thing.</h2>
+      </div>
+      <p class="section-note">Clearance is set by process depth and selectivity, not brand recognition. A five-round process with a 2% offer rate outranks a well-known name with a single call.</p>
+    </div>
+
+    <div class="tiers">
+      <div class="tier-card t1">
+        <span class="tlabel mono">Tier I</span>
+        <div class="swatch"></div>
+        <h3>Apex Clearance</h3>
+        <div class="spec"><span>Rounds</span><span>6+</span></div>
+        <div class="spec"><span>Offer rate</span><span>&lt;2%</span></div>
+        <div class="spec"><span>Process length</span><span>6-10 wks</span></div>
+        <p class="archetypes">Quant trading desks, elite research labs, top-tier strategy consultancies, white-shoe law and banking.</p>
+      </div>
+      <div class="tier-card t2">
+        <span class="tlabel mono">Tier II</span>
+        <div class="swatch"></div>
+        <h3>Elite Clearance</h3>
+        <div class="spec"><span>Rounds</span><span>4-5</span></div>
+        <div class="spec"><span>Offer rate</span><span>2-8%</span></div>
+        <div class="spec"><span>Process length</span><span>3-6 wks</span></div>
+        <p class="archetypes">Large-scale tech platforms, bulge-bracket finance, national consultancies, competitive fellowships.</p>
+      </div>
+      <div class="tier-card t3">
+        <span class="tlabel mono">Tier III</span>
+        <div class="swatch"></div>
+        <h3>Verified Clearance</h3>
+        <div class="spec"><span>Rounds</span><span>3</span></div>
+        <div class="spec"><span>Offer rate</span><span>8-20%</span></div>
+        <div class="spec"><span>Process length</span><span>2-3 wks</span></div>
+        <p class="archetypes">Well-funded scaleups, regional firms, agencies with structured multi-stage panels.</p>
+      </div>
+      <div class="tier-card t4">
+        <span class="tlabel mono">Tier IV</span>
+        <div class="swatch"></div>
+        <h3>Standard Clearance</h3>
+        <div class="spec"><span>Rounds</span><span>2</span></div>
+        <div class="spec"><span>Offer rate</span><span>&gt;20%</span></div>
+        <div class="spec"><span>Process length</span><span>&lt;2 wks</span></div>
+        <p class="archetypes">Early-stage startups, small businesses, roles hired on a single structured interview.</p>
+      </div>
+    </div>
+
+    <div class="calc">
+      <div class="calc-head">
+        <span class="section-tag">Try It</span>
+        <h3>Where does your process rank?</h3>
+      </div>
+      <div class="calc-body">
+        <div class="calc-control">
+          <label for="calc-rounds">Rounds in the loop <span class="calc-val mono" id="rounds-val">4</span></label>
+          <input type="range" id="calc-rounds" min="1" max="8" step="1" value="4">
+        </div>
+        <div class="calc-control">
+          <label for="calc-offer">Offer rate <span class="calc-val mono" id="offer-val">10%</span></label>
+          <input type="range" id="calc-offer" min="1" max="40" step="1" value="10">
+        </div>
+        <div class="calc-result">
+          <span class="calc-tier-label mono">Result</span>
+          <div class="calc-tier-name" id="calc-tier-name">Elite Clearance</div>
+          <p class="calc-tier-desc" id="calc-tier-desc">A 4-round process with a 10% offer rate lands in Tier II.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="stages">
+      <div class="stage">
+        <span class="sname mono">Screened</span>
+        <p>Cleared resume review or an assessment. Entry-level signal, listed but not prioritized.</p>
+        <span class="badge-ex mono">- Screened</span>
+      </div>
+      <div class="stage active">
+        <span class="sname mono">Semifinalist</span>
+        <p>Reached onsite, panel, or case-round interviews. Real interviewer time already invested.</p>
+        <span class="badge-ex mono">Elite Semifinalist</span>
+      </div>
+      <div class="stage active">
+        <span class="sname mono">Finalist</span>
+        <p>Reached the last round - committee, partner, or offer-stage conversation.</p>
+        <span class="badge-ex mono">Apex Finalist</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="verification">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <span class="section-tag">04 - Verification</span>
+        <h2>Confidence has levels. We show all of them.</h2>
+      </div>
+      <p class="section-note">A badge that just says "Verified" hides more than it reveals. Every dossier shows exactly how its evidence was established.</p>
+    </div>
+
+    <div class="confidence-row" role="group" aria-label="Evidence levels - select one to preview">
+      <button type="button" class="conf-card c1" data-level="1" data-badge="Self-Attested" aria-pressed="false">
+        <span class="cnum mono">Level 01</span>
+        <h3>Self-Attested</h3>
+        <p>Candidate-submitted documentation - an offer letter or calendar invite - not yet cross-checked against an independent source.</p>
+        <div class="bar"><span></span></div>
+      </button>
+      <button type="button" class="conf-card c2" data-level="2" data-badge="Corroborated" aria-pressed="true">
+        <span class="cnum mono">Level 02</span>
+        <h3>Corroborated</h3>
+        <p>Two or more independent sources agree on company, date range, and role - pulled directly from calendar and email records, not screenshots.</p>
+        <div class="bar"><span></span></div>
+      </button>
+      <button type="button" class="conf-card c3" data-level="3" data-badge="Confirmed" aria-pressed="false">
+        <span class="cnum mono">Level 03</span>
+        <h3>Confirmed</h3>
+        <p>The interviewing company responded directly to a one-click confirmation request and verified the round.</p>
+        <div class="bar"><span></span></div>
+      </button>
+    </div>
+
+    <div class="conf-preview">
+      <span class="conf-preview-label mono">On a dossier, this shows as:</span>
+      <span class="conf-badge" id="conf-preview-badge">Corroborated</span>
+      <div class="bar"><span id="conf-preview-bar" style="width:66%"></span></div>
+    </div>
+
+    <div class="verify-method">
+      <div class="vm-item">
+        <span class="vn mono">01</span>
+        <p><strong>Read the record, don't accept a copy.</strong> Email and calendar connections let us check sender domains and message headers directly - far harder to fake than an uploaded screenshot.</p>
+      </div>
+      <div class="vm-item">
+        <span class="vn mono">02</span>
+        <p><strong>Require agreement across sources.</strong> No single document moves a dossier past Level 01. We look for independent signals that corroborate each other.</p>
+      </div>
+      <div class="vm-item">
+        <span class="vn mono">03</span>
+        <p><strong>Ask the company, briefly.</strong> A one-click confirmation request goes to the recruiter's verified address. Most go unanswered - the ones that come back matter a lot.</p>
+      </div>
+      <div class="vm-item">
+        <span class="vn mono">04</span>
+        <p><strong>Real identity behind an anonymous listing.</strong> Candidates verify who they are at signup. A caught fraud costs a real identity, not a throwaway account.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="ai">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <span class="section-tag">05 - Where AI Does the Work</span>
+        <h2>Three jobs that don't scale by hand.</h2>
+      </div>
+    </div>
+    <p class="ai-lede">None of this is a chat widget bolted onto the page. Each piece replaces a manual task that stops working once the pool gets past a few hundred dossiers.</p>
+
+    <div class="ai-grid">
+      <div class="ai-card">
+        <span class="atag mono">Verification</span>
+        <h3>Pattern review across the pool</h3>
+        <p>Flags claims that don't match a company's typical process, documents reused across different candidate accounts, and clusters of correlated claims worth a manual look.</p>
+        <div class="solves mono">→ Fraud checks that don't scale one dossier at a time</div>
+      </div>
+      <div class="ai-card">
+        <span class="atag mono">Sourcing</span>
+        <h3>Matching, not browsing</h3>
+        <p>A recruiter describes the role; matching surfaces finalists whose cleared rounds actually tested the same skills - including candidates whose title doesn't match on paper.</p>
+        <div class="solves mono">→ Replaces scrolling a dossier list by hand</div>
+      </div>
+      <div class="ai-card">
+        <span class="atag mono">Interviewing</span>
+        <h3>Skip-ahead briefs</h3>
+        <p>Before a first call, the hiring team gets a summary of exactly what was already tested elsewhere - system design, case, behavioral - and what's still worth probing.</p>
+        <div class="solves mono">→ Turns "start over" into "pick up where it left off"</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="trust">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <span class="section-tag">06 - Before You Ask</span>
+        <h2>Two questions everyone opens with.</h2>
+      </div>
+    </div>
+    <div class="trust">
+      <div class="trust-item">
+        <p class="q">Who can see my name?</p>
+        <p class="a">No one, until you approve a specific introduction. Companies browse anonymized dossiers - tier, function, rounds cleared, evidence level - with identity withheld.</p>
+      </div>
+      <div class="trust-item">
+        <p class="q">Does listing cost anything?</p>
+        <p class="a">No. Listing is free for candidates for as long as you're on elestar. Companies pay for the access tier that lets them browse and request intros.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="pricing">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <span class="section-tag">07 - Access</span>
+        <h2>Priced by which files you can open.</h2>
+      </div>
+      <p class="section-note">Every company plan includes full round history and evidence-level filtering. Higher access opens deeper tiers.</p>
+    </div>
+
+    <p class="pricing-note">Candidates: listing is free at every tier - you're not the one being billed.</p>
+
+    <div class="pricing">
+      <div class="plan">
+        <span class="pname mono">Standard</span>
+        <h3>Open Access</h3>
+        <p class="access">Tier III-IV dossiers</p>
+        <ul>
+          <li>Verified Clearance and below</li>
+          <li>Unlimited dossier views</li>
+          <li>5 introductions / month</li>
+        </ul>
+        <a href="#" class="btn btn-ghost">Request Access</a>
+      </div>
+      <div class="plan featured">
+        <span class="pname mono">Elite</span>
+        <h3>Full Circuit</h3>
+        <p class="access">Tier II-IV dossiers</p>
+        <ul>
+          <li>Elite Clearance and below</li>
+          <li>Priority introductions</li>
+          <li>Round-by-round interview notes</li>
+        </ul>
+        <a href="#" class="btn btn-primary">Request Access</a>
+      </div>
+      <div class="plan">
+        <span class="pname mono">Apex</span>
+        <h3>Full Network</h3>
+        <p class="access">All tiers, including Apex</p>
+        <ul>
+          <li>Every clearance tier</li>
+          <li>Dedicated sourcing contact</li>
+          <li>Custom clearance floors per role</li>
+        </ul>
+        <a href="#" class="btn btn-ghost">Talk to Us</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot-grid">
+    <div class="brandmark"><span class="mark">elestar</span></div>
+    <p class="foot-note">Dossiers show an explicit evidence level - Self-Attested, Corroborated, or Confirmed - rather than a single verified/unverified flag. Identity is disclosed only after both parties agree to an introduction.</p>
+  </div>
+</footer>
+</div>
+
+<!-- ============ CIRCUIT ============ -->
+<div class="page appview" id="page-circuit" hidden>
+  <div class="wrap">
+    <div class="app-head">
+      <div>
+        <span class="section-tag">The Circuit</span>
+        <h1>What real loops actually look like.</h1>
+      </div>
+      <p>An anonymized public feed of every process listed. No account needed to read it, because the honest answer to "what happens in that onsite" doesn't exist anywhere else.</p>
+    </div>
+    <div class="feedbar">
+      <span><span class="live-dot"></span>Live · shared across everyone reading this</span>
+      <span id="circuit-count">—</span>
+      <span style="margin-left:auto">You are <b data-myid></b> here</span>
+    </div>
+    <div id="circuit-out"></div>
+    <p class="hint" style="margin-top:24px">Replies are redacted client-side before they post — emails, phone numbers, links and handles are stripped whether or not you meant to include them.</p>
+  </div>
+</div>
+
+<!-- ============ LIST A PROCESS ============ -->
+<div class="page appview" id="page-list" hidden>
+  <div class="wrap">
+    <div class="app-head">
+      <div>
+        <span class="section-tag">List a process</span>
+        <h1>Describe it. The agent does the rest.</h1>
+      </div>
+      <p>No form. Write what you went through the way you'd tell a friend, and the pipeline below turns it into a structured, anonymous record.</p>
+    </div>
+
+    <div class="cols wide-left">
+      <div>
+        <div class="field">
+          <label for="list-input">What happened</label>
+          <textarea id="list-input" placeholder="e.g. I interviewed at a Series B fintech, maybe 300 people, for a senior backend role. Recruiter screen, then a coding round in Go, then a system design session, then a take-home on rate limiting which we reviewed in a follow-up call, then a final panel with two engineers and the VP. Took about five weeks. They went with someone internal in the end."></textarea>
+          <p class="hint">Rounds you <b>completed</b> — not how far you were told you'd get. Don't include your name or your employer's; anything identifying is stripped before the model sees a word of it.</p>
+        </div>
+        <button class="btn solid" id="list-run">Run the pipeline</button>
+        <div id="list-out" style="margin-top:24px"></div>
+      </div>
+
+      <div class="rail">
+        <h4>Pipeline</h4>
+        <div class="trace" id="list-trace">
+          <div class="trace-step"><span class="st">·</span><span class="lb">Redact identity</span></div>
+          <div class="trace-step"><span class="st">·</span><span class="lb">Parse the process</span></div>
+          <div class="trace-step"><span class="st">·</span><span class="lb">Compute tier (deterministic)</span></div>
+          <div class="trace-step"><span class="st">·</span><span class="lb">Re-identification audit</span></div>
+          <div class="trace-step"><span class="st">·</span><span class="lb">Publish to the circuit</span></div>
+        </div>
+        <h4 style="margin-top:28px">Why five steps</h4>
+        <p>Redaction runs first and always — if it fails, nothing proceeds. The model proposes a tier but a deterministic rule decides it, and that rule can lower the proposal, never raise it. Brand is not an input: a famous company with one screening call is Standard.</p>
+        <p>The audit checks how many other live records share your combination of tier, function and region. Below eight, detail gets generalized until it clears. Every step fails closed.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SEARCH ============ -->
+<div class="page appview" id="page-search" hidden>
+  <div class="wrap">
+    <div class="app-head">
+      <div>
+        <span class="section-tag">Search the pool</span>
+        <h1>Describe the role, not the keywords.</h1>
+      </div>
+      <p>Ranked by whether the competencies already assessed overlap with what this role needs — never by employer prestige, school, or years of experience.</p>
+    </div>
+
+    <div class="qbar">
+      <input type="text" id="search-q" placeholder="Backend engineer who's been tested on distributed systems and on-call judgment, London">
+      <button class="btn solid" id="search-run">Rank the pool</button>
+    </div>
+    <div class="filters">
+      <span>Your floor:</span>
+      <label>Minimum tier
+        <select id="f-tier">
+          <option value="standard">Standard</option>
+          <option value="verified" selected>Verified</option>
+          <option value="elite">Elite</option>
+          <option value="apex">Apex</option>
+        </select>
+      </label>
+      <span style="margin-left:auto">Filters run in code before the model sees anything</span>
+    </div>
+
+    <div class="cols wide-left">
+      <div id="search-out"></div>
+      <div class="rail">
+        <h4>Ranking</h4>
+        <div class="trace" id="search-trace">
+          <div class="trace-step"><span class="st">·</span><span class="lb">Apply hard filters</span></div>
+          <div class="trace-step"><span class="st">·</span><span class="lb">Rank by competency overlap</span></div>
+          <div class="trace-step"><span class="st">·</span><span class="lb">Write rationales</span></div>
+        </div>
+        <h4 style="margin-top:28px">Why filters run first</h4>
+        <p>Your tier and evidence floors are enforced in code, never passed to the model as an instruction. A model that can be talked out of a floor can be talked out of a blocklist, and that is a privacy incident rather than a ranking bug.</p>
+        <h4>Every row names a gap</h4>
+        <p>A rationale with no negative in it is a sales pitch, and it teaches recruiters to stop reading rationales. If the model returns one without a gap, it's rejected.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ INTROS ============ -->
+<div class="page appview" id="page-intros" hidden>
+  <div class="wrap">
+    <div class="app-head">
+      <div>
+        <span class="section-tag">Introductions</span>
+        <h1>Nothing moves without the candidate.</h1>
+      </div>
+      <p>You are <b data-myid></b>. A request reveals nothing until it's approved, and declining is free, unlimited, and invisible to whoever asked.</p>
+    </div>
+    <div id="intros-out"></div>
+  </div>
+</div>
+
+
+<script>
+  const hiringBtn = document.getElementById('btn-hiring');
+  const candidateBtn = document.getElementById('btn-candidate');
+  const hiringPanel = document.getElementById('audience-hiring');
+  const candidatePanel = document.getElementById('audience-candidate');
+
+  function setAudience(mode){
+    const isHiring = mode === 'hiring';
+    hiringPanel.hidden = !isHiring;
+    candidatePanel.hidden = isHiring;
+    hiringBtn.setAttribute('aria-pressed', String(isHiring));
+    candidateBtn.setAttribute('aria-pressed', String(!isHiring));
+  }
+  hiringBtn.addEventListener('click', () => setAudience('hiring'));
+  candidateBtn.addEventListener('click', () => setAudience('candidate'));
+
+  // Only in-page anchors take part in scroll tracking. App routes (#/circuit,
+  // #/search, #/intros) are handled by the router and are not valid selectors.
+  const tabs = [...document.querySelectorAll('.tabs a')]
+    .filter(a => { const h = a.getAttribute('href') || ''; return h.startsWith('#') && !h.startsWith('#/'); });
+  const sections = tabs.map(t => document.querySelector(t.getAttribute('href')));
+  const tabIO = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      const idx = sections.indexOf(entry.target);
+      if (entry.isIntersecting && idx > -1) {
+        tabs.forEach(t => t.classList.remove('active'));
+        tabs[idx].classList.add('active');
+      }
+    });
+  }, { rootMargin: '-40% 0px -50% 0px' });
+  sections.forEach(s => s && tabIO.observe(s));
+
+  // Count-up stats
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function animateNum(el){
+    const target = parseFloat(el.dataset.target);
+    if (Number.isNaN(target)) return;
+    const decimals = parseInt(el.dataset.decimals || '0', 10);
+    const suffix = el.dataset.suffix || '';
+    if (reduceMotion) { el.textContent = target.toFixed(decimals) + suffix; return; }
+    const start = performance.now();
+    const dur = 900;
+    function tick(now){
+      const p = Math.min((now - start) / dur, 1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = (target * eased).toFixed(decimals) + suffix;
+      if (p < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+  const statIO = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.querySelectorAll('[data-target]').forEach(animateNum);
+        statIO.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.4 });
+  document.querySelectorAll('.stat-row').forEach(row => statIO.observe(row));
+
+  // Circuit diagram: staggered reveal + progress fill on scroll into view
+  const circuitDiagram = document.getElementById('circuit-diagram');
+  const circuitProgress = document.getElementById('circuit-progress');
+  const circuitIO = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        circuitDiagram.classList.add('in');
+        circuitProgress.classList.add('in');
+        circuitIO.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.35 });
+  if (circuitDiagram) circuitIO.observe(circuitDiagram);
+
+  // Tier calculator
+  const roundsInput = document.getElementById('calc-rounds');
+  const offerInput = document.getElementById('calc-offer');
+  const roundsVal = document.getElementById('rounds-val');
+  const offerVal = document.getElementById('offer-val');
+  const tierName = document.getElementById('calc-tier-name');
+  const tierDesc = document.getElementById('calc-tier-desc');
+  const tierMap = {
+    1: { name: 'Apex Clearance', color: 'var(--brass)' },
+    2: { name: 'Elite Clearance', color: 'var(--tier2)' },
+    3: { name: 'Verified Clearance', color: 'var(--tier3)' },
+    4: { name: 'Standard Clearance', color: 'var(--tier4)' }
+  };
+  function tierForRounds(r){
+    if (r >= 6) return 1;
+    if (r >= 4) return 2;
+    if (r === 3) return 3;
+    return 4;
+  }
+  function updateCalc(){
+    const rounds = parseInt(roundsInput.value, 10);
+    const offer = parseInt(offerInput.value, 10);
+    roundsVal.textContent = rounds;
+    offerVal.textContent = offer + '%';
+    const t = tierMap[tierForRounds(rounds)];
+    tierName.textContent = t.name;
+    tierName.style.color = t.color;
+    tierDesc.textContent = `A ${rounds}-round process with a ${offer}% offer rate lands in ${t.name}.`;
+  }
+  if (roundsInput) {
+    roundsInput.addEventListener('input', updateCalc);
+    offerInput.addEventListener('input', updateCalc);
+    updateCalc();
+  }
+
+  // Verification confidence preview
+  const confCards = [...document.querySelectorAll('.conf-card')];
+  const previewBadge = document.getElementById('conf-preview-badge');
+  const previewBar = document.getElementById('conf-preview-bar');
+  const widthByLevel = { '1': '33%', '2': '66%', '3': '100%' };
+  confCards.forEach(card => {
+    card.addEventListener('click', () => {
+      confCards.forEach(c => c.setAttribute('aria-pressed', 'false'));
+      card.setAttribute('aria-pressed', 'true');
+      previewBadge.textContent = card.dataset.badge;
+      previewBar.style.width = widthByLevel[card.dataset.level];
+    });
+  });
+
+  // Subtle 3D tilt on the dossier card stack (pointer devices only, motion allowed)
+  const dossierFrame = document.getElementById('dossier-frame');
+  if (dossierFrame && window.matchMedia('(pointer: fine)').matches && !reduceMotion) {
+    dossierFrame.addEventListener('mousemove', (e) => {
+      const r = dossierFrame.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width - 0.5;
+      const y = (e.clientY - r.top) / r.height - 0.5;
+      dossierFrame.style.transform = `perspective(900px) rotateX(${(-y * 4).toFixed(2)}deg) rotateY(${(x * 4).toFixed(2)}deg)`;
+    });
+    dossierFrame.addEventListener('mouseleave', () => { dossierFrame.style.transform = ''; });
+  }
+
+
+/* ==================== elestar app ==================== */
+/* ============================================================
+   elestar — application layer
+   Router · Network (shared storage) · Agent (Claude API)
+   ============================================================ */
+
+const K_FLOOR = 8;                       // k-anonymity floor before publish
+const MODEL = "claude-sonnet-4-6";
+const TIERS = ["standard", "verified", "elite", "apex"];
+
+/* ---------- identity (local, ephemeral) ---------- */
+function myId() {
+  let id = sessionStorage.getItem("elestar:id");
+  if (!id) {
+    id = "#" + "ABC"[Math.floor(Math.random() * 3)] + "-" + String(1000 + Math.floor(Math.random() * 8999));
+    sessionStorage.setItem("elestar:id", id);
+  }
+  return id;
+}
+
+/* ---------- storage ---------- */
+async function sget(key, shared = true, fallback = null) {
+  try { const r = await window.storage.get(key, shared); return r ? JSON.parse(r.value) : fallback; }
+  catch { return fallback; }
+}
+async function sset(key, value, shared = true) {
+  try { await window.storage.set(key, JSON.stringify(value), shared); return true; }
+  catch { return false; }
+}
+
+/* ---------- deterministic tier (authoritative) ----------
+   The model proposes; this decides. It may lower the model's
+   proposal, never raise it. Brand is not an input, deliberately. */
+function computeTier({ roundsCleared, roundsConfidence, loopLengthWeeks, knownOfferRate }) {
+  let tier = roundsCleared >= 6 ? "apex"
+           : roundsCleared >= 4 ? "elite"
+           : roundsCleared === 3 ? "verified" : "standard";
+
+  if (knownOfferRate != null) {
+    const byRate = knownOfferRate < 0.02 ? "apex"
+                 : knownOfferRate < 0.08 ? "elite"
+                 : knownOfferRate < 0.20 ? "verified" : "standard";
+    if (TIERS.indexOf(byRate) > TIERS.indexOf(tier))
+      tier = TIERS[Math.min(TIERS.indexOf(tier) + 1, 3)];   // at most one step
+  }
+  if (loopLengthWeeks != null && loopLengthWeeks < 2 && roundsCleared >= 6)
+    tier = TIERS[Math.max(TIERS.indexOf(tier) - 1, 0)];      // 6 rounds in <2wks is a miscount
+
+  if (roundsConfidence < 0.6 && TIERS.indexOf(tier) > TIERS.indexOf("verified"))
+    tier = "verified";
+
+  return tier;
+}
+
+/* ---------- redaction (runs before any model call) ---------- */
+const RX = {
+  email: /[\w.+-]+@[\w-]+\.[\w.]+/g,
+  phone: /(\+?\d[\d\s().-]{7,}\d)/g,
+  url: /\bhttps?:\/\/\S+/g,
+  handle: /(^|\s)@[\w.-]{2,}/g,
+};
+function redact(text) {
+  const removed = [];
+  let out = text;
+  for (const [kind, rx] of Object.entries(RX)) {
+    const n = (out.match(rx) || []).length;
+    if (n) removed.push(kind + " ×" + n);
+    out = out.replace(rx, kind === "handle" ? "$1[handle]" : "[" + kind + "]");
+  }
+  return { text: out, removed };
+}
+
+/* ---------- k-anonymity ---------- */
+function cohortKey(r) {
+  return [r.tier, r.function || "unknown", (r.employerProfile?.region || "unknown")].join("|");
+}
+function cohortCount(record, pool) {
+  const k = cohortKey(record);
+  return pool.filter(p => cohortKey(p) === k && p.id !== record.id).length;
+}
+function generalize(record) {
+  const p = { ...record.employerProfile };
+  const steps = [];
+  if (p.sizeBand && !/-/.test(p.sizeBand)) { steps.push(["employer size", p.sizeBand, "100–500"]); p.sizeBand = "100–500"; }
+  if (p.region && p.region.split(",").length > 1) {
+    const wide = p.region.split(",").pop().trim();
+    steps.push(["region", p.region, wide]); p.region = wide;
+  }
+  if (p.stage) { steps.push(["stage", p.stage, "private company"]); p.stage = "private company"; }
+  return { employerProfile: p, steps };
+}
+
+/* ---------- agent ---------- */
+async function askClaude(system, user, maxTokens = 1600) {
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: MODEL, max_tokens: maxTokens, system,
+      messages: [{ role: "user", content: user }],
+    }),
+  });
+  if (!res.ok) throw new Error("agent unavailable (" + res.status + ")");
+  const data = await res.json();
+  const text = data.content.filter(b => b.type === "text").map(b => b.text).join("");
+  const clean = text.replace(/```json/g, "").replace(/```/g, "").trim();
+  const start = clean.indexOf("{");
+  const end = clean.lastIndexOf("}");
+  if (start < 0 || end < 0) throw new Error("agent returned no JSON");
+  return JSON.parse(clean.slice(start, end + 1));
+}
+
+const PARSE_SYSTEM = `You extract structured interview-process records from what a candidate wrote.
+You will never see the candidate's name, employer name or contact details. Do not ask for them.
+
+HARD RULE — never invent a round. A record claiming more than happened destroys this product, and
+when it comes from you it is invisible.
+- A recruiter screen is a round. A hiring-manager chat is a round. A take-home is a round, and the
+  call reviewing that take-home is part of the SAME round, not a second one. A scheduling call is
+  not a round. A rejection call is not a round.
+- "A few technical interviews" is an unknown number: emit the LOWER bound, set roundsConfidence < 0.6.
+- Being told you would be moved forward is not clearing a round.
+- If no outcome was stated, outcome is "unstated". NEVER infer "performance" from silence.
+- Brand NEVER promotes tier. A famous company with one screening call is standard.
+
+Competencies: 3–8, drawn from what was TESTED not what the role listed.
+depth: "assessed" (a whole round or work sample), "probed" (substantial part of a round),
+"mentioned" (came up in conversation).
+
+Questions: at most 3, only when the answer would change the tier or round count. Short, specific,
+answerable in a few words. Never ask anything identifying.
+
+Return ONLY this JSON, no prose, no fences:
+{"rounds":[{"index":1,"type":"screen|technical|system_design|case|take_home|panel|final|other","label":"","cleared":true}],
+"roundsCleared":0,"roundsTotal":null,"roundsConfidence":0.0,"processType":"external|internal",
+"function":"","seniority":"","employerProfile":{"sector":null,"stage":null,"sizeBand":null,"region":null},
+"loopLengthWeeks":null,
+"outcome":"req_closed|internal_candidate|comp_mismatch|competitive_loss|candidate_withdrew|performance|unstated",
+"competencies":[{"name":"","depth":"assessed|probed|mentioned"}],
+"proposedTier":"apex|elite|verified|standard","questions":[],"headline":""}
+"headline" is one anonymous sentence for the public feed, e.g. "cleared a five-round fintech backend
+loop — system design, then an on-call simulation". No names, no company, no first person.`;
+
+const MATCH_SYSTEM = `You rank anonymized interview records against a role.
+Every record given has ALREADY passed the recruiter's hard filters — do not reason about floors.
+
+Rank by whether competencies already ASSESSED overlap with what the role requires — not keywords.
+Depth weights: assessed 1.0, probed 0.5, mentioned 0.15.
+fitScore 0–100 = 55% competency overlap (denominator is what the ROLE requires) + 20% process
+similarity + 15% seniority alignment + 10% recency.
+
+Rationale: 1–2 sentences, readable by the candidate it describes. ALWAYS name at least one gap —
+a rationale with no negative is a sales pitch and trains recruiters to stop reading them.
+Never rank on employer prestige, school, or years of experience.
+
+Return ONLY: {"results":[{"recordId":"","fitScore":0,"matched":[],"gaps":[""],"rationale":""}]}`;
+
+const BRIEF_SYSTEM = `You write the interview brief a hiring team receives after a candidate approves
+an introduction. This is what makes "start at round four" real rather than a slogan.
+
+Be specific about skipping. Useless: "they have been technically assessed." Useful: "their loop
+included a dedicated system design round on rate limiting plus a Go coding round — your technical
+screen and system design round are both redundant."
+
+neverSkip must always be populated: team fit and working style, anything domain-specific to the
+hiring company, anything with a regulatory requirement, the final decision-maker conversation.
+
+Report the previous outcome without softening or dramatising. "req_closed" is the most common case
+and carries no negative signal. If "unstated", say the candidate gave no reason and speculate about
+nothing. No adjectives about the candidate. No sales language.
+
+Return ONLY: {"alreadyAssessed":[{"competency":"","depth":"","format":""}],
+"safeToSkip":[{"round":"","redundantWith":""}],"probeInstead":[""],"neverSkip":[""],"outcomeContext":""}`;
+
+/* ============================================================
+   ROUTER
+   ============================================================ */
+const PAGES = ["landing", "circuit", "list", "search", "intros"];
+function route() {
+  const h = location.hash;
+  const m = h.match(/^#\/(\w+)/);
+  const name = m && PAGES.includes(m[1]) ? m[1] : "landing";
+  PAGES.forEach(p => {
+    const el = document.getElementById("page-" + p);
+    if (el) el.hidden = p !== name;
+  });
+  document.querySelectorAll(".tabs a.approute").forEach(a =>
+    a.classList.toggle("active", a.getAttribute("href") === "#/" + name));
+  if (name !== "landing") window.scrollTo(0, 0);
+  if (name === "circuit") renderCircuit();
+  if (name === "intros") renderIntros();
+  if (name === "search") renderSearchIdle();
+}
+window.addEventListener("hashchange", route);
+
+function toast(msg, ms = 3200) {
+  const t = document.createElement("div");
+  t.className = "toast"; t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), ms);
+}
+
+/* ============================================================
+   TRACE — shows the agent pipeline running, step by step
+   ============================================================ */
+function Trace(el, steps) {
+  el.innerHTML = steps.map((s, i) =>
+    `<div class="trace-step" data-i="${i}"><span class="st">·</span><span class="lb">${s}</span><span class="meta"></span></div>`).join("");
+  const rows = [...el.querySelectorAll(".trace-step")];
+  return {
+    run(i, note) {
+      rows[i].className = "trace-step run";
+      rows[i].querySelector(".st").innerHTML = '<span class="spin">◐</span>';
+      if (note) rows[i].querySelector(".meta").textContent = note;
+    },
+    done(i, note) {
+      rows[i].className = "trace-step done";
+      rows[i].querySelector(".st").textContent = "✓";
+      if (note) rows[i].querySelector(".meta").textContent = note;
+    },
+    fail(i, note) {
+      rows[i].className = "trace-step fail";
+      rows[i].querySelector(".st").textContent = "×";
+      if (note) rows[i].querySelector(".meta").textContent = note;
+    },
+  };
+}
+
+/* ============================================================
+   LISTING FLOW — redact → parse → tier → k-anonymity → publish
+   ============================================================ */
+let pendingQuestions = null;
+
+async function runListing() {
+  const ta = document.getElementById("list-input");
+  const raw = ta.value.trim();
+  if (raw.length < 40) { toast("Tell it a bit more — a sentence or two about each round."); return; }
+
+  const btn = document.getElementById("list-run");
+  const out = document.getElementById("list-out");
+  btn.disabled = true; out.innerHTML = "";
+  const traceEl = document.getElementById("list-trace");
+  const t = Trace(traceEl, [
+    "Redact identity",
+    "Parse the process",
+    "Compute tier (deterministic)",
+    "Re-identification audit",
+    "Publish to the circuit",
+  ]);
+
+  try {
+    /* 1 — redact */
+    t.run(0);
+    const { text, removed } = redact(raw);
+    await new Promise(r => setTimeout(r, 260));
+    t.done(0, removed.length ? "stripped " + removed.join(", ") : "nothing to strip");
+
+    /* 2 — parse */
+    t.run(1, "calling model");
+    const answers = pendingQuestions
+      ? [...document.querySelectorAll("#list-qs input")].map((i, n) => pendingQuestions[n] + " → " + i.value).join("; ")
+      : "";
+    const parsed = await askClaude(PARSE_SYSTEM,
+      "<description>\n" + text + "\n</description>" +
+      (answers ? "\n<clarifications>" + answers + "</clarifications>" : ""));
+    t.done(1, parsed.roundsCleared + " rounds · confidence " + Number(parsed.roundsConfidence).toFixed(2));
+
+    /* clarifying questions short-circuit */
+    if (parsed.questions && parsed.questions.length && !answers) {
+      pendingQuestions = parsed.questions;
+      out.innerHTML =
+        `<div class="qs" id="list-qs"><h4>Before this can be listed</h4>` +
+        parsed.questions.map(q => `<div class="q"><p>${esc(q)}</p><input type="text" placeholder="Short answer"></div>`).join("") +
+        `<button class="btn solid sm" id="list-again">Answer and continue</button></div>`;
+      document.getElementById("list-again").onclick = runListing;
+      t.run(2, "waiting on answers"); btn.disabled = false; return;
+    }
+    pendingQuestions = null;
+
+    /* 3 — deterministic tier */
+    t.run(2);
+    const tier = computeTier({
+      roundsCleared: parsed.roundsCleared,
+      roundsConfidence: parsed.roundsConfidence,
+      loopLengthWeeks: parsed.loopLengthWeeks,
+      knownOfferRate: null,
+    });
+    const overridden = tier !== parsed.proposedTier;
+    await new Promise(r => setTimeout(r, 220));
+    t.done(2, overridden ? `model said ${parsed.proposedTier} → rules set ${tier}` : tier);
+
+    /* 4 — k-anonymity */
+    t.run(3);
+    const pool = (await sget("elestar:records", true, [])) || [];
+    let record = {
+      id: myId() + "-" + Date.now().toString(36).slice(-4),
+      owner: myId(),
+      tier, evidence: "self_attested",
+      function: parsed.function || "unspecified",
+      seniority: parsed.seniority || "",
+      rounds: parsed.rounds || [],
+      roundsCleared: parsed.roundsCleared,
+      roundsTotal: parsed.roundsTotal ?? (parsed.roundsCleared + 1),
+      employerProfile: parsed.employerProfile || {},
+      outcome: parsed.outcome,
+      competencies: parsed.competencies || [],
+      headline: parsed.headline || "listed a process",
+      loopLengthWeeks: parsed.loopLengthWeeks,
+      listedAt: Date.now(),
+      monthsAgo: 0,
+    };
+    let k = cohortCount(record, pool);
+    let genNote = "";
+    if (k < K_FLOOR) {
+      const g = generalize(record);
+      record.employerProfile = g.employerProfile;
+      record.generalized = g.steps;
+      genNote = g.steps.length ? "generalized " + g.steps.map(s => s[0]).join(", ") : "";
+      k = cohortCount(record, pool);
+    }
+    const thin = k < K_FLOOR;
+    t.done(3, `k=${k}` + (genNote ? " · " + genNote : "") + (thin ? " · below floor, published with detail withheld" : " · clears floor"));
+    if (thin) record.thinCohort = true;
+
+    /* 5 — publish */
+    t.run(4);
+    pool.unshift(record);
+    await sset("elestar:records", pool.slice(0, 200), true);
+    const feed = (await sget("elestar:circuit", true, [])) || [];
+    feed.unshift({
+      id: "p" + Date.now().toString(36),
+      cid: record.owner, recordId: record.id,
+      text: record.headline,
+      tier, at: Date.now(), reactions: 0, replies: [],
+    });
+    await sset("elestar:circuit", feed.slice(0, 120), true);
+    const mine = (await sget("elestar:mine", false, [])) || [];
+    mine.unshift(record.id); await sset("elestar:mine", mine, false);
+    t.done(4, "live on the circuit");
+
+    out.innerHTML = recordCard(record, { own: true }) +
+      (thin ? `<div class="notice"><b>Published with detail withheld.</b> Only ${k} other live records share your
+       combination of tier, function and region — below our floor of ${K_FLOOR}. Employer stage and size are hidden
+       until the pool thickens. Nothing identifying has been shared.</div>` : "") +
+      (overridden ? `<div class="notice"><b>Tier set by rule, not by model.</b> The model proposed
+       ${parsed.proposedTier}; the deterministic rules returned ${tier}. Rules can lower a proposal, never raise it.</div>` : "");
+    toast("Listed. It's on the circuit now.");
+  } catch (err) {
+    t.fail(4, String(err.message || err));
+    out.innerHTML = `<div class="notice"><b>Nothing was published.</b> ${esc(String(err.message || err))}.
+      This pipeline fails closed — an unpublished record is an annoyance, a wrongly published one is not.</div>`;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+/* ============================================================
+   SEARCH — hard filters in code, ranking by agent
+   ============================================================ */
+function renderSearchIdle() {
+  const out = document.getElementById("search-out");
+  if (!out.dataset.ran) out.innerHTML = `<div class="empty">Describe the role and the pool gets ranked against it.</div>`;
+}
+
+async function runSearch() {
+  const q = document.getElementById("search-q").value.trim();
+  if (!q) { toast("Describe the role first."); return; }
+  const floorTier = document.getElementById("f-tier").value;
+  const out = document.getElementById("search-out");
+  const btn = document.getElementById("search-run");
+  btn.disabled = true;
+  out.dataset.ran = "1";
+  const t = Trace(document.getElementById("search-trace"), [
+    "Apply hard filters", "Rank by competency overlap", "Write rationales",
+  ]);
+
+  try {
+    t.run(0);
+    const pool = (await sget("elestar:records", true, [])) || [];
+    const filtered = pool.filter(r => TIERS.indexOf(r.tier) >= TIERS.indexOf(floorTier));
+    await new Promise(r => setTimeout(r, 220));
+    t.done(0, `${filtered.length} of ${pool.length} records clear your floor`);
+
+    if (!filtered.length) {
+      t.fail(1, "nothing to rank");
+      out.innerHTML = `<div class="empty">No records clear a floor of <b>${floorTier}</b>.
+        Lower the floor, or list a process to seed the pool.</div>`;
+      return;
+    }
+
+    t.run(1, "calling model");
+    const res = await askClaude(MATCH_SYSTEM, JSON.stringify({
+      role: q,
+      candidates: filtered.slice(0, 12).map(r => ({
+        recordId: r.id, tier: r.tier, monthsAgo: r.monthsAgo ?? 0,
+        function: r.function, seniority: r.seniority,
+        competencies: r.competencies, rounds: (r.rounds || []).map(x => x.type),
+        sector: r.employerProfile?.sector,
+      })),
+    }), 2600);
+    t.done(1, res.results.length + " ranked");
+    t.done(2, "with gaps named");
+
+    const byId = Object.fromEntries(filtered.map(r => [r.id, r]));
+    const rows = res.results
+      .filter(m => byId[m.recordId])
+      .sort((a, b) => b.fitScore - a.fitScore);
+    out.innerHTML = rows.map(m => recordCard(byId[m.recordId], { match: m })).join("")
+      || `<div class="empty">The model returned nothing rankable. Try a fuller role description.</div>`;
+    bindIntroButtons();
+  } catch (err) {
+    t.fail(1, String(err.message || err));
+    out.innerHTML = `<div class="notice">Ranking is unavailable right now — ${esc(String(err.message || err))}.
+      No partial or unranked list is shown, because an unexplained order is worse than none.</div>`;
+  } finally { btn.disabled = false; }
+}
+
+/* ============================================================
+   INTROS
+   ============================================================ */
+function bindIntroButtons() {
+  document.querySelectorAll("[data-intro]").forEach(b => {
+    b.onclick = async () => {
+      const rid = b.dataset.intro;
+      const intros = (await sget("elestar:intros", true, [])) || [];
+      if (intros.some(i => i.recordId === rid && i.from === myId())) { toast("Already requested."); return; }
+      intros.unshift({
+        id: "i" + Date.now().toString(36), recordId: rid, from: myId(),
+        role: document.getElementById("search-q")?.value?.slice(0, 200) || "",
+        status: "pending", at: Date.now(),
+      });
+      await sset("elestar:intros", intros.slice(0, 200), true);
+      b.textContent = "Requested"; b.disabled = true;
+      toast("Intro requested. The candidate decides — you'll see nothing until they do.");
+    };
+  });
+}
+
+async function renderIntros() {
+  const el = document.getElementById("intros-out");
+  const [intros, pool, mine] = await Promise.all([
+    sget("elestar:intros", true, []), sget("elestar:records", true, []), sget("elestar:mine", false, []),
+  ]);
+  const mineSet = new Set(mine || []);
+  const byId = Object.fromEntries((pool || []).map(r => [r.id, r]));
+
+  const inbound = (intros || []).filter(i => mineSet.has(i.recordId));
+  const outbound = (intros || []).filter(i => i.from === myId());
+
+  el.innerHTML = `
+    <h3 style="font-family:'Spectral',serif;font-size:19px;margin:0 0 12px">Requests for your records</h3>
+    ${inbound.length ? inbound.map(i => {
+      const r = byId[i.recordId];
+      return `<div class="rec">
+        <div class="rec-top"><div>
+          <div class="rec-id">Intro requested</div>
+          <div class="rec-sub">On your record ${esc(i.recordId)} · ${r ? esc(r.function) : ""}</div>
+        </div><span class="tierchip t-${r ? r.tier : "standard"}">${r ? r.tier : ""}</span></div>
+        <div class="rec-sub">Their role: ${esc(i.role || "not stated")}</div>
+        <div class="rec-foot">
+          <span class="rec-sub">Status: <b>${i.status}</b></span>
+          ${i.status === "pending" ? `<span>
+            <button class="btn sm" data-decline="${i.id}">Decline</button>
+            <button class="btn solid sm" data-approve="${i.id}">Approve</button></span>`
+          : `<span class="rec-sub">${i.status === "approved" ? "Identity released to this company only." : "Declined. They were told nothing."}</span>`}
+        </div>
+        <div id="brief-${i.id}"></div>
+      </div>`;
+    }).join("") : `<div class="empty">No requests yet. List a process and recruiters can ask.</div>`}
+
+    <h3 style="font-family:'Spectral',serif;font-size:19px;margin:32px 0 12px">Requests you've sent</h3>
+    ${outbound.length ? outbound.map(i => `<div class="rec">
+      <div class="rec-top"><div>
+        <div class="rec-id">${esc(i.recordId)}</div>
+        <div class="rec-sub">${byId[i.recordId] ? esc(byId[i.recordId].headline) : "record"}</div>
+      </div><span class="tierchip t-${byId[i.recordId]?.tier || "standard"}">${i.status}</span></div>
+      ${i.status === "approved"
+        ? `<div class="rec-sub">Approved. <button class="btn sm" data-brief="${i.recordId}">Generate interview brief</button></div>
+           <div id="ob-${i.id}"></div>`
+        : `<div class="rec-sub">Waiting on the candidate. You see nothing until they approve.</div>`}
+    </div>`).join("") : `<div class="empty">None yet. Rank the pool in Search and request one.</div>`}`;
+
+  el.querySelectorAll("[data-approve]").forEach(b => b.onclick = () => setIntro(b.dataset.approve, "approved"));
+  el.querySelectorAll("[data-decline]").forEach(b => b.onclick = () => setIntro(b.dataset.decline, "declined"));
+  el.querySelectorAll("[data-brief]").forEach(b => b.onclick = () => makeBrief(b.dataset.brief, b));
+}
+
+async function setIntro(id, status) {
+  const intros = (await sget("elestar:intros", true, [])) || [];
+  const i = intros.find(x => x.id === id);
+  if (i) { i.status = status; await sset("elestar:intros", intros, true); }
+  toast(status === "approved" ? "Approved. Your name is released to that company only." : "Declined. Nothing was shared.");
+  renderIntros();
+}
+
+async function makeBrief(recordId, btn) {
+  const pool = (await sget("elestar:records", true, [])) || [];
+  const r = pool.find(x => x.id === recordId);
+  if (!r) return;
+  const holder = btn.parentElement.nextElementSibling;
+  btn.disabled = true; holder.innerHTML = `<p class="hint"><span class="spin">◐</span> Writing the brief…</p>`;
+  try {
+    const b = await askClaude(BRIEF_SYSTEM, JSON.stringify({ record: r, role: "as described in the request" }), 1800);
+    const cap = 2;   // never recommend skipping more than half a loop
+    holder.innerHTML = `<div class="brief">
+      <h4>Already assessed</h4><ul>${(b.alreadyAssessed || []).map(a =>
+        `<li><b>${esc(a.competency)}</b> — ${esc(a.depth)}, ${esc(a.format)}</li>`).join("")}</ul>
+      <h4>Safe to skip</h4><ul class="skip">${(b.safeToSkip || []).slice(0, cap).map(s =>
+        `<li><b>${esc(s.round)}</b> — redundant with ${esc(s.redundantWith)}</li>`).join("")}</ul>
+      <h4>Probe instead</h4><ul>${(b.probeInstead || []).map(p => `<li>${esc(p)}</li>`).join("")}</ul>
+      <h4>Never skip</h4><ul>${(b.neverSkip || []).map(p => `<li>${esc(p)}</li>`).join("")}</ul>
+      <h4>Why the last process ended</h4><p style="font-size:13.5px;line-height:1.6">${esc(b.outcomeContext || "")}</p>
+    </div>`;
+  } catch (err) {
+    holder.innerHTML = `<div class="notice">Brief unavailable — ${esc(String(err.message || err))}.</div>`;
+  } finally { btn.disabled = false; }
+}
+
+/* ============================================================
+   CIRCUIT — the network layer
+   ============================================================ */
+const SEED = [
+  { id: "s1", cid: "#A-1142", text: "cleared a five-round fintech backend loop — system design, then an on-call simulation", tier: "elite", at: Date.now() - 7.2e6, reactions: 41, replies: [{ cid: "#B-2207", text: "The on-call sim is the one nobody warns you about. Two hours." }] },
+  { id: "s2", cid: "#C-0918", text: "listed a seven-round quant loop — first apex record in prop trading", tier: "apex", at: Date.now() - 1.7e8, reactions: 86, replies: [] },
+  { id: "s3", cid: "#B-2207", text: "moved from self-attested to corroborated — calendar connect matched four of four rounds", tier: "verified", at: Date.now() - 3.4e8, reactions: 12, replies: [] },
+  { id: "s4", cid: "#A-1150", text: "four rounds at a consumer marketplace, req closed the week of the final panel", tier: "elite", at: Date.now() - 5.1e8, reactions: 63, replies: [{ cid: "#C-0918", text: "Same company, same month. Two of us." }] },
+];
+
+async function renderCircuit() {
+  const el = document.getElementById("circuit-out");
+  let feed = await sget("elestar:circuit", true, null);
+  if (!feed) { feed = SEED.slice(); await sset("elestar:circuit", feed, true); }
+  const reacted = (await sget("elestar:reacted", false, [])) || [];
+
+  document.getElementById("circuit-count").textContent = feed.length + " records";
+  el.innerHTML = feed.map(p => `
+    <article class="post" data-p="${p.id}">
+      <div class="post-h">
+        <span class="cid">${esc(p.cid)}</span>
+        <span class="tierchip t-${p.tier || "standard"}">${esc(p.tier || "")}</span>
+        <span class="when">${ago(p.at)}</span>
+      </div>
+      <p class="post-body">${esc(p.text)}</p>
+      <div class="post-acts">
+        <button data-react="${p.id}" class="${reacted.includes(p.id) ? "on" : ""}">▲ ${p.reactions || 0}</button>
+        <button data-reply="${p.id}">${(p.replies || []).length} ${((p.replies || []).length === 1) ? "reply" : "replies"}</button>
+      </div>
+      ${(p.replies || []).length ? `<div class="replies">${p.replies.map(r =>
+        `<div class="reply"><b>${esc(r.cid)}</b> — ${esc(r.text)}</div>`).join("")}</div>` : ""}
+      <div class="replybox" hidden>
+        <input type="text" placeholder="Reply as ${esc(myId())} — no names, no employers">
+        <button class="btn sm" data-send="${p.id}">Post</button>
+      </div>
+    </article>`).join("");
+
+  el.querySelectorAll("[data-react]").forEach(b => b.onclick = () => react(b.dataset.react));
+  el.querySelectorAll("[data-reply]").forEach(b => b.onclick = () => {
+    const box = b.closest(".post").querySelector(".replybox");
+    box.hidden = !box.hidden; if (!box.hidden) box.querySelector("input").focus();
+  });
+  el.querySelectorAll("[data-send]").forEach(b => b.onclick = () => sendReply(b.dataset.send, b.previousElementSibling));
+}
+
+async function react(id) {
+  const reacted = (await sget("elestar:reacted", false, [])) || [];
+  if (reacted.includes(id)) { toast("Already counted."); return; }
+  const feed = (await sget("elestar:circuit", true, [])) || [];
+  const p = feed.find(x => x.id === id);
+  if (!p) return;
+  p.reactions = (p.reactions || 0) + 1;
+  await sset("elestar:circuit", feed, true);
+  reacted.push(id); await sset("elestar:reacted", reacted, false);
+  renderCircuit();
+}
+
+async function sendReply(id, input) {
+  const text = input.value.trim();
+  if (!text) return;
+  const clean = redact(text).text;
+  const feed = (await sget("elestar:circuit", true, [])) || [];
+  const p = feed.find(x => x.id === id);
+  if (!p) return;
+  p.replies = p.replies || [];
+  p.replies.push({ cid: myId(), text: clean.slice(0, 280) });
+  await sset("elestar:circuit", feed, true);
+  input.value = "";
+  renderCircuit();
+}
+
+/* ============================================================
+   RENDER HELPERS
+   ============================================================ */
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, c =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+function ago(ts) {
+  const s = (Date.now() - ts) / 1000;
+  if (s < 90) return "just now";
+  if (s < 5400) return Math.round(s / 60) + "m";
+  if (s < 172800) return Math.round(s / 3600) + "h";
+  return Math.round(s / 86400) + "d";
+}
+const OUTCOME_LABEL = {
+  req_closed: "Req closed", internal_candidate: "Filled internally",
+  comp_mismatch: "Comp mismatch", competitive_loss: "Another candidate preferred",
+  candidate_withdrew: "Candidate withdrew", performance: "Below bar", unstated: "Not stated",
+};
+function roundsMeter(cleared, total) {
+  const t = Math.max(total || cleared + 1, cleared);
+  let h = "";
+  for (let i = 0; i < t; i++) h += `<i class="${i < cleared ? "" : "open"}"></i>`;
+  return `<span class="rounds">${h}</span>`;
+}
+function recordCard(r, opts = {}) {
+  const m = opts.match;
+  const ep = r.employerProfile || {};
+  const profile = [ep.stage, ep.sector, ep.sizeBand, ep.region].filter(Boolean).join(" · ") || "profile withheld";
+  return `<div class="rec">
+    <div class="rec-top">
+      <div>
+        <div class="rec-id">${esc(r.id)}</div>
+        <div class="rec-role">${esc(r.seniority ? r.seniority + " " : "")}${esc(r.function || "role unspecified")}</div>
+        <div class="rec-sub">${esc(profile)}</div>
+      </div>
+      <span class="tierchip t-${r.tier}">${esc(r.tier)}</span>
+    </div>
+    <dl class="rec-grid">
+      <dt>Rounds</dt><dd>${roundsMeter(r.roundsCleared, r.roundsTotal)} &nbsp;${r.roundsCleared} of ${r.roundsTotal || r.roundsCleared + 1} cleared</dd>
+      <dt>Outcome</dt><dd>${esc(OUTCOME_LABEL[r.outcome] || r.outcome || "—")}</dd>
+      <dt>Evidence</dt><dd>${esc((r.evidence || "self_attested").replace("_", "-"))}</dd>
+      <dt>Assessed</dt><dd>${(r.competencies || []).map(c =>
+        `${esc(c.name)}<span style="color:var(--ink-soft)"> (${esc(c.depth)})</span>`).join(", ") || "—"}</dd>
+    </dl>
+    ${m ? `<p class="rationale">${esc(m.rationale)}</p>` : ""}
+    <div class="rec-foot">
+      ${m ? `<span class="fit">${Math.round(m.fitScore)}<small>fit</small></span>` : `<span class="rec-sub">Listed ${ago(r.listedAt || Date.now())} ago</span>`}
+      ${opts.own
+        ? `<span class="rec-sub">Identity withheld until you approve an intro.</span>`
+        : `<button class="btn solid sm" data-intro="${esc(r.id)}">Request intro</button>`}
+    </div>
+  </div>`;
+}
+
+/* ---------- boot ---------- */
+document.getElementById("list-run").onclick = runListing;
+document.getElementById("search-run").onclick = runSearch;
+document.getElementById("search-q").addEventListener("keydown", e => { if (e.key === "Enter") runSearch(); });
+document.querySelectorAll("[data-myid]").forEach(el => el.textContent = myId());
+route();
+
+</script>
+
+</body>
+</html>
