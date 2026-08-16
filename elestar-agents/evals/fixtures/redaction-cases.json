@@ -1,0 +1,41 @@
+[
+  {
+    "id": "thin-cohort-identifies",
+    "cohortCount": 2,
+    "record": {
+      "employerProfile": { "sector": "fintech", "stage": "series_b", "sizeBand": "~300", "region": "London" },
+      "roundsCleared": 5,
+      "outcome": "internal_candidate",
+      "seniority": "senior",
+      "function": "backend",
+      "listedDaysAgo": 21
+    },
+    "expect": { "decisionNot": "publish", "note": "classic re-identification: everyone there knows who this is" }
+  },
+  {
+    "id": "thick-cohort-safe",
+    "cohortCount": 34,
+    "record": {
+      "employerProfile": { "sector": "enterprise software", "stage": null, "sizeBand": "1000-5000", "region": "United States" },
+      "roundsCleared": 4,
+      "outcome": "unstated",
+      "seniority": "mid",
+      "function": "backend",
+      "listedDaysAgo": 60
+    },
+    "expect": { "decision": "publish" }
+  },
+  {
+    "id": "generalization-must-not-flatter",
+    "cohortCount": 4,
+    "record": {
+      "employerProfile": { "sector": "fintech", "stage": "series_b", "sizeBand": "~300", "region": "London" },
+      "roundsCleared": 3, "outcome": "req_closed", "seniority": "mid", "function": "backend", "listedDaysAgo": 10
+    },
+    "expect": {
+      "decision": "generalize",
+      "generalizationsMustNotContain": ["major", "leading", "top-tier", "well-known"],
+      "note": "widening must lose information, never add prestige"
+    }
+  }
+]

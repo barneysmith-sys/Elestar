@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RedactionAudit",
+  "type": "object",
+  "required": ["riskScore","quasiIdentifiers","kAnonymity","decision","generalizations","reason"],
+  "additionalProperties": false,
+  "properties": {
+    "riskScore": { "type": "number", "minimum": 0, "maximum": 100 },
+    "quasiIdentifiers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["field","value","contribution"],
+        "additionalProperties": false,
+        "properties": {
+          "field": { "type": "string" },
+          "value": { "type": "string" },
+          "contribution": { "type": "number", "minimum": 0, "maximum": 100 }
+        }
+      }
+    },
+    "kAnonymity": { "type": "integer", "minimum": 0 },
+    "decision": { "enum": ["publish","generalize","withhold"] },
+    "generalizations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["field","from","to"],
+        "additionalProperties": false,
+        "properties": { "field": {"type":"string"}, "from": {"type":"string"}, "to": {"type":"string"} }
+      }
+    },
+    "reason": { "type": "string", "maxLength": 400 }
+  }
+}

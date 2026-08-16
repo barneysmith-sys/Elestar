@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ParsedProcess",
+  "type": "object",
+  "required": ["rounds","roundsCleared","roundsConfidence","processType","employerProfile","outcome","competencies","proposedTier","needsReview","questions"],
+  "additionalProperties": false,
+  "properties": {
+    "rounds": {
+      "type": "array", "maxItems": 15,
+      "items": {
+        "type": "object",
+        "required": ["index","type","label","cleared"],
+        "additionalProperties": false,
+        "properties": {
+          "index": { "type": "integer", "minimum": 1 },
+          "type": { "enum": ["screen","technical","system_design","case","take_home","panel","final","other"] },
+          "label": { "type": "string", "maxLength": 120 },
+          "cleared": { "type": "boolean" }
+        }
+      }
+    },
+    "roundsCleared": { "type": "integer", "minimum": 0, "maximum": 15 },
+    "roundsTotal": { "type": ["integer","null"], "minimum": 0, "maximum": 15 },
+    "roundsConfidence": { "type": "number", "minimum": 0, "maximum": 1 },
+    "processType": { "enum": ["external","internal"] },
+    "employerProfile": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "sector": { "type": ["string","null"] },
+        "stage": { "type": ["string","null"] },
+        "sizeBand": { "type": ["string","null"] },
+        "region": { "type": ["string","null"] }
+      }
+    },
+    "loopLengthWeeks": { "type": ["number","null"], "minimum": 0, "maximum": 52 },
+    "outcome": { "enum": ["req_closed","internal_candidate","comp_mismatch","competitive_loss","candidate_withdrew","performance","unstated"] },
+    "competencies": {
+      "type": "array", "maxItems": 8,
+      "items": {
+        "type": "object",
+        "required": ["name","depth","roundIndex"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string", "maxLength": 60 },
+          "depth": { "enum": ["mentioned","probed","assessed"] },
+          "roundIndex": { "type": ["integer","null"] }
+        }
+      }
+    },
+    "proposedTier": { "enum": ["apex","elite","verified","standard"] },
+    "needsReview": { "type": "boolean" },
+    "questions": { "type": "array", "maxItems": 3, "items": { "type": "string", "maxLength": 160 } },
+    "notes": { "type": ["string","null"], "maxLength": 400 }
+  }
+}

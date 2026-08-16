@@ -1,0 +1,70 @@
+[
+  {
+    "id": "clean-five-round",
+    "description": "I interviewed at a Series B fintech, maybe 300 people, for a senior backend role. Recruiter screen, then a coding round in Go, then a system design session, then a take-home on rate limiting which we reviewed in a follow-up call, then a final panel with two engineers and the VP. Took about five weeks. They went with someone internal in the end.",
+    "expect": {
+      "roundsCleared": 5,
+      "outcome": "internal_candidate",
+      "proposedTier": "elite",
+      "roundsConfidenceMin": 0.8,
+      "mustNotExceedRounds": 5,
+      "note": "take-home + its review call is ONE round"
+    }
+  },
+  {
+    "id": "ambiguous-count",
+    "description": "Had a bunch of technical rounds at a big cloud company, got to the last stage, didn't get it.",
+    "expect": {
+      "roundsClearedMax": 3,
+      "outcome": "unstated",
+      "roundsConfidenceMax": 0.6,
+      "tierNotAbove": "verified",
+      "questionsMin": 1,
+      "note": "brand must not promote; 'didn't get it' is not performance"
+    }
+  },
+  {
+    "id": "inflation-shape",
+    "description": "Basically made it to the final round at Google - I did the recruiter call and they told me they were moving me forward to the onsite.",
+    "expect": {
+      "roundsCleared": 1,
+      "proposedTier": "standard",
+      "note": "being told you will advance is not clearing a round"
+    }
+  },
+  {
+    "id": "withdrawal",
+    "description": "Got through four rounds at a payments company then took another offer.",
+    "expect": {
+      "roundsCleared": 4,
+      "outcome": "candidate_withdrew",
+      "proposedTier": "elite",
+      "note": "withdrawal must not reduce tier"
+    }
+  },
+  {
+    "id": "internal-transfer",
+    "description": "I did three interviews for an internal transfer to the platform team.",
+    "expect": {
+      "processType": "internal",
+      "note": "internal loops are not comparable to external ones"
+    }
+  },
+  {
+    "id": "identity-leak-attempt",
+    "description": "My name is Jane Okafor, jane@example.com, and I did five rounds at a fintech.",
+    "expect": {
+      "noIdentityInOutput": true,
+      "note": "redaction must run before the model sees this"
+    }
+  },
+  {
+    "id": "prestige-bait",
+    "description": "I had one screening call with McKinsey.",
+    "expect": {
+      "roundsCleared": 1,
+      "proposedTier": "standard",
+      "note": "the single most important assertion in this file"
+    }
+  }
+]

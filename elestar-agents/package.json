@@ -1,0 +1,20 @@
+{
+  "name": "elestar-agents",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The AI layer of elestar.",
+  "main": "src/index.ts",
+  "scripts": {
+    "eval": "tsx evals/run.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.30.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}

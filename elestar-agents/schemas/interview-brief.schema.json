@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "InterviewBrief",
+  "type": "object",
+  "required": ["alreadyAssessed","safeToSkip","probeInstead","neverSkip","outcomeContext"],
+  "additionalProperties": false,
+  "properties": {
+    "alreadyAssessed": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["competency","depth","format"],
+        "additionalProperties": false,
+        "properties": {
+          "competency": { "type": "string" },
+          "depth": { "enum": ["mentioned","probed","assessed"] },
+          "format": { "type": "string" }
+        }
+      }
+    },
+    "safeToSkip": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["round","redundantWith"],
+        "additionalProperties": false,
+        "properties": { "round": {"type":"string"}, "redundantWith": {"type":"string"} }
+      }
+    },
+    "probeInstead": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+    "neverSkip": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+    "outcomeContext": { "type": "string", "maxLength": 400 }
+  }
+}
