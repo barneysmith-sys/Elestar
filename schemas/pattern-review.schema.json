@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PatternReview",
+  "type": "object",
+  "required": ["signals","recommendation","reviewerNote"],
+  "additionalProperties": false,
+  "properties": {
+    "signals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["signal","severity","evidence"],
+        "additionalProperties": false,
+        "properties": {
+          "signal": { "type": "string" },
+          "severity": { "enum": ["low","medium","high","critical"] },
+          "evidence": { "type": "string", "maxLength": 300 }
+        }
+      }
+    },
+    "recommendation": { "enum": ["clear","flag","hold"] },
+    "reviewerNote": { "type": "string", "maxLength": 500 }
+  }
+}

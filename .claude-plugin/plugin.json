@@ -1,0 +1,5 @@
+{
+  "name": "elestar-agents",
+  "description": "The agent layer of elestar: process-parser, redaction-audit, record-matcher, interview-brief, and pattern-review. Ships skills, prompts, schemas, and a TypeScript reference implementation for each agent.",
+  "version": "0.1.0"
+}

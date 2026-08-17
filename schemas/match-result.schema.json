@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MatchResults",
+  "type": "object",
+  "required": ["results"],
+  "additionalProperties": false,
+  "properties": {
+    "results": {
+      "type": "array", "maxItems": 20,
+      "items": {
+        "type": "object",
+        "required": ["recordId","fitScore","components","matched","gaps","rationale"],
+        "additionalProperties": false,
+        "properties": {
+          "recordId": { "type": "string" },
+          "fitScore": { "type": "number", "minimum": 0, "maximum": 100 },
+          "components": {
+            "type": "object",
+            "required": ["competencyOverlap","processSimilarity","seniorityAlignment","recency"],
+            "additionalProperties": false,
+            "properties": {
+              "competencyOverlap": { "type":"number","minimum":0,"maximum":1 },
+              "processSimilarity": { "type":"number","minimum":0,"maximum":1 },
+              "seniorityAlignment": { "type":"number","minimum":0,"maximum":1 },
+              "recency": { "type":"number","minimum":0,"maximum":1 }
+            }
+          },
+          "matched": { "type": "array", "items": { "type": "string" } },
+          "gaps": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+          "rationale": { "type": "string", "maxLength": 300 }
+        }
+      }
+    }
+  }
+}
