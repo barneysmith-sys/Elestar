@@ -6,28 +6,42 @@
 <title>elestar — verified interview rounds, both sides of the table</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Source+Serif+4:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700;9..144,800&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   /* ============ TOKENS ============ */
   :root{
-    --paper: #EFE7D6;
-    --paper-dark: #E4D9C1;
-    --paper-darker: #D9CBAC;
-    --ink: #1E2530;
-    --ink-soft: #565B66;
-    --stamp: #A3392C;
-    --stamp-dark: #7E2C22;
-    --brass: #8A6A2E;
-    --tier2: #55606E;
-    --tier3: #3C5F55;
-    --tier4: #9C6A45;
-    --line: #C6B896;
+    /* cool neutral base, one desaturated accent (claret). matches the
+       elestar visual system: paper/ink/accent, restrained, no warm cream. */
+    --paper: #eceef0;
+    --paper-dark: #e3e5e8;
+    --paper-darker: #d6d9dd;
+    --surface: #ffffff;
+    --ink: #191a1d;
+    --ink-soft: #5c5e66;
+    --ink-soft-2: #8b8d95;
+    --stamp: #9c2f4d;
+    --stamp-dark: #7a2340;
+    --stamp-wash: rgba(156,47,77,.07);
+    --brass: #ad7f3a;
+    --tier2: #5c6774;
+    --tier3: #47695c;
+    --tier4: #96745a;
+    --line: rgba(25,26,29,.12);
+    --line-2: rgba(25,26,29,.22);
+
+    --r-sm: 8px; --r-md: 12px; --r-lg: 16px;
+    --shadow-card: 0 1px 2px rgba(25,26,29,.05), 0 20px 40px -18px rgba(25,26,29,.22);
+    --shadow-pop: 0 30px 70px -20px rgba(25,26,29,.4);
 
     --s-1: 4px;  --s-2: 8px;  --s-3: 12px; --s-4: 16px;
     --s-5: 24px; --s-6: 32px; --s-7: 48px; --s-8: 64px; --s-9: 88px;
 
-    --ease: cubic-bezier(.2,.7,.3,1);
-    --dur: .16s;
+    --font-d:'Fraunces',serif;
+    --font-b:'Geist',system-ui,sans-serif;
+    --font-m:'Geist Mono',ui-monospace,monospace;
+
+    --ease: cubic-bezier(.16,1,.3,1);
+    --dur: .2s;
   }
 
   *{ box-sizing:border-box; }
@@ -36,158 +50,220 @@
     margin:0;
     background:var(--paper);
     color:var(--ink);
-    font-family:'Source Serif 4', serif;
+    font-family:var(--font-b);
     -webkit-font-smoothing:antialiased;
+    line-height:1.5;
   }
-  ::selection{ background:var(--stamp); color:var(--paper); }
+  ::selection{ background:var(--stamp); color:#fff; }
   a{ color:inherit; }
-  .mono{ font-family:'IBM Plex Mono', monospace; }
-  .wrap{ max-width:1140px; margin:0 auto; padding:0 var(--s-6); }
+  .mono{ font-family:var(--font-m); }
+  .wrap{ max-width:1180px; margin:0 auto; padding:0 var(--s-6); }
   [hidden]{ display:none !important; }
+  @media (prefers-reduced-motion: reduce){ *{ animation-duration:.001ms !important; transition-duration:.001ms !important; } }
+
+  /* fixed grain texture, purely decorative, matches the reference's paper feel */
+  .grain{ position:fixed; inset:0; z-index:1; pointer-events:none; opacity:.035; mix-blend-mode:multiply;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
 
   /* ============ TOP BAR ============ */
   .topbar{
     position:sticky; top:0; z-index:100;
-    background:var(--paper);
-    border-bottom:1px solid var(--ink);
+    background:rgba(236,238,240,.78); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--line);
   }
   .topbar-inner{
     display:flex; align-items:center; justify-content:space-between;
     padding:var(--s-4) var(--s-6);
-    max-width:1140px; margin:0 auto;
+    max-width:1180px; margin:0 auto;
   }
-  .brandmark{ display:flex; align-items:baseline; gap:var(--s-3); }
-  .brandmark .mark{ font-family:'Spectral', serif; font-weight:700; font-size:20px; }
-  .brandmark .filecode{ font-size:10.5px; letter-spacing:.12em; color:var(--ink-soft); }
+  .brandmark{ display:flex; align-items:center; gap:8px; }
+  .brandmark .mark-icon{ color:var(--stamp); flex:none; }
+  .brandmark .mark{ font-family:var(--font-d); font-weight:800; font-size:20px; letter-spacing:-.03em; align-self:baseline; }
+  .brandmark .filecode{ font-family:var(--font-m); font-size:10px; letter-spacing:.12em; color:var(--ink-soft); border-left:1px solid var(--line-2); padding-left:var(--s-3); }
 
-  .tabs{ display:flex; gap:2px; }
+  .tabs{ display:flex; gap:0; flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; }
+  .tabs::-webkit-scrollbar{ display:none; }
   .tabs a{
-    font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.08em;
-    text-decoration:none; color:var(--ink-soft);
-    padding:var(--s-2) var(--s-3); text-transform:uppercase;
+    font-family:var(--font-m); font-size:10.5px; letter-spacing:.05em;
+    text-decoration:none; color:var(--ink-soft); white-space:nowrap;
+    padding:9px 10px; text-transform:uppercase; border-radius:var(--r-sm);
     border-bottom:2px solid transparent;
-    transition:color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+    transition:color var(--dur) var(--ease), background var(--dur) var(--ease), border-color var(--dur) var(--ease);
   }
+  .tabs a:hover{ background:var(--paper-dark); }
   .tabs a:hover, .tabs a.active{ color:var(--ink); border-color:var(--stamp); }
 
   .topbar-ctas{ display:flex; gap:var(--s-3); }
   .cta-small{
-    font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.06em; text-transform:uppercase;
-    text-decoration:none; padding:var(--s-3) var(--s-4); white-space:nowrap;
-    border:1px solid var(--ink); background:transparent; color:var(--ink); cursor:pointer;
-    transition:background var(--dur) var(--ease), color var(--dur) var(--ease);
+    font-family:var(--font-m); font-size:11px; letter-spacing:.04em; text-transform:uppercase;
+    text-decoration:none; padding:10px 16px; white-space:nowrap; border-radius:var(--r-sm);
+    border:1px solid var(--line-2); background:transparent; color:var(--ink); cursor:pointer;
+    transition:background var(--dur) var(--ease), color var(--dur) var(--ease), border-color var(--dur) var(--ease), transform .15s var(--ease);
   }
-  .cta-small.solid{ background:var(--ink); color:var(--paper); }
+  .cta-small:active{ transform:translateY(1px) scale(.98); }
+  .cta-small.solid{ background:var(--ink); color:#fff; border-color:var(--ink); }
   .cta-small.solid:hover{ background:var(--stamp); border-color:var(--stamp); }
-  .cta-small:not(.solid):hover{ background:var(--paper-dark); }
+  .cta-small:not(.solid):hover{ background:var(--paper-dark); border-color:var(--stamp); color:var(--stamp); }
 
   @media (max-width:960px){ .tabs{ display:none; } }
+  @media (max-width:480px){
+    .topbar-inner{ padding:var(--s-3) var(--s-4); }
+    .brandmark .filecode{ display:none; }
+    .topbar-ctas .cta-small:not(.solid){ display:none; }
+  }
+  @media (max-width:420px){
+    .topbar-inner{ flex-wrap:wrap; row-gap:var(--s-2); }
+    .navswitch{ order:3; }
+    .topbar-ctas{ order:2; margin-left:auto; }
+  }
 
   /* ============ AUDIENCE SWITCH ============ */
-  .switch{ display:inline-flex; border:1px solid var(--ink); margin-bottom:var(--s-6); }
+  .switch{ display:inline-flex; background:var(--paper-dark); border:1px solid var(--line); border-radius:var(--r-md); padding:3px; margin-bottom:var(--s-6); }
   .switch button{
-    font-family:'IBM Plex Mono', monospace; font-size:11.5px; letter-spacing:.06em; text-transform:uppercase;
-    padding:var(--s-3) var(--s-5); background:transparent; border:none; color:var(--ink-soft); cursor:pointer;
+    font-family:var(--font-m); font-size:11.5px; letter-spacing:.04em; text-transform:uppercase;
+    padding:10px 20px; background:transparent; border:none; border-radius:var(--r-sm); color:var(--ink-soft); cursor:pointer;
     transition:background var(--dur) var(--ease), color var(--dur) var(--ease);
   }
-  .switch button + button{ border-left:1px solid var(--ink); }
-  .switch button[aria-pressed="true"]{ background:var(--ink); color:var(--paper); }
-  .switch button:not([aria-pressed="true"]):hover{ background:var(--paper-dark); color:var(--ink); }
+  .switch button + button{ margin-left:2px; }
+  .switch button[aria-pressed="true"]{ background:var(--ink); color:#fff; }
+  .switch button:not([aria-pressed="true"]):hover{ color:var(--ink); }
+  .navswitch{ margin-bottom:0; padding:2px; }
+  .navswitch button{ padding:7px 14px; font-size:10.5px; }
 
   /* ============ HERO ============ */
-  .hero{ padding:var(--s-9) 0 var(--s-8); border-bottom:1px solid var(--ink); }
-  .hero-grid{ display:grid; grid-template-columns:1.15fr .85fr; gap:var(--s-8); align-items:center; }
-  @media (max-width:900px){ .hero-grid{ grid-template-columns:1fr; } }
+  .hero{ position:relative; padding:80px 0 var(--s-7); overflow:hidden; }
+  /* Organic halftone silhouette, not a clean circle — layered, off-center
+     radial masks so the density pools asymmetrically like a loose portrait
+     or eye form rather than a geometric dot-fade. */
+  .hero-blob{
+    position:absolute; top:-10%; right:-10%; width:62%; height:120%; z-index:0; pointer-events:none;
+    background-image:radial-gradient(circle, var(--ink) 1.6px, transparent 1.6px);
+    background-size:9px 9px;
+    -webkit-mask-image:
+      radial-gradient(38% 46% at 62% 38%, rgba(0,0,0,.6) 0%, rgba(0,0,0,.32) 55%, transparent 78%),
+      radial-gradient(30% 34% at 40% 62%, rgba(0,0,0,.45) 0%, transparent 75%),
+      radial-gradient(20% 24% at 70% 72%, rgba(0,0,0,.35) 0%, transparent 80%);
+    mask-image:
+      radial-gradient(38% 46% at 62% 38%, rgba(0,0,0,.6) 0%, rgba(0,0,0,.32) 55%, transparent 78%),
+      radial-gradient(30% 34% at 40% 62%, rgba(0,0,0,.45) 0%, transparent 75%),
+      radial-gradient(20% 24% at 70% 72%, rgba(0,0,0,.35) 0%, transparent 80%);
+    -webkit-mask-composite:source-over; mask-composite:add;
+    opacity:.18;
+  }
+  .hero .wrap{ position:relative; z-index:1; }
+  .hero-content{ max-width:760px; }
+  @media (max-width:900px){ .hero-blob{ width:85%; right:-25%; } }
 
   .eyebrow{
-    font-family:'IBM Plex Mono', monospace; font-size:11.5px; letter-spacing:.14em; text-transform:uppercase;
-    color:var(--stamp-dark); margin-bottom:var(--s-5); padding-left:var(--s-3);
-    border-left:2px solid var(--stamp);
+    font-family:var(--font-m); font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--ink-soft); margin-bottom:var(--s-5);
   }
 
   h1{
-    font-family:'Spectral', serif; font-weight:600; font-size:clamp(36px,4.6vw,56px);
-    line-height:1.06; letter-spacing:-.01em; margin:0 0 var(--s-5); min-height:2.2em;
+    font-family:var(--font-d); font-weight:800; font-size:clamp(40px,6.4vw,84px);
+    line-height:.98; letter-spacing:-.04em; margin:0 0 var(--s-5); min-height:2.1em;
   }
-  h1 em{ font-style:italic; font-weight:500; color:var(--stamp-dark); }
-  .hero-sub{ font-size:18px; line-height:1.6; color:var(--ink-soft); max-width:48ch; margin:0 0 var(--s-6); min-height:3.4em; }
+  h1 em{ font-style:normal; font-weight:800; color:var(--stamp); }
+  .hero-sub{ font-size:17px; line-height:1.55; color:var(--ink-soft); max-width:46ch; margin:0 0 var(--s-6); min-height:3.4em; }
 
-  .hero-ctas{ display:flex; gap:var(--s-4); flex-wrap:wrap; margin-bottom:var(--s-7); }
-  .btn{
-    font-family:'IBM Plex Mono', monospace; font-size:12.5px; letter-spacing:.06em; text-transform:uppercase;
-    text-decoration:none; padding:var(--s-4) var(--s-5); display:inline-block; border:1px solid var(--ink);
-    transition:background var(--dur) var(--ease), color var(--dur) var(--ease);
+  .hero-ctas{ display:flex; align-items:center; gap:var(--s-5); flex-wrap:wrap; }
+  /* .btn-mkt is the marketing-page button family (hero, pricing plans) —
+     deliberately its own class, not `.btn`, because `.btn` is redefined
+     again later for the app-shell's compact utility buttons and CSS
+     resolves same-specificity collisions by source order, not by which
+     rule "looks" like the base. Sharing the name silently let the later
+     rule win over btn-primary/btn-ghost here. */
+  .btn-mkt{
+    font-family:var(--font-m); font-size:12.5px; letter-spacing:.04em; text-transform:uppercase;
+    text-decoration:none; padding:14px 22px; display:inline-block; border:1px solid var(--line-2); border-radius:var(--r-md);
+    transition:background var(--dur) var(--ease), color var(--dur) var(--ease), border-color var(--dur) var(--ease), transform .15s var(--ease);
   }
-  .btn-primary{ background:var(--ink); color:var(--paper); }
-  .btn-primary:hover{ background:var(--stamp); border-color:var(--stamp); }
-  .btn-ghost{ color:var(--ink); }
-  .btn-ghost:hover{ background:var(--paper-dark); }
+  .btn-mkt:active{ transform:translateY(1px) scale(.98); }
+  .btn-mkt.btn-primary{ background:var(--ink); color:#fff; border-color:var(--ink); }
+  .btn-mkt.btn-primary:hover{ background:var(--stamp); border-color:var(--stamp); }
+  .btn-mkt.btn-ghost{ border-color:transparent; padding-left:0; padding-right:0; color:var(--ink); text-decoration:underline; text-underline-offset:4px; text-decoration-color:var(--line-2); }
+  .btn-mkt.btn-ghost:hover{ background:transparent; color:var(--stamp); text-decoration-color:var(--stamp); }
 
-  .stat-row{ display:flex; gap:var(--s-7); flex-wrap:wrap; }
-  .stat .num{ font-family:'Spectral', serif; font-weight:600; font-size:26px; display:block; }
-  .stat .lbl{ font-family:'IBM Plex Mono', monospace; font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-soft); }
+  .stat-row{ display:flex; gap:var(--s-7); flex-wrap:wrap; margin-top:var(--s-8); padding-top:var(--s-6); border-top:1px solid var(--line); }
+  .stat .num{ font-family:var(--font-d); font-weight:700; font-size:26px; display:block; letter-spacing:-.02em; }
+  .stat .lbl{ font-family:var(--font-m); font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-soft); }
+
+  /* ============ SECTION INDEX BAND ============ */
+  .index-band{ border-top:1px solid var(--line); border-bottom:1px solid var(--line); padding:var(--s-6) 0; overflow-x:auto; }
+  .index-row{ display:flex; align-items:baseline; justify-content:space-between; gap:var(--s-6); }
+  .index-row a{
+    font-family:var(--font-d); font-weight:700; font-size:clamp(22px,4.2vw,46px); letter-spacing:-.03em;
+    color:var(--ink-soft-2); text-decoration:none; white-space:nowrap; position:relative;
+    transition:color var(--dur) var(--ease);
+  }
+  .index-row a:hover{ color:var(--ink); }
+  .index-row a sup{ font-family:var(--font-m); font-size:11px; font-weight:400; letter-spacing:.04em; color:var(--stamp); margin-left:4px; top:-.6em; }
+  @media (max-width:820px){ .index-row{ justify-content:flex-start; } }
+
+  /* ============ CREDENTIAL ROW ============ */
+  .credential-row{ display:grid; grid-template-columns:1.15fr .85fr; gap:var(--s-8); align-items:center; margin-bottom:var(--s-8); }
+  @media (max-width:900px){ .credential-row{ grid-template-columns:1fr; } }
 
   /* ============ DOSSIER CARD ============ */
   .dossier-frame{ position:relative; transition:transform .15s ease-out; transform-style:preserve-3d; }
   .dossier-frame::before{
     content:""; position:absolute; inset:0; transform:translate(9px,9px);
-    border:1px solid var(--ink); z-index:0;
+    border:1px solid var(--line-2); border-radius:var(--r-lg); z-index:0;
   }
   .dossier-frame::after{
     content:""; position:absolute; inset:0; transform:translate(18px,18px);
-    border:1px solid var(--line); z-index:0;
+    border:1px solid var(--line); border-radius:var(--r-lg); z-index:0;
   }
   .folder-tab{
-    position:absolute; top:-21px; left:30px; z-index:2;
-    background:var(--paper-darker); border:1px solid var(--ink); border-bottom:none;
-    padding:5px 16px 9px; font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-soft);
-    clip-path: polygon(8% 0, 92% 0, 100% 100%, 0% 100%);
+    position:absolute; top:-18px; left:30px; z-index:2;
+    background:var(--ink); color:var(--paper); border-radius:var(--r-sm) var(--r-sm) 0 0;
+    padding:6px 16px 10px; font-family:var(--font-m); font-size:10px; letter-spacing:.1em; text-transform:uppercase;
   }
-  .dossier{ position:relative; z-index:1; background:var(--paper-dark); border:1px solid var(--ink); padding:var(--s-6) var(--s-6) var(--s-5); }
-  .dossier-eyebrow{ font-family:'IBM Plex Mono', monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft); margin-bottom:var(--s-3); }
+  .dossier{ position:relative; z-index:1; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-lg); padding:var(--s-6) var(--s-6) var(--s-5); box-shadow:var(--shadow-card); }
+  .dossier-eyebrow{ font-family:var(--font-m); font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft); margin-bottom:var(--s-3); }
   .dossier-top{ display:flex; justify-content:space-between; align-items:flex-start; border-bottom:1px dashed var(--line); padding-bottom:var(--s-4); margin-bottom:var(--s-4); }
-  .dossier-id{ font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--ink-soft); letter-spacing:.05em; }
-  .dossier-tier{ font-family:'IBM Plex Mono', monospace; font-size:10.5px; letter-spacing:.08em; color:var(--brass); border:1px solid var(--brass); padding:3px 8px; text-transform:uppercase; }
-  .dossier-name{ font-family:'Spectral', serif; font-size:22px; font-weight:600; margin:0 0 4px; }
+  .dossier-id{ font-family:var(--font-m); font-size:11px; color:var(--ink-soft); letter-spacing:.05em; }
+  .dossier-tier{ font-family:var(--font-m); font-size:10.5px; letter-spacing:.06em; color:var(--stamp-dark); background:var(--stamp-wash); border:1px solid rgba(156,47,77,.25); border-radius:var(--r-sm); padding:4px 10px; text-transform:uppercase; }
+  .dossier-name{ font-family:var(--font-d); font-size:22px; font-weight:700; letter-spacing:-.015em; margin:0 0 4px; }
   .dossier-role{ font-size:13.5px; color:var(--ink-soft); margin-bottom:var(--s-5); }
   .dossier-rounds{ display:flex; gap:6px; margin-bottom:var(--s-5); }
-  .rnd{ flex:1; height:6px; background:var(--paper-darker); }
-  .rnd.filled{ background:var(--ink); }
-  .dossier-caption{ font-family:'IBM Plex Mono', monospace; font-size:10px; color:var(--ink-soft); letter-spacing:.06em; text-transform:uppercase; margin-bottom:var(--s-5); }
+  .rnd{ flex:1; height:6px; border-radius:99px; background:var(--paper-darker); }
+  .rnd.filled{ background:var(--stamp); }
+  .dossier-caption{ font-family:var(--font-m); font-size:10px; color:var(--ink-soft); letter-spacing:.05em; text-transform:uppercase; margin-bottom:var(--s-5); }
 
   .dossier-confidence{ display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--s-5); }
-  .conf-label{ font-family:'IBM Plex Mono', monospace; font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-soft); }
-  .conf-badge{ font-family:'IBM Plex Mono', monospace; font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; border:1px solid var(--stamp-dark); color:var(--stamp-dark); padding:3px 9px; }
+  .conf-label{ font-family:var(--font-m); font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-soft); }
+  .conf-badge{ font-family:var(--font-m); font-size:10.5px; letter-spacing:.05em; text-transform:uppercase; border:1px solid var(--line-2); border-radius:var(--r-sm); color:var(--ink); padding:4px 10px; }
 
   .stamp-wrap{ position:relative; height:66px; }
   .stamp{
-    position:absolute; top:2px; right:0; border:2px solid var(--stamp); color:var(--stamp);
-    font-family:'IBM Plex Mono', monospace; font-weight:600; font-size:14px; letter-spacing:.1em;
-    padding:7px 13px; transform:rotate(-5deg); text-transform:uppercase;
+    position:absolute; top:2px; right:0; border:2px solid var(--stamp); color:var(--stamp); border-radius:var(--r-sm);
+    font-family:var(--font-m); font-weight:600; font-size:13px; letter-spacing:.08em;
+    padding:8px 14px; transform:rotate(-4deg); text-transform:uppercase;
   }
   @media (prefers-reduced-motion: no-preference){
     .stamp{ opacity:0; animation:stampin .3s var(--ease) .3s forwards; }
     @keyframes stampin{
-      0%{ opacity:0; transform:rotate(-5deg) translateY(-4px); }
-      100%{ opacity:1; transform:rotate(-5deg) translateY(0); }
+      0%{ opacity:0; transform:rotate(-4deg) translateY(-4px); }
+      100%{ opacity:1; transform:rotate(-4deg) translateY(0); }
     }
   }
-  .dossier-foot{ display:flex; justify-content:space-between; align-items:center; font-family:'IBM Plex Mono', monospace; font-size:10.5px; color:var(--ink-soft); border-top:1px dashed var(--line); padding-top:var(--s-3); }
+  .dossier-foot{ display:flex; justify-content:space-between; align-items:center; font-family:var(--font-m); font-size:10.5px; color:var(--ink-soft); border-top:1px dashed var(--line); padding-top:var(--s-3); }
 
   /* ============ SECTION SHELL ============ */
-  section{ padding:var(--s-9) 0; border-bottom:1px solid var(--ink); }
+  section{ padding:var(--s-9) 0; border-bottom:1px solid var(--line); }
   section:last-of-type{ border-bottom:none; }
   .section-head{ display:flex; justify-content:space-between; align-items:flex-end; gap:var(--s-5); margin-bottom:var(--s-7); flex-wrap:wrap; }
-  .section-tag{ font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--stamp-dark); margin-bottom:var(--s-3); display:block; }
-  h2{ font-family:'Spectral', serif; font-weight:600; font-size:clamp(27px,3.2vw,36px); margin:0; letter-spacing:-.01em; }
+  .section-tag{ font-family:var(--font-m); font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--stamp-dark); margin-bottom:var(--s-3); display:block; }
+  h2{ font-family:var(--font-d); font-weight:800; font-size:clamp(27px,3.2vw,36px); margin:0; letter-spacing:-.025em; }
   .section-note{ max-width:36ch; color:var(--ink-soft); font-size:15px; line-height:1.55; }
 
   /* ============ CIRCUIT DIAGRAM ============ */
-  .circuit-progress{ height:3px; background:var(--paper-darker); margin-bottom:var(--s-5); }
-  .circuit-progress span{ display:block; height:100%; width:0; background:var(--stamp-dark); transition:width 1.3s var(--ease); }
+  .circuit-progress{ height:3px; border-radius:99px; background:var(--paper-darker); margin-bottom:var(--s-5); overflow:hidden; }
+  .circuit-progress span{ display:block; height:100%; width:0; background:var(--stamp); transition:width 1.3s var(--ease); }
   .circuit-progress.in span{ width:100%; }
 
-  .circuit{ display:grid; grid-template-columns:repeat(5,1fr); border:1px solid var(--ink); }
+  .circuit{ display:grid; grid-template-columns:repeat(5,1fr); gap:var(--s-3); }
   .circuit-step{ opacity:0; transform:translateY(12px); transition:opacity .5s var(--ease), transform .5s var(--ease); }
   .circuit.in .circuit-step{ opacity:1; transform:none; }
   .circuit.in .circuit-step:nth-child(1){ transition-delay:.05s; }
@@ -195,175 +271,206 @@
   .circuit.in .circuit-step:nth-child(3){ transition-delay:.27s; }
   .circuit.in .circuit-step:nth-child(4){ transition-delay:.38s; }
   .circuit.in .circuit-step:nth-child(5){ transition-delay:.49s; }
-  .circuit-step{ padding:var(--s-5) var(--s-4); border-right:1px solid var(--ink); min-height:150px; display:flex; flex-direction:column; justify-content:space-between; }
-  .circuit-step:last-child{ border-right:none; background:var(--paper-dark); }
-  .circuit-step .n{ font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--ink-soft); }
-  .circuit-step h3{ font-family:'Spectral', serif; font-size:17px; margin:var(--s-3) 0 var(--s-2); }
+  .circuit-step{ padding:var(--s-5) var(--s-4); background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md); min-height:150px; display:flex; flex-direction:column; justify-content:space-between; transition:box-shadow var(--dur) var(--ease), border-color var(--dur) var(--ease); }
+  .circuit-step:hover{ border-color:var(--line-2); box-shadow:var(--shadow-card); }
+  .circuit-step:last-child{ background:var(--ink); border-color:var(--ink); }
+  .circuit-step:last-child p, .circuit-step:last-child .n{ color:rgba(236,238,240,.65); }
+  .circuit-step .n{ font-family:var(--font-m); font-size:11px; color:var(--ink-soft); }
+  .circuit-step h3{ font-family:var(--font-d); font-weight:700; font-size:17px; margin:var(--s-3) 0 var(--s-2); letter-spacing:-.01em; }
   .circuit-step p{ font-size:12.5px; color:var(--ink-soft); line-height:1.5; margin:0; }
-  .circuit-step.out h3{ color:var(--stamp-dark); }
+  .circuit-step.out h3{ color:#fff; }
   @media (max-width:900px){
     .circuit{ grid-template-columns:1fr 1fr; }
-    .circuit-step{ border-bottom:1px solid var(--ink); }
-    .circuit-step:nth-child(2n){ border-right:none; }
   }
   @media (max-width:560px){ .circuit{ grid-template-columns:1fr; } }
 
-  .pivot-row{ display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--ink); border:1px solid var(--ink); margin-top:var(--s-6); }
-  .pivot{ background:var(--paper); padding:var(--s-5) var(--s-6); }
-  .pivot .who{ font-family:'IBM Plex Mono', monospace; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); margin-bottom:var(--s-2); display:block; }
-  .pivot p{ font-family:'Spectral', serif; font-style:italic; font-size:17px; margin:0; }
+  .pivot-row{ display:grid; grid-template-columns:1fr 1fr; gap:var(--s-4); margin-top:var(--s-6); }
+  .pivot{ background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md); padding:var(--s-5) var(--s-6); }
+  .pivot .who{ font-family:var(--font-m); font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-soft); margin-bottom:var(--s-2); display:block; }
+  .pivot p{ font-family:var(--font-d); font-weight:600; font-size:17px; margin:0; letter-spacing:-.01em; }
   @media (max-width:700px){ .pivot-row{ grid-template-columns:1fr; } }
+
+  /* ============ KEEP WHAT YOU EARNED (today vs with-elestar) ============ */
+  .keep-earned{ margin-top:var(--s-9); }
+  .ke-head{ display:grid; grid-template-columns:1.2fr 1fr; gap:var(--s-8); align-items:end; margin-bottom:var(--s-6); }
+  .ke-head h2{ font-size:clamp(30px,4.4vw,48px); }
+  .ke-head .section-note{ max-width:44ch; }
+  @media (max-width:760px){ .ke-head{ grid-template-columns:1fr; } }
+
+  .ke-compare{
+    display:grid; grid-template-columns:1fr 1fr; background:var(--paper-dark); border:1px solid var(--line);
+    border-radius:var(--r-lg); overflow:hidden;
+    background-image:repeating-linear-gradient(90deg, var(--line) 0, var(--line) 1px, transparent 1px, transparent 56px);
+  }
+  @media (max-width:640px){ .ke-compare{ grid-template-columns:1fr; } }
+  .ke-col{ padding:var(--s-6); position:relative; }
+  .ke-col + .ke-col{ border-left:1px solid var(--line-2); }
+  @media (max-width:640px){ .ke-col + .ke-col{ border-left:none; border-top:1px solid var(--line-2); } }
+  .ke-col-elestar{ background:rgba(255,255,255,.5); }
+  .ke-label{ display:block; font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-soft); margin-bottom:var(--s-5); }
+  .ke-row{ padding:var(--s-3) 0; border-bottom:1px solid var(--line); font-size:15px; color:var(--ink-soft-2); }
+  .ke-row:last-child{ border-bottom:none; }
+  .ke-row.ke-final{ font-family:var(--font-d); font-weight:700; font-size:22px; letter-spacing:-.015em; color:var(--ink); border-bottom:2px solid var(--ink); padding-bottom:var(--s-4); }
+  .ke-row.ke-fade{ color:var(--ink-soft-2); opacity:.55; font-style:italic; }
+  .ke-row.ke-signal{ font-family:var(--font-m); font-size:11.5px; letter-spacing:.03em; color:var(--stamp-dark); font-weight:600; }
 
   /* ============ TWO TRACKS ============ */
   .tracks{ display:grid; grid-template-columns:1fr 1fr; gap:var(--s-8); }
   @media (max-width:820px){ .tracks{ grid-template-columns:1fr; gap:var(--s-7); } }
-  .track h3.track-title{ font-family:'IBM Plex Mono', monospace; font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:var(--stamp-dark); margin:0 0 var(--s-5); padding-bottom:var(--s-3); border-bottom:2px solid var(--ink); }
+  .track h3.track-title{ font-family:var(--font-m); font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--stamp-dark); margin:0 0 var(--s-5); padding-bottom:var(--s-3); border-bottom:2px solid var(--stamp); }
   .step3{ padding:var(--s-4) 0; border-top:1px dashed var(--line); }
   .track .step3:first-of-type{ border-top:none; }
-  .step3 .idx{ font-family:'Spectral', serif; font-style:italic; font-size:14px; color:var(--ink-soft); }
-  .step3 h4{ font-family:'Spectral', serif; font-size:18px; margin:var(--s-2) 0 var(--s-2); font-weight:600; }
+  .step3 .idx{ font-family:var(--font-m); font-size:12px; color:var(--ink-soft-2); }
+  .step3 h4{ font-family:var(--font-d); font-size:18px; margin:var(--s-2) 0 var(--s-2); font-weight:700; letter-spacing:-.01em; }
   .step3 p{ color:var(--ink-soft); font-size:14px; line-height:1.6; margin:0; }
 
   /* ============ TIER CARDS ============ */
-  .tiers{ display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--ink); border:1px solid var(--ink); }
+  .tiers{ display:grid; grid-template-columns:repeat(4,1fr); gap:var(--s-4); }
   @media (max-width:900px){ .tiers{ grid-template-columns:1fr 1fr; } }
   @media (max-width:560px){ .tiers{ grid-template-columns:1fr; } }
-  .tier-card{ background:var(--paper); padding:var(--s-5) var(--s-5) var(--s-4); }
-  .tier-card .tlabel{ font-family:'IBM Plex Mono', monospace; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft); margin-bottom:var(--s-2); display:block; }
-  .tier-card h3{ font-family:'Spectral', serif; font-weight:600; font-size:21px; margin:0 0 var(--s-4); }
-  .tier-card .swatch{ width:26px; height:4px; margin-bottom:var(--s-4); }
+  .tier-card{ background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md); padding:var(--s-5) var(--s-5) var(--s-4); transition:box-shadow var(--dur) var(--ease), transform var(--dur) var(--ease), border-color var(--dur) var(--ease); }
+  .tier-card:hover{ transform:translateY(-3px); border-color:var(--line-2); box-shadow:var(--shadow-card); }
+  .tier-card .tlabel{ font-family:var(--font-m); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft); margin-bottom:var(--s-2); display:block; }
+  .tier-card h3{ font-family:var(--font-d); font-weight:700; font-size:21px; margin:0 0 var(--s-4); letter-spacing:-.015em; }
+  .tier-card .swatch{ width:26px; height:4px; border-radius:99px; margin-bottom:var(--s-4); }
   .t1 .swatch{ background:var(--brass); } .t1 h3{ color:var(--brass); }
   .t2 .swatch{ background:var(--tier2); } .t2 h3{ color:var(--tier2); }
   .t3 .swatch{ background:var(--tier3); } .t3 h3{ color:var(--tier3); }
   .t4 .swatch{ background:var(--tier4); } .t4 h3{ color:var(--tier4); }
-  .tier-card .spec{ font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--ink-soft); display:flex; justify-content:space-between; padding:var(--s-2) 0; border-top:1px dashed var(--line); }
+  .tier-card .spec{ font-family:var(--font-m); font-size:11px; color:var(--ink-soft); display:flex; justify-content:space-between; padding:var(--s-2) 0; border-top:1px dashed var(--line); }
   .tier-card .spec:first-of-type{ border-top:1px solid var(--line); }
   .tier-card .archetypes{ margin-top:var(--s-4); font-size:13.5px; line-height:1.5; }
 
   /* ============ TIER CALCULATOR ============ */
-  .calc{ border:1px solid var(--ink); background:var(--paper-dark); margin-top:var(--s-6); padding:var(--s-6); }
+  .calc{ border:1px solid var(--line); border-radius:var(--r-lg); background:var(--surface); box-shadow:var(--shadow-card); margin-top:var(--s-6); padding:var(--s-6); }
   .calc-head{ margin-bottom:var(--s-5); }
   .calc-head .section-tag{ margin-bottom:var(--s-2); }
-  .calc-head h3{ font-family:'Spectral', serif; font-size:20px; font-weight:600; margin:0; }
+  .calc-head h3{ font-family:var(--font-d); font-size:20px; font-weight:700; margin:0; letter-spacing:-.015em; }
   .calc-body{ display:grid; grid-template-columns:1fr 1fr auto; gap:var(--s-7); align-items:end; }
   @media (max-width:820px){ .calc-body{ grid-template-columns:1fr; } }
-  .calc-control label{ display:flex; justify-content:space-between; font-family:'IBM Plex Mono', monospace; font-size:11.5px; letter-spacing:.04em; color:var(--ink-soft); margin-bottom:var(--s-3); }
+  .calc-control label{ display:flex; justify-content:space-between; font-family:var(--font-m); font-size:11.5px; letter-spacing:.04em; color:var(--ink-soft); margin-bottom:var(--s-3); }
   .calc-val{ color:var(--ink); font-weight:600; }
-  .calc-control input[type="range"]{ width:100%; accent-color:var(--stamp-dark); }
-  .calc-result{ border-left:2px solid var(--stamp-dark); padding-left:var(--s-5); min-width:230px; }
+  .calc-control input[type="range"]{ width:100%; accent-color:var(--stamp); }
+  .calc-result{ border-left:2px solid var(--stamp); padding-left:var(--s-5); min-width:230px; }
   .calc-tier-label{ font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft); }
-  .calc-tier-name{ font-family:'Spectral', serif; font-size:23px; font-weight:600; margin:var(--s-2) 0 var(--s-3); transition:color .2s var(--ease); }
+  .calc-tier-name{ font-family:var(--font-d); font-size:23px; font-weight:700; margin:var(--s-2) 0 var(--s-3); letter-spacing:-.015em; transition:color .2s var(--ease); }
   .calc-tier-desc{ font-size:12.5px; color:var(--ink-soft); line-height:1.5; margin:0; max-width:32ch; }
 
-  .stages{ display:flex; gap:1px; background:var(--ink); border:1px solid var(--ink); margin-top:var(--s-7); }
-  .stage{ flex:1; background:var(--paper); padding:var(--s-5) var(--s-4); }
-  .stage.active{ background:var(--paper-dark); }
-  .stage .sname{ font-family:'IBM Plex Mono', monospace; font-weight:600; font-size:12.5px; letter-spacing:.06em; text-transform:uppercase; margin-bottom:var(--s-3); display:block; }
+  .stages{ display:flex; gap:var(--s-4); margin-top:var(--s-7); }
+  .stage{ flex:1; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md); padding:var(--s-5) var(--s-4); }
+  .stage.active{ border-color:var(--stamp); box-shadow:var(--shadow-card); }
+  .stage .sname{ font-family:var(--font-m); font-weight:600; font-size:12.5px; letter-spacing:.05em; text-transform:uppercase; margin-bottom:var(--s-3); display:block; }
   .stage p{ font-size:12.5px; color:var(--ink-soft); line-height:1.5; margin:0; }
-  .stage .badge-ex{ margin-top:var(--s-4); display:inline-block; font-family:'IBM Plex Mono', monospace; font-size:10px; letter-spacing:.05em; border:1px solid var(--ink); padding:4px 8px; }
+  .stage .badge-ex{ margin-top:var(--s-4); display:inline-block; font-family:var(--font-m); font-size:10px; letter-spacing:.05em; border:1px solid var(--line-2); border-radius:var(--r-sm); padding:4px 9px; }
   @media (max-width:800px){ .stages{ flex-direction:column; } }
 
   /* ============ VERIFICATION ============ */
-  .confidence-row{ display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--ink); border:1px solid var(--ink); }
+  .confidence-row{ display:grid; grid-template-columns:repeat(3,1fr); gap:var(--s-4); }
   @media (max-width:800px){ .confidence-row{ grid-template-columns:1fr; } }
   .conf-card{
-    background:var(--paper); padding:var(--s-5) var(--s-5) var(--s-6); position:relative;
-    border:none; text-align:left; font-family:inherit; cursor:pointer; width:100%;
-    box-shadow: inset 0 0 0 2px transparent; transition:box-shadow .15s var(--ease), background .15s var(--ease);
+    background:var(--surface); padding:var(--s-5) var(--s-5) var(--s-6); position:relative;
+    border:1px solid var(--line); border-radius:var(--r-md); text-align:left; font-family:inherit; cursor:pointer; width:100%;
+    box-shadow:none; transition:box-shadow .15s var(--ease), border-color .15s var(--ease), transform .15s var(--ease);
   }
-  .conf-card:hover{ background:var(--paper-dark); }
-  .conf-card[aria-pressed="true"]{ box-shadow: inset 0 0 0 2px var(--stamp-dark); background:var(--paper-dark); }
-  .conf-card .cnum{ font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--ink-soft); letter-spacing:.08em; }
-  .conf-card h3{ font-family:'Spectral', serif; font-size:20px; font-weight:600; margin:var(--s-2) 0 var(--s-3); color:var(--ink); }
+  .conf-card:hover{ transform:translateY(-2px); box-shadow:var(--shadow-card); }
+  .conf-card[aria-pressed="true"]{ border-color:var(--stamp); box-shadow:0 0 0 1px var(--stamp); }
+  .conf-card .cnum{ font-family:var(--font-m); font-size:11px; color:var(--ink-soft); letter-spacing:.08em; }
+  .conf-card h3{ font-family:var(--font-d); font-size:20px; font-weight:700; margin:var(--s-2) 0 var(--s-3); color:var(--ink); letter-spacing:-.015em; }
   .conf-card p{ font-size:13.5px; color:var(--ink-soft); line-height:1.6; margin:0 0 var(--s-4); }
-  .conf-card .bar{ height:5px; background:var(--paper-darker); }
-  .conf-card .bar span{ display:block; height:100%; background:var(--stamp-dark); transition:width .3s var(--ease); }
+  .conf-card .bar{ height:5px; border-radius:99px; background:var(--paper-darker); overflow:hidden; }
+  .conf-card .bar span{ display:block; height:100%; background:var(--stamp); transition:width .3s var(--ease); }
   .conf-card.c1 .bar span{ width:33%; }
   .conf-card.c2 .bar span{ width:66%; }
   .conf-card.c3 .bar span{ width:100%; }
 
   .conf-preview{
     display:flex; align-items:center; gap:var(--s-4); margin-top:var(--s-5);
-    border:1px dashed var(--line); padding:var(--s-4) var(--s-5);
+    border:1px dashed var(--line-2); border-radius:var(--r-md); padding:var(--s-4) var(--s-5);
   }
   .conf-preview-label{ font-size:11px; color:var(--ink-soft); letter-spacing:.04em; white-space:nowrap; }
-  .conf-preview .bar{ flex:1; height:5px; background:var(--paper-darker); }
-  .conf-preview .bar span{ display:block; height:100%; background:var(--stamp-dark); width:33%; transition:width .3s var(--ease); }
+  .conf-preview .bar{ flex:1; height:5px; border-radius:99px; background:var(--paper-darker); overflow:hidden; }
+  .conf-preview .bar span{ display:block; height:100%; background:var(--stamp); width:33%; transition:width .3s var(--ease); }
 
   .verify-method{ margin-top:var(--s-7); display:grid; grid-template-columns:repeat(2,1fr); gap:var(--s-5) var(--s-7); }
   @media (max-width:700px){ .verify-method{ grid-template-columns:1fr; } }
   .vm-item{ display:flex; gap:var(--s-4); padding-top:var(--s-4); border-top:1px dashed var(--line); }
-  .vm-item .vn{ font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--stamp-dark); flex-shrink:0; padding-top:2px; }
+  .vm-item .vn{ font-family:var(--font-m); font-size:12px; color:var(--stamp-dark); flex-shrink:0; padding-top:2px; }
   .vm-item p{ margin:0; font-size:13.5px; color:var(--ink-soft); line-height:1.6; }
   .vm-item strong{ color:var(--ink); font-weight:600; }
 
   /* ============ AI SECTION ============ */
   .ai-lede{ font-size:15px; color:var(--ink-soft); line-height:1.6; max-width:70ch; margin:0 0 var(--s-7); border-left:2px solid var(--stamp); padding-left:var(--s-4); }
-  .ai-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--ink); border:1px solid var(--ink); }
+  .ai-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:var(--s-4); }
   @media (max-width:900px){ .ai-grid{ grid-template-columns:1fr; } }
-  .ai-card{ background:var(--paper); padding:var(--s-6) var(--s-5); }
-  .ai-card .atag{ font-family:'IBM Plex Mono', monospace; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); margin-bottom:var(--s-3); display:block; }
-  .ai-card h3{ font-family:'Spectral', serif; font-size:19px; font-weight:600; margin:0 0 var(--s-3); }
+  .ai-card{ background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md); padding:var(--s-6) var(--s-5); transition:box-shadow var(--dur) var(--ease), border-color var(--dur) var(--ease), transform var(--dur) var(--ease); }
+  .ai-card:hover{ transform:translateY(-3px); border-color:var(--line-2); box-shadow:var(--shadow-card); }
+  .ai-card .atag{ font-family:var(--font-m); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); margin-bottom:var(--s-3); display:block; }
+  .ai-card h3{ font-family:var(--font-d); font-size:19px; font-weight:700; margin:0 0 var(--s-3); letter-spacing:-.01em; }
   .ai-card p{ font-size:13.5px; color:var(--ink-soft); line-height:1.6; margin:0 0 var(--s-4); }
-  .ai-card .solves{ font-family:'IBM Plex Mono', monospace; font-size:10.5px; letter-spacing:.04em; color:var(--stamp-dark); padding-top:var(--s-3); border-top:1px dashed var(--line); }
+  .ai-card .solves{ font-family:var(--font-m); font-size:10.5px; letter-spacing:.04em; color:var(--stamp-dark); padding-top:var(--s-3); border-top:1px dashed var(--line); }
 
   /* ============ TRUST ============ */
   .trust{ display:grid; grid-template-columns:repeat(2,1fr); gap:var(--s-7); }
   @media (max-width:700px){ .trust{ grid-template-columns:1fr; } }
-  .trust-item .q{ font-family:'Spectral', serif; font-size:17px; font-weight:600; margin:0 0 var(--s-3); }
+  .trust-item .q{ font-family:var(--font-d); font-size:17px; font-weight:700; margin:0 0 var(--s-3); letter-spacing:-.01em; }
   .trust-item .a{ font-size:14px; color:var(--ink-soft); line-height:1.6; margin:0; }
 
   /* ============ PRICING ============ */
-  .pricing-note{ margin-bottom:var(--s-6); font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--ink-soft); border-left:2px solid var(--stamp); padding-left:var(--s-4); }
-  .pricing{ display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--ink); border:1px solid var(--ink); }
+  .pricing-note{ margin-bottom:var(--s-6); font-family:var(--font-m); font-size:12px; color:var(--ink-soft); border-left:2px solid var(--stamp); padding-left:var(--s-4); }
+  .pricing{ display:grid; grid-template-columns:repeat(3,1fr); gap:var(--s-4); }
   @media (max-width:820px){ .pricing{ grid-template-columns:1fr; } }
-  .plan{ background:var(--paper); padding:var(--s-6) var(--s-5); display:flex; flex-direction:column; }
-  .plan.featured{ background:var(--ink); color:var(--paper); }
-  .plan .pname{ font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--stamp-dark); }
-  .plan.featured .pname{ color:#D98D80; }
-  .plan h3{ font-family:'Spectral', serif; font-size:23px; margin:var(--s-3) 0 var(--s-2); }
+  .plan{ background:var(--surface); border:1px solid var(--line); border-radius:var(--r-lg); padding:var(--s-6) var(--s-5); display:flex; flex-direction:column; transition:box-shadow var(--dur) var(--ease), transform var(--dur) var(--ease); }
+  .plan:hover{ transform:translateY(-3px); box-shadow:var(--shadow-card); }
+  .plan.featured{ background:var(--ink); color:var(--paper); border-color:var(--ink); }
+  .plan .pname{ font-family:var(--font-m); font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--stamp-dark); }
+  .plan.featured .pname{ color:#e8879f; }
+  .plan h3{ font-family:var(--font-d); font-size:23px; font-weight:700; margin:var(--s-3) 0 var(--s-2); letter-spacing:-.015em; }
   .plan .access{ font-size:13px; margin-bottom:var(--s-5); color:var(--ink-soft); }
-  .plan.featured .access{ color:#C9CDD6; }
+  .plan.featured .access{ color:#c9cdd6; }
   .plan ul{ list-style:none; padding:0; margin:0 0 var(--s-6); flex:1; }
   .plan li{ font-size:13.5px; padding:var(--s-2) 0; border-top:1px dashed var(--line); display:flex; gap:var(--s-2); }
-  .plan.featured li{ border-top:1px dashed #3A4150; }
-  .plan li::before{ content:"-"; color:var(--ink-soft); }
+  .plan.featured li{ border-top:1px dashed rgba(236,238,240,.18); }
+  .plan li::before{ content:"–"; color:var(--ink-soft); }
   .plan .btn{ text-align:center; }
+  .plan.featured .btn-primary{ background:var(--stamp); border-color:var(--stamp); }
+  .plan.featured .btn-ghost{ border-color:rgba(236,238,240,.3); color:var(--paper); }
+  .plan.featured .btn-ghost:hover{ background:rgba(236,238,240,.1); }
 
   /* ============ FOOTER ============ */
   footer{ padding:var(--s-7) 0 var(--s-6); }
   .foot-grid{ display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:var(--s-5); }
-  .foot-note{ font-family:'IBM Plex Mono', monospace; font-size:10.5px; color:var(--ink-soft); letter-spacing:.04em; max-width:44ch; line-height:1.6; }
+  .foot-note{ font-family:var(--font-m); font-size:10.5px; color:var(--ink-soft); letter-spacing:.04em; max-width:44ch; line-height:1.6; }
 
-  :focus-visible{ outline:2px solid var(--stamp); outline-offset:2px; }
+  :focus-visible{ outline:2px solid var(--stamp); outline-offset:2px; border-radius:4px; }
 
   /* ============ APP SHELL ============ */
   .page[hidden]{ display:none !important; }
   .appview{ padding:var(--s-7) 0 var(--s-9); }
-  .appview .wrap{ max-width:1140px; }
+  .appview .wrap{ max-width:1180px; }
   .app-head{ display:flex; justify-content:space-between; align-items:flex-end; gap:var(--s-5); flex-wrap:wrap;
-    padding-bottom:var(--s-4); border-bottom:1px solid var(--ink); margin-bottom:var(--s-6); }
-  .app-head h1{ font-family:'Spectral',serif; font-weight:700; font-size:clamp(26px,3.4vw,40px); line-height:1.05; margin:var(--s-2) 0 0; letter-spacing:-.01em; }
+    padding-bottom:var(--s-4); border-bottom:1px solid var(--line); margin-bottom:var(--s-6); }
+  .app-head h1{ font-family:var(--font-d); font-weight:800; font-size:clamp(26px,3.4vw,40px); line-height:1.03; margin:var(--s-2) 0 0; letter-spacing:-.03em; }
   .app-head .section-tag{ display:inline-block; }
   .app-head p{ font-size:13.5px; color:var(--ink-soft); max-width:46ch; margin:0; line-height:1.6; }
 
-  .section-tag{ font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--stamp); }
+  .section-tag{ font-family:var(--font-m); font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--stamp); }
 
-  .btn{ font-family:'IBM Plex Mono',monospace; font-size:11.5px; letter-spacing:.08em; text-transform:uppercase;
-    padding:11px 18px; border:1px solid var(--ink); background:transparent; color:var(--ink); cursor:pointer;
-    text-decoration:none; display:inline-block; transition:all var(--dur) var(--ease); }
-  .btn:hover{ background:var(--ink); color:var(--paper); }
-  .btn.solid{ background:var(--stamp); border-color:var(--stamp); color:var(--paper); }
+  .btn{ font-family:var(--font-m); font-size:11.5px; letter-spacing:.05em; text-transform:uppercase;
+    padding:11px 18px; border:1px solid var(--line-2); border-radius:var(--r-md); background:var(--surface); color:var(--ink); cursor:pointer;
+    text-decoration:none; display:inline-block; transition:background var(--dur) var(--ease), color var(--dur) var(--ease), border-color var(--dur) var(--ease), transform .15s var(--ease); }
+  .btn:hover{ background:var(--ink); color:#fff; border-color:var(--ink); }
+  .btn:active{ transform:translateY(1px) scale(.98); }
+  .btn.solid{ background:var(--stamp); border-color:var(--stamp); color:#fff; }
   .btn.solid:hover{ background:var(--stamp-dark); border-color:var(--stamp-dark); }
-  .btn:disabled{ opacity:.45; cursor:not-allowed; }
-  .btn.sm{ padding:7px 12px; font-size:10.5px; }
+  .btn:disabled{ opacity:.45; cursor:not-allowed; transform:none; }
+  .btn.sm{ padding:7px 13px; font-size:10.5px; border-radius:var(--r-sm); }
 
   .field{ margin-bottom:var(--s-5); }
-  .field label{ display:block; font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.1em;
+  .field label{ display:block; font-family:var(--font-m); font-size:10.5px; letter-spacing:.1em;
     text-transform:uppercase; color:var(--ink-soft); margin-bottom:var(--s-2); }
   .field textarea, .field input[type=text], .field select{
-    width:100%; background:#F6F0E2; border:1px solid var(--line); color:var(--ink);
-    font-family:'Source Serif 4',serif; font-size:15px; padding:12px 14px; line-height:1.6; }
+    width:100%; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md); color:var(--ink);
+    font-family:var(--font-b); font-size:15px; padding:13px 15px; line-height:1.6; }
   .field textarea{ min-height:170px; resize:vertical; }
   .field textarea:focus, .field input:focus, .field select:focus{ outline:2px solid var(--stamp); outline-offset:-1px; }
   .hint{ font-size:12px; color:var(--ink-soft); margin-top:var(--s-2); line-height:1.55; }
@@ -372,14 +479,14 @@
   .cols{ display:grid; grid-template-columns:1fr 1fr; gap:var(--s-7); align-items:start; }
   .cols.wide-left{ grid-template-columns:1.15fr .85fr; }
   .rail{ border-left:1px solid var(--line); padding-left:var(--s-5); }
-  .rail h4{ font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase;
+  .rail h4{ font-family:var(--font-m); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase;
     color:var(--ink-soft); margin:0 0 var(--s-3); font-weight:500; }
   .rail p{ font-size:13px; color:var(--ink-soft); line-height:1.65; margin:0 0 var(--s-4); }
 
   /* ---- agent trace ---- */
-  .trace{ border:1px solid var(--line); background:#F6F0E2; padding:var(--s-4); }
+  .trace{ border:1px solid var(--line); border-radius:var(--r-md); background:var(--surface); padding:var(--s-4); }
   .trace-step{ display:flex; gap:var(--s-3); align-items:baseline; padding:8px 0; border-bottom:1px dotted var(--line);
-    font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.03em; color:var(--ink-soft); }
+    font-family:var(--font-m); font-size:11px; letter-spacing:.03em; color:var(--ink-soft); }
   .trace-step:last-child{ border-bottom:none; }
   .trace-step .st{ width:14px; flex:none; }
   .trace-step.done .st{ color:var(--tier3); }
@@ -392,80 +499,139 @@
   @media (prefers-reduced-motion:reduce){ .spin{ animation:none; } }
 
   /* ---- record card ---- */
-  .rec{ border:1px solid var(--ink); background:#F6F0E2; padding:var(--s-5); margin-bottom:var(--s-4); position:relative; }
+  .rec{ border:1px solid var(--line); border-radius:var(--r-md); background:var(--surface); padding:var(--s-5); margin-bottom:var(--s-4); position:relative; transition:box-shadow var(--dur) var(--ease), border-color var(--dur) var(--ease); }
+  .rec:hover{ border-color:var(--line-2); box-shadow:var(--shadow-card); }
   .rec-top{ display:flex; justify-content:space-between; gap:var(--s-4); align-items:flex-start;
     padding-bottom:var(--s-3); border-bottom:1px solid var(--line); margin-bottom:var(--s-3); }
-  .rec-id{ font-family:'IBM Plex Mono',monospace; font-size:13px; font-weight:600; letter-spacing:.06em; }
+  .rec-id{ font-family:var(--font-m); font-size:13px; font-weight:600; letter-spacing:.05em; }
   .rec-role{ font-size:14.5px; margin-top:3px; }
   .rec-sub{ font-size:12px; color:var(--ink-soft); margin-top:2px; }
-  .tierchip{ font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:.12em; text-transform:uppercase;
-    border:1px solid currentColor; padding:3px 7px; white-space:nowrap; }
+  .tierchip{ font-family:var(--font-m); font-size:9.5px; letter-spacing:.1em; text-transform:uppercase;
+    border:1px solid currentColor; border-radius:var(--r-sm); padding:4px 9px; white-space:nowrap; }
   .t-apex{ color:var(--stamp); } .t-elite{ color:var(--brass); }
   .t-verified{ color:var(--tier3); } .t-standard{ color:var(--tier2); }
   .rec-grid{ display:grid; grid-template-columns:auto 1fr; gap:6px var(--s-4); font-size:12.5px; }
-  .rec-grid dt{ font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); }
+  .rec-grid dt{ font-family:var(--font-m); font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); }
   .rec-grid dd{ margin:0; }
   .rec-foot{ display:flex; justify-content:space-between; align-items:center; gap:var(--s-4);
     margin-top:var(--s-4); padding-top:var(--s-3); border-top:1px dotted var(--line); }
-  .fit{ font-family:'IBM Plex Mono',monospace; font-size:20px; font-weight:600; }
-  .fit small{ display:block; font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft); font-weight:400; }
+  .fit{ font-family:var(--font-d); font-size:20px; font-weight:700; }
+  .fit small{ display:block; font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft); font-weight:400; font-family:var(--font-m); }
   .rationale{ font-size:13px; line-height:1.6; margin:var(--s-3) 0 0; }
   .rationale .gap{ color:var(--stamp); }
 
   /* ---- rounds meter ---- */
   .rounds{ display:inline-flex; gap:4px; align-items:center; }
-  .rounds i{ width:15px; height:5px; background:var(--ink); display:block; }
+  .rounds i{ width:15px; height:5px; border-radius:99px; background:var(--ink); display:block; }
   .rounds i.open{ background:transparent; border:1px dashed var(--stamp); height:5px; }
 
-  /* ---- circuit feed ---- */
+  /* ---- circuit feed: "the wall" treatment, ported verbatim ---- */
+  .wall-search{
+    background:var(--surface); border:1px solid var(--line-2); border-radius:13px; padding:7px 7px 7px 16px;
+    display:flex; align-items:center; gap:10px; max-width:640px; box-shadow:0 1px 2px rgba(25,26,29,.05);
+  }
+  .wall-search:focus-within{ border-color:var(--stamp); }
+  .wall-search svg{ flex:none; }
+  .wall-search input{ flex:1; border:0; outline:0; background:transparent; font-family:var(--font-b); font-size:14.5px; color:var(--ink); padding:9px 0; }
+  .wall-search input::placeholder{ color:var(--ink-soft-2); }
+  .wall-search button{ font-family:var(--font-m); font-size:12.5px; background:var(--ink); color:#fff; border:0; cursor:pointer; padding:10px 16px; border-radius:9px; transition:transform .15s var(--ease); }
+  .wall-search button:active{ transform:translateY(1px) scale(.98); }
+
+  .chips{ display:flex; flex-wrap:wrap; gap:7px; margin-top:13px; margin-bottom:var(--s-5); }
+  .chip{
+    font-family:var(--font-m); font-size:11.5px; letter-spacing:0; text-transform:none;
+    background:transparent; border:1px solid var(--line-2); color:var(--ink-soft); border-radius:8px;
+    padding:6px 12px; cursor:pointer; transition:all .2s var(--ease);
+  }
+  .chip:hover{ border-color:var(--stamp); color:var(--stamp); transform:translateY(-1px); }
+  /* single-select tier filter (elestar's real axis), so "on" reads as the
+     reference's dark ink "ALL" pill rather than its accent multi-select tags */
+  .chip.on{ background:var(--ink); border-color:var(--ink); color:#fff; }
+
   .feedbar{ display:flex; gap:var(--s-4); align-items:center; flex-wrap:wrap; margin-bottom:var(--s-5);
-    font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.06em; color:var(--ink-soft); }
+    font-family:var(--font-m); font-size:11px; letter-spacing:.05em; color:var(--ink-soft); }
   .live-dot{ width:7px; height:7px; border-radius:50%; background:var(--tier3); display:inline-block; margin-right:6px; }
-  .post{ border-bottom:1px solid var(--line); padding:var(--s-4) 0; }
-  .post-h{ display:flex; gap:var(--s-3); align-items:baseline; flex-wrap:wrap; }
-  .post-h .cid{ font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--stamp); font-weight:500; }
-  .post-h .when{ font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--ink-soft); margin-left:auto; }
-  .post-body{ font-size:14.5px; line-height:1.6; margin-top:6px; }
+
+  /* Ported verbatim from the reference wall: masonry columns, break-inside
+     avoid cards, staggered rise-in. Card anatomy (.thumb/.seal/.meta/.nm/
+     .dc/.cred/.credtop/.track/.fill) matches the reference's class names
+     and measurements 1:1; only the data behind it is elestar's own. */
+  #circuit-out.wall{ columns:4; column-gap:22px; }
+  @media (max-width:1180px){ #circuit-out.wall{ columns:3; } }
+  @media (max-width:760px){ #circuit-out.wall{ columns:2; column-gap:14px; } }
+  @media (max-width:460px){ #circuit-out.wall{ columns:1; } }
+
+  @keyframes cardRise{ to{ opacity:1; transform:translateY(0); } }
+  .card{
+    break-inside:avoid; margin-bottom:22px; background:var(--surface); border:1px solid var(--line);
+    border-radius:13px; overflow:hidden; cursor:default; position:relative;
+    transition:transform .3s var(--ease), box-shadow .3s var(--ease), border-color .3s;
+    opacity:0; transform:translateY(14px); animation:cardRise .5s var(--ease) forwards;
+  }
+  .card:hover{ transform:translateY(-5px); border-color:var(--line-2); box-shadow:var(--shadow-card); }
+  .thumb{ position:relative; line-height:0; }
+  .thumb canvas{ display:block; width:100%; height:auto; }
+
+  .seal{ position:absolute; top:11px; right:11px; width:52px; height:52px; display:grid; place-items:center;
+    filter:drop-shadow(0 3px 7px rgba(25,26,29,.28)); }
+  .seal svg{ width:100%; height:100%; position:absolute; inset:0; }
+  .seal .t{ position:relative; font-family:var(--font-m); font-weight:500; font-size:8px; letter-spacing:.04em;
+    text-align:center; line-height:1.1; text-transform:uppercase; }
+  .seal.fin .t{ color:#fff; }
+  .seal.semi .t{ color:var(--ink); }
+
+  .meta{ padding:14px 15px 15px; }
+  .nm{ font-family:var(--font-d); font-weight:700; font-size:16.5px; letter-spacing:-.015em; }
+  .dc{ font-family:var(--font-m); font-size:10.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.07em; margin-top:3px; }
+  .cred{ margin-top:13px; }
+  .credtop{ display:flex; justify-content:space-between; align-items:baseline; font-family:var(--font-m);
+    font-size:10px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.05em; margin-bottom:6px; }
+  .credtop .v{ color:var(--ink); font-size:12px; }
+  .track{ height:4px; background:rgba(25,26,29,.09); border-radius:99px; overflow:hidden; }
+  .fill{ height:100%; background:var(--stamp); border-radius:99px; }
+
+  .post-body{ font-size:13.5px; line-height:1.55; color:var(--ink-soft); margin-top:12px; }
   .post-acts{ display:flex; gap:var(--s-4); margin-top:var(--s-3); align-items:center;
-    font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.06em; color:var(--ink-soft); }
+    font-family:var(--font-m); font-size:10.5px; letter-spacing:.05em; color:var(--ink-soft); }
   .post-acts button{ background:none; border:none; padding:0; cursor:pointer; color:inherit;
     font-family:inherit; font-size:inherit; letter-spacing:inherit; }
   .post-acts button:hover{ color:var(--stamp); }
   .post-acts button.on{ color:var(--stamp); font-weight:600; }
   .replies{ margin-top:var(--s-3); padding-left:var(--s-4); border-left:1px solid var(--line); }
   .reply{ font-size:13px; line-height:1.6; padding:6px 0; color:var(--ink-soft); }
-  .reply b{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--stamp); font-weight:500; }
+  .reply b{ font-family:var(--font-m); font-size:11px; color:var(--stamp); font-weight:500; }
   .replybox{ display:flex; gap:var(--s-2); margin-top:var(--s-3); }
-  .replybox input{ flex:1; background:#F6F0E2; border:1px solid var(--line); padding:8px 10px;
-    font-family:'Source Serif 4',serif; font-size:13px; color:var(--ink); }
+  .replybox input{ flex:1; background:var(--paper); border:1px solid var(--line); border-radius:var(--r-sm); padding:9px 11px;
+    font-family:var(--font-b); font-size:13px; color:var(--ink); }
 
   /* ---- brief ---- */
-  .brief h4{ font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase;
+  .brief h4{ font-family:var(--font-m); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase;
     color:var(--stamp); margin:var(--s-5) 0 var(--s-2); }
   .brief ul{ margin:0; padding-left:18px; }
   .brief li{ font-size:13.5px; line-height:1.65; margin-bottom:6px; }
   .brief .skip b{ font-weight:600; }
 
   /* ---- misc ---- */
-  .empty{ border:1px dashed var(--line); padding:var(--s-6); text-align:center; color:var(--ink-soft); font-size:13.5px; }
-  .notice{ border-left:3px solid var(--stamp); background:#F6F0E2; padding:var(--s-4); font-size:13px; line-height:1.6; margin-bottom:var(--s-5); }
+  .empty{ border:1px dashed var(--line-2); border-radius:var(--r-md); padding:var(--s-6); text-align:center; color:var(--ink-soft); font-size:13.5px; }
+  .notice{ border-left:3px solid var(--stamp); border-radius:0 var(--r-md) var(--r-md) 0; background:var(--stamp-wash); padding:var(--s-4); font-size:13px; line-height:1.6; margin-bottom:var(--s-5); }
   .notice b{ font-weight:600; }
   .qbar{ display:flex; gap:var(--s-3); align-items:stretch; margin-bottom:var(--s-5); }
-  .qbar input{ flex:1; background:#F6F0E2; border:1px solid var(--ink); padding:13px 15px;
-    font-family:'Source Serif 4',serif; font-size:15px; color:var(--ink); }
+  .qbar input{ flex:1; background:var(--surface); border:1px solid var(--line-2); border-radius:var(--r-md); padding:14px 16px;
+    font-family:var(--font-b); font-size:15px; color:var(--ink); }
   .filters{ display:flex; gap:var(--s-4); flex-wrap:wrap; align-items:center; margin-bottom:var(--s-5);
-    font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); }
-  .filters select{ background:transparent; border:none; border-bottom:1px solid var(--ink); color:var(--ink);
-    font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; padding:3px 2px; }
-  .qs{ border:1px solid var(--brass); background:#F6F0E2; padding:var(--s-4); margin-bottom:var(--s-5); }
-  .qs h4{ font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--brass); margin:0 0 var(--s-3); }
+    font-family:var(--font-m); font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-soft); }
+  .filters select{ background:var(--paper-dark); border:1px solid var(--line); border-radius:var(--r-sm); color:var(--ink);
+    font-family:var(--font-m); font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; padding:6px 8px; }
+  .qs{ border:1px solid var(--line-2); border-radius:var(--r-md); background:var(--surface); padding:var(--s-4); margin-bottom:var(--s-5); }
+  .qs h4{ font-family:var(--font-m); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--brass); margin:0 0 var(--s-3); }
   .qs .q{ margin-bottom:var(--s-3); }
   .qs .q p{ font-size:13.5px; margin:0 0 5px; }
-  .qs .q input{ width:100%; background:var(--paper); border:1px solid var(--line); padding:8px 10px;
-    font-family:'Source Serif 4',serif; font-size:13px; color:var(--ink); }
-  .toast{ position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--ink); color:var(--paper);
-    padding:12px 20px; font-family:'IBM Plex Mono',monospace; font-size:11.5px; letter-spacing:.06em; z-index:300;
-    max-width:90vw; text-align:center; }
+  .qs .q input{ width:100%; background:var(--paper); border:1px solid var(--line); border-radius:var(--r-sm); padding:9px 11px;
+    font-family:var(--font-b); font-size:13px; color:var(--ink); }
+  .toast{ position:fixed; bottom:26px; left:50%; transform:translateX(-50%) translateY(18px); background:var(--ink); color:#fff;
+    padding:13px 19px; border-radius:var(--r-md); font-family:var(--font-m); font-size:11.5px; letter-spacing:.05em; z-index:300;
+    max-width:90vw; text-align:center; box-shadow:var(--shadow-pop); opacity:0; pointer-events:none; animation:toastin .3s var(--ease) forwards; }
+  @keyframes toastin{ to{ opacity:1; transform:translateX(-50%) translateY(0); } }
   .tabs a.approute.active{ color:var(--stamp); }
 
   @media (max-width:860px){
@@ -477,10 +643,12 @@
 </style>
 </head>
 <body>
+<div class="grain"></div>
 
 <div class="topbar">
   <div class="topbar-inner">
     <a class="brandmark" href="#/landing" style="text-decoration:none">
+      <svg class="mark-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 1 L14.5 9.5 L23 12 L14.5 14.5 L12 23 L9.5 14.5 L1 12 L9.5 9.5 Z" fill="currentColor"/></svg>
       <span class="mark">elestar</span>
       <span class="mono filecode">FILE&nbsp;NO.&nbsp;004</span>
     </a>
@@ -495,6 +663,10 @@
       <a href="#/search" class="approute">Search</a>
       <a href="#/intros" class="approute">Intros</a>
     </nav>
+    <div class="switch navswitch" role="group" aria-label="Choose your side of elestar">
+      <button type="button" id="btn-hiring" aria-pressed="true">Hiring</button>
+      <button type="button" id="btn-candidate" aria-pressed="false">Candidate</button>
+    </div>
     <div class="topbar-ctas">
       <a href="#/list" class="cta-small">List Your Rounds</a>
       <a href="#/search" class="cta-small solid">Request Access</a>
@@ -504,72 +676,53 @@
 
 <div class="page" id="page-landing">
 <header class="hero">
-  <div class="wrap hero-grid">
-    <div>
-      <div class="switch" role="group" aria-label="Choose your side of elestar">
-        <button type="button" id="btn-hiring" aria-pressed="true">I'm Hiring</button>
-        <button type="button" id="btn-candidate" aria-pressed="false">I Made a Final Round</button>
-      </div>
-
+  <div class="hero-blob" aria-hidden="true"></div>
+  <div class="wrap">
+    <div class="hero-content">
       <div id="audience-hiring">
         <span class="eyebrow mono">For Recruiting Teams</span>
-        <h1>They got 80% of the way<br>to <em>yes.</em></h1>
+        <h1>They got 80% of<br>the way to <em>yes.</em></h1>
         <p class="hero-sub">Browse candidates who already cleared another company's technical and panel rounds. Start at their round four, not your round one.</p>
         <div class="hero-ctas">
-          <a href="#pricing" class="btn btn-primary">Request Access</a>
-          <a href="#circuit" class="btn btn-ghost">See a Sample Dossier</a>
-        </div>
-        <div class="stat-row">
-          <div class="stat"><span class="num mono" data-target="4.2" data-decimals="1">0</span><span class="lbl">avg. rounds cleared pre-listing</span></div>
-          <div class="stat"><span class="num mono" data-target="11" data-suffix=" days">0</span><span class="lbl">avg. time saved per hire</span></div>
-          <div class="stat"><span class="num mono" data-target="62" data-suffix="%">0</span><span class="lbl">fewer first rounds run</span></div>
+          <a href="#pricing" class="btn-mkt btn-primary">Request Access</a>
+          <a href="#circuit" class="btn-mkt btn-ghost">See a Sample Dossier</a>
         </div>
       </div>
 
       <div id="audience-candidate" hidden>
         <span class="eyebrow mono">For Job Seekers</span>
-        <h1>Made the final round?<br>That's worth more than <em>a rejection email.</em></h1>
+        <h1>Made the final round?<br>Keep what you <em>earned.</em></h1>
         <p class="hero-sub">List your interview history once - the rounds you cleared, the panels you passed - and let other companies find you at the stage you already earned.</p>
         <div class="hero-ctas">
-          <a href="#pricing" class="btn btn-primary">List Your Rounds</a>
-          <a href="#tracks" class="btn btn-ghost">See How It Works</a>
-        </div>
-        <div class="stat-row">
-          <div class="stat"><span class="num mono">Free</span><span class="lbl">to list, always</span></div>
-          <div class="stat"><span class="num mono" data-target="3.1" data-decimals="1">0</span><span class="lbl">avg. companies matched per finalist</span></div>
-          <div class="stat"><span class="num mono">0</span><span class="lbl">cold applications required</span></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="dossier-frame" id="dossier-frame">
-      <div class="folder-tab mono">Exhibit A</div>
-      <div class="dossier">
-        <div class="dossier-eyebrow mono">What a dossier looks like</div>
-        <div class="dossier-top">
-          <span class="dossier-id mono">CANDIDATE&nbsp;#A-1142</span>
-          <span class="dossier-tier">Apex Clearance</span>
-        </div>
-        <div class="dossier-name">Finalist - Quant Research</div>
-        <div class="dossier-role">Reached final round · 6 interviews cleared · offer went to another candidate</div>
-        <div class="dossier-rounds">
-          <div class="rnd filled"></div><div class="rnd filled"></div><div class="rnd filled"></div>
-          <div class="rnd filled"></div><div class="rnd filled"></div><div class="rnd filled"></div>
-        </div>
-        <div class="dossier-caption mono">Screen → Technical ×3 → Panel → Final Round</div>
-        <div class="dossier-confidence">
-          <span class="conf-label mono">Evidence level</span>
-          <span class="conf-badge">Corroborated</span>
-        </div>
-        <div class="stamp-wrap"><div class="stamp">Listed</div></div>
-        <div class="dossier-foot">
-          <span>Sourced Q2 2026</span>
-          <span>Identity withheld until intro</span>
+          <a href="#pricing" class="btn-mkt btn-primary">List Your Rounds</a>
+          <a href="#tracks" class="btn-mkt btn-ghost">See How It Works</a>
         </div>
       </div>
     </div>
   </div>
+
+  <div class="wrap">
+    <div id="audience-hiring-stats" class="stat-row">
+      <div class="stat"><span class="num mono" data-target="4.2" data-decimals="1">0</span><span class="lbl">avg. rounds cleared pre-listing</span></div>
+      <div class="stat"><span class="num mono" data-target="11" data-suffix=" days">0</span><span class="lbl">avg. time saved per hire</span></div>
+      <div class="stat"><span class="num mono" data-target="62" data-suffix="%">0</span><span class="lbl">fewer first rounds run</span></div>
+    </div>
+    <div id="audience-candidate-stats" class="stat-row" hidden>
+      <div class="stat"><span class="num mono">Free</span><span class="lbl">to list, always</span></div>
+      <div class="stat"><span class="num mono" data-target="3.1" data-decimals="1">0</span><span class="lbl">avg. companies matched per finalist</span></div>
+      <div class="stat"><span class="num mono">0</span><span class="lbl">cold applications required</span></div>
+    </div>
+  </div>
 </header>
+
+<section class="index-band">
+  <div class="wrap index-row">
+    <a href="#circuit">Circuit<sup>01</sup></a>
+    <a href="#tiers">Tiers<sup>02</sup></a>
+    <a href="#verification">Verification<sup>03</sup></a>
+    <a href="#pricing">Access<sup>04</sup></a>
+  </div>
+</section>
 
 <section id="circuit">
   <div class="wrap">
@@ -613,6 +766,29 @@
       <div class="pivot">
         <span class="who mono">For candidates</span>
         <p>Round five is where the work you already did stops going to waste the moment one rejection email arrives.</p>
+      </div>
+    </div>
+
+    <div class="keep-earned">
+      <div class="ke-head">
+        <h2>Keep what<br>you earned.</h2>
+        <p class="section-note">A final round that ends without an offer still happened. elestar makes that hiring event travel with you.</p>
+      </div>
+      <div class="ke-compare">
+        <div class="ke-col">
+          <span class="ke-label mono">Today</span>
+          <div class="ke-row"><span>Screen</span></div>
+          <div class="ke-row"><span>Panel</span></div>
+          <div class="ke-row ke-final"><span>Final round</span></div>
+          <div class="ke-row ke-fade"><span>Nothing</span></div>
+        </div>
+        <div class="ke-col ke-col-elestar">
+          <span class="ke-label mono">With elestar</span>
+          <div class="ke-row"><span>Screen</span></div>
+          <div class="ke-row"><span>Panel</span></div>
+          <div class="ke-row ke-final"><span>Final round</span></div>
+          <div class="ke-row ke-signal"><span>Self-Attested → Corroborated → Confirmed</span></div>
+        </div>
       </div>
     </div>
   </div>
@@ -763,12 +939,41 @@
 
 <section id="verification">
   <div class="wrap">
-    <div class="section-head">
-      <div>
-        <span class="section-tag">04 - Verification</span>
-        <h2>Confidence has levels. We show all of them.</h2>
+    <div class="credential-row">
+      <div class="section-head" style="margin-bottom:0">
+        <div>
+          <span class="section-tag">04 - Verification</span>
+          <h2>A credential.<br>Not a badge.</h2>
+        </div>
+        <p class="section-note">A badge that just says "Verified" hides more than it reveals. Every dossier shows exactly how its evidence was established.</p>
       </div>
-      <p class="section-note">A badge that just says "Verified" hides more than it reveals. Every dossier shows exactly how its evidence was established.</p>
+
+      <div class="dossier-frame" id="dossier-frame">
+        <div class="folder-tab mono">Issued Record</div>
+        <div class="dossier">
+          <div class="dossier-eyebrow mono">What a dossier looks like</div>
+          <div class="dossier-top">
+            <span class="dossier-id mono">CANDIDATE&nbsp;#A-1142</span>
+            <span class="dossier-tier">Apex Clearance</span>
+          </div>
+          <div class="dossier-name">Finalist - Quant Research</div>
+          <div class="dossier-role">Reached final round · 6 interviews cleared · offer went to another candidate</div>
+          <div class="dossier-rounds">
+            <div class="rnd filled"></div><div class="rnd filled"></div><div class="rnd filled"></div>
+            <div class="rnd filled"></div><div class="rnd filled"></div><div class="rnd filled"></div>
+          </div>
+          <div class="dossier-caption mono">Screen → Technical ×3 → Panel → Final Round</div>
+          <div class="dossier-confidence">
+            <span class="conf-label mono">Evidence level</span>
+            <span class="conf-badge">Corroborated</span>
+          </div>
+          <div class="stamp-wrap"><div class="stamp">Listed</div></div>
+          <div class="dossier-foot">
+            <span>Sourced Q2 2026</span>
+            <span>Identity withheld until intro</span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="confidence-row" role="group" aria-label="Evidence levels - select one to preview">
@@ -895,7 +1100,7 @@
           <li>Unlimited dossier views</li>
           <li>5 introductions / month</li>
         </ul>
-        <a href="#" class="btn btn-ghost">Request Access</a>
+        <a href="#" class="btn-mkt btn-ghost">Request Access</a>
       </div>
       <div class="plan featured">
         <span class="pname mono">Elite</span>
@@ -906,7 +1111,7 @@
           <li>Priority introductions</li>
           <li>Round-by-round interview notes</li>
         </ul>
-        <a href="#" class="btn btn-primary">Request Access</a>
+        <a href="#" class="btn-mkt btn-primary">Request Access</a>
       </div>
       <div class="plan">
         <span class="pname mono">Apex</span>
@@ -917,7 +1122,7 @@
           <li>Dedicated sourcing contact</li>
           <li>Custom clearance floors per role</li>
         </ul>
-        <a href="#" class="btn btn-ghost">Talk to Us</a>
+        <a href="#" class="btn-mkt btn-ghost">Talk to Us</a>
       </div>
     </div>
   </div>
@@ -941,12 +1146,24 @@
       </div>
       <p>An anonymized public feed of every process listed. No account needed to read it, because the honest answer to "what happens in that onsite" doesn't exist anywhere else.</p>
     </div>
+    <div class="wall-search">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#8b8d95" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <input type="text" id="circuit-q" placeholder="Search the circuit — fintech, panel, quant..." />
+      <button type="button" id="circuit-search-btn">Search</button>
+    </div>
+    <div class="chips" id="circuit-chips">
+      <button type="button" class="chip on" data-tier="all">All</button>
+      <button type="button" class="chip" data-tier="apex">Apex</button>
+      <button type="button" class="chip" data-tier="elite">Elite</button>
+      <button type="button" class="chip" data-tier="verified">Verified</button>
+      <button type="button" class="chip" data-tier="standard">Standard</button>
+    </div>
     <div class="feedbar">
       <span><span class="live-dot"></span>Live · shared across everyone reading this</span>
       <span id="circuit-count">—</span>
       <span style="margin-left:auto">You are <b data-myid></b> here</span>
     </div>
-    <div id="circuit-out"></div>
+    <div id="circuit-out" class="wall"></div>
     <p class="hint" style="margin-top:24px">Replies are redacted client-side before they post — emails, phone numbers, links and handles are stripped whether or not you meant to include them.</p>
   </div>
 </div>
@@ -1059,10 +1276,14 @@
   const hiringPanel = document.getElementById('audience-hiring');
   const candidatePanel = document.getElementById('audience-candidate');
 
+  const hiringStats = document.getElementById('audience-hiring-stats');
+  const candidateStats = document.getElementById('audience-candidate-stats');
   function setAudience(mode){
     const isHiring = mode === 'hiring';
     hiringPanel.hidden = !isHiring;
     candidatePanel.hidden = isHiring;
+    hiringStats.hidden = !isHiring;
+    candidateStats.hidden = isHiring;
     hiringBtn.setAttribute('aria-pressed', String(isHiring));
     candidateBtn.setAttribute('aria-pressed', String(!isHiring));
   }
@@ -1232,7 +1453,7 @@ function envBanner() {
       ${has ? "and agent calls use the key you supplied."
             : "and the agent steps are inactive until you add an Anthropic API key."}
       <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
-        <input type="password" id="k-in" placeholder="sk-ant-..." style="flex:1;min-width:220px;background:var(--paper);border:1px solid var(--line);padding:8px 10px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink)">
+        <input type="password" id="k-in" placeholder="sk-ant-..." style="flex:1;min-width:220px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);padding:9px 11px;font-family:var(--font-m);font-size:12px;color:var(--ink)">
         <button class="btn sm" id="k-save">${has ? "Replace key" : "Save key"}</button>
         ${has ? '<button class="btn sm" id="k-clear">Remove</button>' : ""}
       </div>
@@ -1254,6 +1475,106 @@ function envBanner() {
 const K_FLOOR = 8;                       // k-anonymity floor before publish
 const MODEL = "claude-sonnet-4-6";
 const TIERS = ["standard", "verified", "elite", "apex"];
+
+/* ============================================================
+   CARD SPECIMEN ART — ported verbatim from the reference wall's
+   canvas generator. Deterministic per record id, so the wall stays
+   visually composed rather than random. No photo, stock or real
+   image is used anywhere — this draws directly to a <canvas>.
+   Tone is keyed by TIER (elestar's real axis) where the reference
+   keyed by a fictional "discipline".
+   ============================================================ */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+
+const SPECIMEN_INK = "#191a1d", SPECIMEN_PAPER = "#eceef0";
+const TIER_TONE = { apex:"#9c2f4d", elite:"#ad7f3a", verified:"#47695c", standard:"#5c6774" };
+
+function specimen(canvas, seedInput, tier, W, H){
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  canvas.style.width = "100%"; canvas.style.height = "auto";
+  const x = canvas.getContext("2d"); x.scale(dpr, dpr);
+  const r = mulberry32((seedInput * 2654435761) >>> 0);
+  const tone = TIER_TONE[tier] || TIER_TONE.standard;
+  const accent = TIER_TONE.apex;
+
+  // apex/elite read as "lens" (flow-field ribbons); verified/standard as
+  // "structural" (recursive subdivision) — a real, non-arbitrary split on
+  // elestar's own tier axis, not a borrowed discipline taxonomy.
+  const lens = (tier === "apex" || tier === "elite");
+  x.fillStyle = SPECIMEN_PAPER; x.fillRect(0, 0, W, H);
+
+  if (lens) {
+    const N = 44, steps = 46;
+    const scale = 0.006 + r() * 0.004;
+    const phase = r() * 6.28;
+    for (let i = 0; i < N; i++) {
+      let px = r() * W, py = r() * H;
+      const useAcc = r() < 0.2;
+      x.strokeStyle = useAcc ? accent : (r() < 0.5 ? SPECIMEN_INK : tone);
+      x.globalAlpha = 0.4;
+      x.lineWidth = useAcc ? 1.6 : 0.9;
+      x.beginPath(); x.moveTo(px, py);
+      for (let s = 0; s < steps; s++) {
+        const ang = Math.sin(px * scale + phase) * 1.7 + Math.cos(py * scale * 1.3 - phase) * 1.7 + Math.sin((px + py) * scale * 0.6) * 1.1;
+        px += Math.cos(ang) * 4.2; py += Math.sin(ang) * 4.2;
+        if (px < 0 || px > W || py < 0 || py > H) break;
+        x.lineTo(px, py);
+      }
+      x.stroke();
+    }
+    x.globalAlpha = 1;
+    x.save();
+    x.translate(W * 0.5, H * 0.52);
+    x.fillStyle = SPECIMEN_INK; x.globalAlpha = 0.9;
+    const rad = Math.min(W, H) * 0.2;
+    x.beginPath(); x.arc(0, 0, rad, 0.5, 5.0); x.arc(0, 0, rad * 0.52, 5.0, 0.5, true); x.closePath(); x.fill();
+    x.restore(); x.globalAlpha = 1;
+  } else {
+    const cells = [];
+    (function split(cx, cy, cw, ch, d) {
+      if (d <= 0 || (cw < W * 0.24 && r() > 0.35)) { cells.push([cx, cy, cw, ch]); return; }
+      const vert = r() > 0.5;
+      const t = 0.32 + r() * 0.36;
+      if (vert) { split(cx, cy, cw * t, ch, d - 1); split(cx + cw * t, cy, cw * (1 - t), ch, d - 1); }
+      else { split(cx, cy, cw, ch * t, d - 1); split(cx, cy + ch * t, cw, ch * (1 - t), d - 1); }
+    })(0, 0, W, H, 4);
+
+    cells.forEach(([cx, cy, cw, ch]) => {
+      const g = r(); const pad = 3;
+      if (g < 0.16) { x.fillStyle = accent; x.fillRect(cx + pad, cy + pad, cw - 2 * pad, ch - 2 * pad); }
+      else if (g < 0.34) { x.fillStyle = SPECIMEN_INK; x.fillRect(cx + pad, cy + pad, cw - 2 * pad, ch - 2 * pad); }
+      else if (g < 0.52) { x.fillStyle = tone; x.fillRect(cx + pad, cy + pad, cw - 2 * pad, ch - 2 * pad); }
+      else if (g < 0.72) {
+        x.strokeStyle = "#c3c6ca"; x.lineWidth = 0.8; x.globalAlpha = 0.8;
+        const gap = 5 + r() * 5;
+        for (let ly = cy + pad; ly < cy + ch - pad; ly += gap) { x.beginPath(); x.moveTo(cx + pad, ly); x.lineTo(cx + cw - pad, ly); x.stroke(); }
+        x.globalAlpha = 1;
+      } else if (g < 0.86) {
+        x.strokeStyle = r() < 0.4 ? accent : SPECIMEN_INK; x.lineWidth = 1; x.globalAlpha = 0.85;
+        const ox = cx + cw / 2, oy = cy + ch / 2, mx = Math.min(cw, ch) / 2 - pad;
+        for (let rr = mx; rr > 3; rr -= 5) { x.beginPath(); x.arc(ox, oy, rr, 0, 6.283); x.stroke(); }
+        x.globalAlpha = 1;
+      } else {
+        x.fillStyle = tone;
+        const gap = 7;
+        for (let dy = cy + pad + 3; dy < cy + ch - pad; dy += gap) for (let dx = cx + pad + 3; dx < cx + cw - pad; dx += gap) {
+          x.beginPath(); x.arc(dx, dy, 1.1 + r() * 1.2, 0, 6.283); x.fill();
+        }
+      }
+      x.strokeStyle = "rgba(25,26,29,0.10)"; x.lineWidth = 1; x.strokeRect(cx, cy, cw, ch);
+    });
+  }
+}
+
+const SEAL_LABEL = { apex:"APEX", elite:"ELITE", verified:"VERI<br>FIED", standard:"STAN<br>DARD" };
+
+function sealSvg(tier){
+  const solid = tier === "apex";
+  const fillAttr = solid ? `fill="${TIER_TONE.apex}"` : `fill="#fff" stroke="${SPECIMEN_INK}" stroke-width="1.5"`;
+  const ringColor = solid ? "rgba(255,255,255,.4)" : "rgba(25,26,29,.25)";
+  return `<svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="24" ${fillAttr}/><circle cx="26" cy="26" r="24" fill="none" stroke="${ringColor}" stroke-width="1" stroke-dasharray="2 3"/></svg>`;
+}
 
 /* ---------- identity (local, ephemeral) ---------- */
 function myId() {
@@ -1704,7 +2025,7 @@ async function renderIntros() {
   const outbound = (intros || []).filter(i => i.from === myId());
 
   el.innerHTML = `
-    <h3 style="font-family:'Spectral',serif;font-size:19px;margin:0 0 12px">Requests for your records</h3>
+    <h3 style="font-family:var(--font-d);font-weight:700;font-size:19px;letter-spacing:-.01em;margin:0 0 12px">Requests for your records</h3>
     ${inbound.length ? inbound.map(i => {
       const r = byId[i.recordId];
       return `<div class="rec">
@@ -1724,7 +2045,7 @@ async function renderIntros() {
       </div>`;
     }).join("") : `<div class="empty">No requests yet. List a process and recruiters can ask.</div>`}
 
-    <h3 style="font-family:'Spectral',serif;font-size:19px;margin:32px 0 12px">Requests you've sent</h3>
+    <h3 style="font-family:var(--font-d);font-weight:700;font-size:19px;letter-spacing:-.01em;margin:32px 0 12px">Requests you've sent</h3>
     ${outbound.length ? outbound.map(i => `<div class="rec">
       <div class="rec-top"><div>
         <div class="rec-id">${esc(i.recordId)}</div>
@@ -1782,6 +2103,9 @@ const SEED = [
   { id: "s4", cid: "#A-1150", text: "four rounds at a consumer marketplace, req closed the week of the final panel", tier: "elite", at: Date.now() - 5.1e8, reactions: 63, replies: [{ cid: "#C-0918", text: "Same company, same month. Two of us." }] },
 ];
 
+let circuitTierFilter = "all";
+let circuitQuery = "";
+
 async function renderCircuit() {
   const el = document.getElementById("circuit-out");
   let feed = await sget("elestar:circuit", true, null);
@@ -1789,25 +2113,55 @@ async function renderCircuit() {
   const reacted = (await sget("elestar:reacted", false, [])) || [];
 
   document.getElementById("circuit-count").textContent = feed.length + " records";
-  el.innerHTML = feed.map(p => `
-    <article class="post" data-p="${p.id}">
-      <div class="post-h">
-        <span class="cid">${esc(p.cid)}</span>
-        <span class="tierchip t-${p.tier || "standard"}">${esc(p.tier || "")}</span>
-        <span class="when">${ago(p.at)}</span>
+
+  const q = circuitQuery.trim().toLowerCase();
+  const filtered = feed.filter(p =>
+    (circuitTierFilter === "all" || (p.tier || "standard") === circuitTierFilter) &&
+    (!q || p.text.toLowerCase().includes(q)));
+
+  if (!filtered.length) {
+    el.innerHTML = `<div class="empty">No records match this filter.</div>`;
+    return;
+  }
+
+  const EVIDENCE_CONF = { self_attested: 0.55, corroborated: 0.78, confirmed: 0.95, flagged: 0.2 };
+
+  el.innerHTML = "";
+  filtered.forEach((p) => {
+    const tier = p.tier || "standard";
+    const conf = EVIDENCE_CONF[p.evidence || "self_attested"];
+    const card = document.createElement("article");
+    card.className = "card post";
+    card.dataset.p = p.id;
+    card.innerHTML = `
+      <div class="thumb"><canvas></canvas>
+        <div class="seal ${tier === "apex" ? "fin" : "semi"}">
+          ${sealSvg(tier)}
+          <div class="t">${SEAL_LABEL[tier] || SEAL_LABEL.standard}</div>
+        </div>
       </div>
-      <p class="post-body">${esc(p.text)}</p>
-      <div class="post-acts">
-        <button data-react="${p.id}" class="${reacted.includes(p.id) ? "on" : ""}">▲ ${p.reactions || 0}</button>
-        <button data-reply="${p.id}">${(p.replies || []).length} ${((p.replies || []).length === 1) ? "reply" : "replies"}</button>
-      </div>
-      ${(p.replies || []).length ? `<div class="replies">${p.replies.map(r =>
-        `<div class="reply"><b>${esc(r.cid)}</b> — ${esc(r.text)}</div>`).join("")}</div>` : ""}
-      <div class="replybox" hidden>
-        <input type="text" placeholder="Reply as ${esc(myId())} — no names, no employers">
-        <button class="btn sm" data-send="${p.id}">Post</button>
-      </div>
-    </article>`).join("");
+      <div class="meta">
+        <div class="nm">${esc(p.cid)}</div>
+        <div class="dc">${esc(tier)} clearance · ${ago(p.at)}</div>
+        <div class="cred">
+          <div class="credtop"><span>Evidence</span><span class="v">${conf.toFixed(2)}</span></div>
+          <div class="track"><div class="fill" style="width:${Math.round(conf * 100)}%"></div></div>
+        </div>
+        <p class="post-body">${esc(p.text)}</p>
+        <div class="post-acts">
+          <button data-react="${p.id}" class="${reacted.includes(p.id) ? "on" : ""}">▲ ${p.reactions || 0}</button>
+          <button data-reply="${p.id}">${(p.replies || []).length} ${((p.replies || []).length === 1) ? "reply" : "replies"}</button>
+        </div>
+        ${(p.replies || []).length ? `<div class="replies">${p.replies.map(r =>
+          `<div class="reply"><b>${esc(r.cid)}</b> — ${esc(r.text)}</div>`).join("")}</div>` : ""}
+        <div class="replybox" hidden>
+          <input type="text" placeholder="Reply as ${esc(myId())} — no names, no employers">
+          <button class="btn sm" data-send="${p.id}">Post</button>
+        </div>
+      </div>`;
+    el.appendChild(card);
+    specimen(card.querySelector("canvas"), hashSeed(p.id), tier, 420, 200 + (hashSeed(p.id) % 120));
+  });
 
   el.querySelectorAll("[data-react]").forEach(b => b.onclick = () => react(b.dataset.react));
   el.querySelectorAll("[data-reply]").forEach(b => b.onclick = () => {
@@ -1815,6 +2169,12 @@ async function renderCircuit() {
     box.hidden = !box.hidden; if (!box.hidden) box.querySelector("input").focus();
   });
   el.querySelectorAll("[data-send]").forEach(b => b.onclick = () => sendReply(b.dataset.send, b.previousElementSibling));
+}
+
+function hashSeed(str) {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) { h = (Math.imul(31, h) + str.charCodeAt(i)) | 0; }
+  return Math.abs(h) || 1;
 }
 
 async function react(id) {
@@ -1903,6 +2263,17 @@ document.getElementById("list-run").onclick = runListing;
 document.getElementById("search-run").onclick = runSearch;
 document.getElementById("search-q").addEventListener("keydown", e => { if (e.key === "Enter") runSearch(); });
 document.querySelectorAll("[data-myid]").forEach(el => el.textContent = myId());
+
+document.querySelectorAll("#circuit-chips .chip").forEach(chip => chip.onclick = () => {
+  document.querySelectorAll("#circuit-chips .chip").forEach(c => c.classList.remove("on"));
+  chip.classList.add("on");
+  circuitTierFilter = chip.dataset.tier;
+  renderCircuit();
+});
+const circuitQ = document.getElementById("circuit-q");
+circuitQ.addEventListener("input", () => { circuitQuery = circuitQ.value; renderCircuit(); });
+document.getElementById("circuit-search-btn").onclick = () => { circuitQuery = circuitQ.value; renderCircuit(); };
+
 envBanner();
 route();
 
