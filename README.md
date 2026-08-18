@@ -23,14 +23,34 @@ and the k-anonymity floor have a real cohort to measure against.
 Set the environment and the same code paths use the real thing instead:
 
 ```bash
-export ANTHROPIC_API_KEY=sk-...            # model-backed judgement
-export NEXT_PUBLIC_SUPABASE_URL=...        # Postgres persistence + RLS
-export NEXT_PUBLIC_SUPABASE_ANON_KEY=...
-export SUPABASE_SERVICE_ROLE_KEY=...
+export ANTHROPIC_API_KEY=sk-...        # model-backed judgement
+export SUPABASE_URL=...                # Postgres persistence + RLS
+export SUPABASE_ANON_KEY=...
+export SUPABASE_SERVICE_ROLE_KEY=...   # server-only, never NEXT_PUBLIC_
 ```
+
+Persistence switches on when `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are
+both present. Apply `supabase/migrations/00000000000001_phase1_schema.sql` first:
+it creates the tables, the RLS policies, and the CHECK constraint that makes an
+identity on an unapproved intro request impossible.
 
 `GET /api/status` reports which of these is live, so the deployment always
 describes itself rather than being taken on trust.
+
+## Deploying
+
+The app needs a Node server. It cannot be a static export or a GitHub Pages
+site: the pipeline streams over server-sent events, and six route handlers under
+`app/api/` do the work. Vercel, Fly, Render or a container all work; importing
+the repo into Vercel needs no configuration.
+
+**Configure Supabase for any deployment other people will use.** The in-memory
+store keeps its state on `globalThis`, which is per-process. That is fine for
+`next start`, where there is one process, but on serverless each instance has its
+own memory, so a record published on one request may be missing from the next.
+The seeded records survive (they are re-created on cold start) so the Circuit and
+search always work — but "submit a process and watch it appear in the Circuit",
+which is the part worth demoing, needs real persistence to be reliable.
 
 Redaction, the tier rules, the k=8 floor, evidence depth weighting, recency
 discounting, fail-closed publish gating and the intro approval gate are
