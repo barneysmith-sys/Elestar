@@ -5,3 +5,4 @@ package-lock.json
 .next/
 *.tsbuildinfo
 .DS_Store
+.screenshots/

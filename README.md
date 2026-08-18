@@ -1,6 +1,70 @@
-# elestar-agents
+# elestar
 
-The agent layer of elestar, packaged so it can be reviewed, tested and changed
+An intelligence layer for hiring. A candidate submits an interview process;
+Elestar redacts identity from it, structures it into rounds and competencies,
+sizes the evidence against deterministic tier rules, checks it against a
+k-anonymity floor, and publishes an anonymous record other people can search.
+Identity is only ever released by the candidate approving a specific intro.
+
+## Run it
+
+```bash
+npm install
+npm run dev            # http://localhost:3000
+```
+
+No credentials are required. With no `ANTHROPIC_API_KEY` the four judgement
+steps (parse, privacy audit, match, brief) run on the deterministic reasoners in
+`lib/reasoners/`, and every surface that shows their output is labelled
+`DEMO MODE · SIMULATED REASONING`. With no Supabase env vars, records persist to
+an in-memory store seeded with clearly-marked synthetic records so the Circuit
+and the k-anonymity floor have a real cohort to measure against.
+
+Set the environment and the same code paths use the real thing instead:
+
+```bash
+export ANTHROPIC_API_KEY=sk-...            # model-backed judgement
+export NEXT_PUBLIC_SUPABASE_URL=...        # Postgres persistence + RLS
+export NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+export SUPABASE_SERVICE_ROLE_KEY=...
+```
+
+`GET /api/status` reports which of these is live, so the deployment always
+describes itself rather than being taken on trust.
+
+Redaction, the tier rules, the k=8 floor, evidence depth weighting, recency
+discounting, fail-closed publish gating and the intro approval gate are
+deterministic. They are real in both modes.
+
+### Product surfaces
+
+| Route | What it is |
+|---|---|
+| `/` | What the product does, and the pipeline in order |
+| `/list` | Submit a process and watch the pipeline execute on it |
+| `/circuit` | The published pool, anonymous, filterable |
+| `/search` | Rank the pool against a role, with explicit gaps |
+| `/intros` | The candidate's inbox: approve or decline an intro |
+| `/brief` | The interview brief, gated on an approved intro |
+| `/system` | Which stages are rules and which are judgement |
+
+### Tests
+
+```bash
+npm run typecheck
+npm run eval:reasoners   # the judgement logic, in isolation
+npm run build && PORT=3111 npm start
+npm run eval:flow        # the product over HTTP, end to end
+```
+
+`eval:flow` asserts the negative cases that matter: a brief is refused before
+approval and after a decline, no identity appears on a pending or declined
+request, a record held by the privacy audit is unreachable by handle, and no
+submitted email, phone number or handle survives anywhere in the event stream.
+
+## The agent layer
+
+The agent layer is packaged so it can be reviewed, tested and changed
 independently of the app.
 
 Five agents. Each takes structured input, returns structured output, and is
@@ -24,9 +88,20 @@ agents/                      Subagent definitions for delegated work
 prompts/                     Framework-agnostic prompt templates
 src/                         TypeScript reference implementation (the agent layer)
 schemas/                     JSON Schema for every agent output
-evals/                       Fixtures + runner, so changes are measurable
-app/                         Next.js App Router routes
+evals/                       Fixtures + runners, so changes are measurable
+app/                         Next.js App Router routes and API endpoints
+components/                  The product console
+lib/                         Orchestration: pipeline, agent dispatch, persistence
+lib/reasoners/               Deterministic fallbacks for the judgement steps
+supabase/migrations/         Schema, RLS policies, and the privacy CHECK constraints
+public/art/                  Brand artwork
 ```
+
+`lib/` is where the app-side decisions live. `lib/agents.ts` dispatches each
+judgement step to a model or a deterministic reasoner and tags the result with
+which one ran; `lib/store.ts` is the only module that persists records, and it
+targets Supabase or the in-memory demo store behind one interface;
+`lib/pipeline.ts` orchestrates the listing flow and fails closed at every step.
 
 ## Install
 
@@ -59,6 +134,14 @@ npx tsx evals/run.ts          # sanity check against fixtures
 5. **The model proposes, a rule or a human disposes.** No agent in this package
    writes to the database, and none of them can raise a tier past what the
    deterministic rules in `references/tier-rules.md` allow.
+
+The app enforces these a second time, because a rule that only lives in a prompt
+is a request. `assertRedacted` throws at the agent boundary and the pipeline
+treats that throw as a full stop; a round-count confidence below 0.6 is held for
+review instead of published; `computeTier` re-runs after the parse and its
+verdict is shown next to the model's; and the k=8 floor overrides any judgement
+that says publish. The deterministic reasoners in `lib/reasoners/` obey the same
+five rules, so demo mode is not a mode with weaker guarantees.
 
 ## Model routing
 

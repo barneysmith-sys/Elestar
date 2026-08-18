@@ -9,6 +9,15 @@ const RequestZ = z.object({
   priorAnswers: z.record(z.string(), z.string()).optional(),
 });
 
+/**
+ * The original pipeline endpoint, kept intact.
+ *
+ * /api/pipeline supersedes it and is what the product calls: that one issues a
+ * demo session when Supabase isn't configured, so the flow works without
+ * credentials. This one deliberately keeps its original contract — a real
+ * authenticated Supabase user or a 401 — so any existing integration against
+ * it behaves exactly as it did.
+ */
 export async function POST(req: Request): Promise<Response> {
   const userId = await getAuthenticatedUserId();
   if (!userId) {
@@ -31,11 +40,11 @@ export async function POST(req: Request): Promise<Response> {
         for await (const message of runPipeline({ userId, description, priorAnswers })) {
           send(message);
         }
-      } catch (err) {
-        // Belt-and-suspenders: runPipeline already fails closed on every
-        // step it controls, but an unexpected throw here must still reach
-        // the client as an explicit failure, never a silently truncated
-        // stream that could read as "it worked."
+      } catch {
+        // Belt-and-suspenders: runPipeline already fails closed on every step
+        // it controls, but an unexpected throw here must still reach the client
+        // as an explicit failure, never a silently truncated stream that could
+        // read as "it worked."
         send({
           kind: "done",
           outcome: "withheld",

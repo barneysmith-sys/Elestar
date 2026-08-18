@@ -1,0 +1,48 @@
+/**
+ * What this deployment is actually able to do right now.
+ *
+ * Elestar has two independent external dependencies — a model provider for
+ * the judgement steps, and Supabase for persistence. Each can be absent, and
+ * the product has to stay honest about which one is missing rather than
+ * either crashing or quietly faking the part it can't do.
+ *
+ * The rule this file exists to enforce: deterministic Elestar logic
+ * (redaction, tier rules, the k-anonymity floor, depth/recency weighting)
+ * is ALWAYS real. Only the judgement steps degrade, and when they do the
+ * result is labelled `deterministic` all the way to the UI.
+ */
+
+export type Engine = "model" | "deterministic";
+
+export interface Capabilities {
+  /** A model provider is configured, so judgement steps run for real. */
+  model: boolean;
+  /** Supabase is configured, so records persist and RLS applies. */
+  persistence: boolean;
+}
+
+export function getCapabilities(): Capabilities {
+  return {
+    model: Boolean(process.env.ANTHROPIC_API_KEY),
+    persistence: Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY),
+  };
+}
+
+export function reasoningEngine(): Engine {
+  return getCapabilities().model ? "model" : "deterministic";
+}
+
+/**
+ * The single sentence the UI is allowed to show about its own honesty.
+ * Deliberately not configurable — if reasoning is simulated, every surface
+ * says so in the same words.
+ */
+export function engineLabel(engine: Engine): string {
+  return engine === "model"
+    ? "LIVE REASONING · MODEL-BACKED"
+    : "DEMO MODE · SIMULATED REASONING";
+}
+
+export function persistenceLabel(persistence: boolean): string {
+  return persistence ? "SUPABASE · RLS ENFORCED" : "DEMO STORE · IN-MEMORY";
+}

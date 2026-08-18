@@ -9,6 +9,8 @@
     "build": "next build",
     "start": "next start",
     "eval": "tsx evals/run.ts",
+    "eval:reasoners": "tsx evals/reasoners.ts",
+    "eval:flow": "tsx evals/flow.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
