@@ -601,6 +601,8 @@
   .reply{ font-size:13px; line-height:1.6; padding:6px 0; color:var(--ink-soft); }
   .reply b{ font-family:var(--font-m); font-size:11px; color:var(--stamp); font-weight:500; }
   .replybox{ display:flex; gap:var(--s-2); margin-top:var(--s-3); }
+  .record-detail{ margin-top:var(--s-4); }
+  .record-detail .rec{ background:var(--paper); }
   .replybox input{ flex:1; background:var(--paper); border:1px solid var(--line); border-radius:var(--r-sm); padding:9px 11px;
     font-family:var(--font-b); font-size:13px; color:var(--ink); }
 
@@ -640,6 +642,57 @@
     .qbar{ flex-direction:column; }
   }
 
+  /* ============ CONSOLE / DASHBOARD ============ */
+  .console-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:var(--s-6); flex-wrap:wrap;
+    padding-bottom:var(--s-5); border-bottom:1px solid var(--line); margin-bottom:var(--s-6); }
+  .console-head h1{ font-family:var(--font-d); font-weight:800; font-size:clamp(26px,3.4vw,38px); line-height:1.04; margin:var(--s-2) 0 var(--s-3); letter-spacing:-.03em; }
+  .console-head p{ font-size:14px; color:var(--ink-soft); max-width:56ch; margin:0; line-height:1.6; }
+  .console-links{ display:flex; gap:var(--s-2); flex-wrap:wrap; font-family:var(--font-m); font-size:11px; letter-spacing:.04em; }
+  .console-links a{ text-decoration:none; color:var(--ink-soft); border:1px solid var(--line-2); border-radius:var(--r-sm); padding:8px 12px; white-space:nowrap; transition:border-color .15s var(--ease), color .15s var(--ease); }
+  .console-links a:hover{ border-color:var(--stamp); color:var(--stamp); }
+
+  .status-strip{ display:grid; grid-template-columns:repeat(4,1fr); gap:var(--s-3); margin-bottom:var(--s-7); }
+  @media (max-width:860px){ .status-strip{ grid-template-columns:1fr 1fr; } }
+  @media (max-width:480px){ .status-strip{ grid-template-columns:1fr; } }
+  .status-chip{ background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md); padding:var(--s-4) var(--s-4); }
+  .status-chip .sc-label{ font-family:var(--font-m); font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft); display:block; margin-bottom:6px; }
+  .status-chip .sc-val{ font-family:var(--font-d); font-weight:700; font-size:22px; letter-spacing:-.015em; display:flex; align-items:center; gap:8px; }
+  .status-dot{ width:8px; height:8px; border-radius:50%; background:var(--tier3); flex:none; display:inline-block; }
+  .status-dot.sim{ background:var(--brass); }
+  .status-dot.off{ background:var(--ink-soft-2); }
+
+  .activity-list{ border:1px solid var(--line); border-radius:var(--r-md); background:var(--surface); }
+  .activity-item{ display:flex; justify-content:space-between; gap:var(--s-4); padding:11px var(--s-4); border-bottom:1px dotted var(--line); font-size:12.5px; }
+  .activity-item:last-child{ border-bottom:none; }
+  .activity-item .at-text{ color:var(--ink); }
+  .activity-item .at-meta{ font-family:var(--font-m); font-size:10.5px; color:var(--ink-soft); white-space:nowrap; }
+
+  .demo-panel{ border:1px solid var(--line-2); border-radius:var(--r-lg); background:var(--surface); padding:var(--s-6); box-shadow:var(--shadow-card); }
+  .demo-actions{ display:flex; gap:var(--s-3); align-items:center; flex-wrap:wrap; }
+  .demo-actions .btn.ghost-mini{ background:transparent; border-color:var(--line-2); color:var(--ink-soft); }
+  .demo-actions .btn.ghost-mini:hover{ background:var(--paper-dark); color:var(--ink); }
+
+  .jsonblock{ border:1px solid var(--line); border-radius:var(--r-sm); background:var(--paper-dark); margin-top:10px; overflow:hidden; }
+  .jsonblock summary{ cursor:pointer; list-style:none; font-family:var(--font-m); font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--stamp-dark); padding:9px 13px; user-select:none; }
+  .jsonblock summary::-webkit-details-marker{ display:none; }
+  .jsonblock summary::before{ content:"▸ "; }
+  .jsonblock[open] summary::before{ content:"▾ "; }
+  .jsonblock pre{ margin:0; padding:12px 14px 14px; font-family:var(--font-m); font-size:11px; line-height:1.55; color:var(--ink); overflow-x:auto; border-top:1px dashed var(--line-2); background:var(--surface); white-space:pre-wrap; word-break:break-word; }
+
+  .agent-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:var(--s-4); }
+  @media (max-width:980px){ .agent-grid{ grid-template-columns:1fr 1fr; } }
+  @media (max-width:640px){ .agent-grid{ grid-template-columns:1fr; } }
+  .agent-card{ border:1px solid var(--line); border-radius:var(--r-md); background:var(--surface); padding:var(--s-5); display:flex; flex-direction:column; gap:10px; }
+  .agent-card .ac-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:var(--s-3); }
+  .agent-card h3{ font-family:var(--font-d); font-weight:700; font-size:17px; margin:0; letter-spacing:-.01em; }
+  .agent-kind{ font-family:var(--font-m); font-size:9.5px; letter-spacing:.08em; text-transform:uppercase; border:1px solid currentColor; border-radius:var(--r-sm); padding:3px 8px; white-space:nowrap; flex:none; }
+  .agent-kind.det{ color:var(--tier3); }
+  .agent-kind.model{ color:var(--stamp-dark); }
+  .agent-card p.desc{ font-size:12.5px; color:var(--ink-soft); line-height:1.55; margin:0; }
+  .agent-io{ font-family:var(--font-m); font-size:10.5px; color:var(--ink-soft); line-height:1.7; border-top:1px dashed var(--line); padding-top:8px; }
+  .agent-io b{ color:var(--ink); font-weight:600; }
+  .agent-status{ font-family:var(--font-m); font-size:10.5px; letter-spacing:.04em; display:flex; align-items:center; gap:6px; margin-top:2px; }
+
 </style>
 </head>
 <body>
@@ -653,32 +706,29 @@
       <span class="mono filecode">FILE&nbsp;NO.&nbsp;004</span>
     </a>
     <nav class="tabs" aria-label="Section navigation">
-      <a href="#circuit">Circuit</a>
-      <a href="#tracks">How It Works</a>
-      <a href="#tiers">Tiers</a>
-      <a href="#verification">Verification</a>
-      <a href="#ai">AI</a>
-      <a href="#pricing">Access</a>
+      <a href="#/dashboard" class="approute">Console</a>
+      <a href="#/dashboard#agents" class="approute">Agents</a>
       <a href="#/circuit" class="approute">Circuit&nbsp;Feed</a>
       <a href="#/search" class="approute">Search</a>
       <a href="#/intros" class="approute">Intros</a>
+      <a href="#/landing" class="approute">About</a>
     </nav>
-    <div class="switch navswitch" role="group" aria-label="Choose your side of elestar">
-      <button type="button" id="btn-hiring" aria-pressed="true">Hiring</button>
-      <button type="button" id="btn-candidate" aria-pressed="false">Candidate</button>
-    </div>
     <div class="topbar-ctas">
-      <a href="#/list" class="cta-small">List Your Rounds</a>
-      <a href="#/search" class="cta-small solid">Request Access</a>
+      <a href="#/dashboard" class="cta-small">Run the Pipeline</a>
+      <a href="#/search" class="cta-small solid">Search the Pool</a>
     </div>
   </div>
 </div>
 
-<div class="page" id="page-landing">
+<div class="page" id="page-landing" hidden>
 <header class="hero">
   <div class="hero-blob" aria-hidden="true"></div>
   <div class="wrap">
     <div class="hero-content">
+      <div class="switch navswitch" role="group" aria-label="Choose your side of elestar" style="margin-bottom:var(--s-5)">
+        <button type="button" id="btn-hiring" aria-pressed="true">Hiring</button>
+        <button type="button" id="btn-candidate" aria-pressed="false">Candidate</button>
+      </div>
       <div id="audience-hiring">
         <span class="eyebrow mono">For Recruiting Teams</span>
         <h1>They got 80% of<br>the way to <em>yes.</em></h1>
@@ -1168,26 +1218,61 @@
   </div>
 </div>
 
-<!-- ============ LIST A PROCESS ============ -->
-<div class="page appview" id="page-list" hidden>
+<!-- ============ DASHBOARD / CONSOLE (default view) ============ -->
+<div class="page appview" id="page-dashboard" hidden>
   <div class="wrap">
-    <div class="app-head">
+    <div class="console-head">
       <div>
-        <span class="section-tag">List a process</span>
-        <h1>Describe it. The agent does the rest.</h1>
+        <span class="section-tag mono">elestar · agent console</span>
+        <h1>An anonymous interview record, built by five small agents.</h1>
+        <p>A candidate describes an interview loop in plain text. Redaction strips anything identifying, a
+        parser turns it into structured data, a deterministic rule sets the clearance tier, a privacy audit
+        checks it can't be traced back to one person, and — only then — it's published to the circuit. Run
+        it below with your own text, or the example provided, and watch every step's actual output.</p>
       </div>
-      <p>No form. Write what you went through the way you'd tell a friend, and the pipeline below turns it into a structured, anonymous record.</p>
+      <div class="console-links">
+        <a href="#agents">Agents ↓</a>
+        <a href="#/circuit">Circuit feed</a>
+        <a href="#/search">Search &amp; match</a>
+        <a href="#/intros">Intros &amp; briefs</a>
+        <a href="#/landing">About / marketing site</a>
+      </div>
+    </div>
+
+    <div class="status-strip" id="dash-status">
+      <div class="status-chip">
+        <span class="sc-label mono">Records in the circuit</span>
+        <span class="sc-val mono" id="dash-stat-records">—</span>
+      </div>
+      <div class="status-chip">
+        <span class="sc-label mono">Feed posts</span>
+        <span class="sc-val mono" id="dash-stat-posts">—</span>
+      </div>
+      <div class="status-chip">
+        <span class="sc-label mono">Open intro requests</span>
+        <span class="sc-val mono" id="dash-stat-intros">—</span>
+      </div>
+      <div class="status-chip">
+        <span class="sc-label mono">Model calls this session</span>
+        <span class="sc-val mono"><span class="status-dot" id="dash-mode-dot"></span><span id="dash-mode-label">—</span></span>
+      </div>
     </div>
 
     <div data-envbanner></div>
-    <div class="cols wide-left">
-      <div>
+
+    <div class="cols wide-left" style="margin-top:var(--s-6)">
+      <div class="demo-panel">
+        <span class="section-tag mono">Live demo</span>
+        <h2 style="margin:var(--s-2) 0 var(--s-4)">Run the pipeline on a real description</h2>
         <div class="field">
           <label for="list-input">What happened</label>
           <textarea id="list-input" placeholder="e.g. I interviewed at a Series B fintech, maybe 300 people, for a senior backend role. Recruiter screen, then a coding round in Go, then a system design session, then a take-home on rate limiting which we reviewed in a follow-up call, then a final panel with two engineers and the VP. Took about five weeks. They went with someone internal in the end."></textarea>
           <p class="hint">Rounds you <b>completed</b> — not how far you were told you'd get. Don't include your name or your employer's; anything identifying is stripped before the model sees a word of it.</p>
         </div>
-        <button class="btn solid" id="list-run">Run the pipeline</button>
+        <div class="demo-actions">
+          <button class="btn solid" id="list-run">Run the pipeline</button>
+          <button class="btn ghost-mini" id="list-example" type="button">Load example</button>
+        </div>
         <div id="list-out" style="margin-top:24px"></div>
       </div>
 
@@ -1202,8 +1287,58 @@
         </div>
         <h4 style="margin-top:28px">Why five steps</h4>
         <p>Redaction runs first and always — if it fails, nothing proceeds. The model proposes a tier but a deterministic rule decides it, and that rule can lower the proposal, never raise it. Brand is not an input: a famous company with one screening call is Standard.</p>
-        <p>The audit checks how many other live records share your combination of tier, function and region. Below eight, detail gets generalized until it clears. Every step fails closed.</p>
+        <p>The audit checks how many other live records share your combination of tier, function and region. Below eight, detail gets generalized until it clears. Every step fails closed. Expand any "Show output" box in the demo panel to see exactly what each step produced.</p>
       </div>
+    </div>
+
+    <div id="agents" style="margin-top:var(--s-9)">
+      <span class="section-tag mono">Agent layer</span>
+      <h2 style="margin:var(--s-2) 0 var(--s-2)">Five agents, one per job.</h2>
+      <p class="hint" style="margin-bottom:var(--s-6);max-width:70ch">Each one is a narrow, single-purpose call with its own schema and its own failure mode — not one general-purpose prompt. Three run live in this demo (simulated when no API key is set, so the product stays fully clickable); two describe how the production system works but aren't wired into this static build.</p>
+      <div class="agent-grid">
+        <div class="agent-card">
+          <div class="ac-top"><h3>Process Parser</h3><span class="agent-kind model">Model</span></div>
+          <p class="desc">Turns a candidate's freeform paragraph into a structured record — rounds, competencies tested, outcome, a proposed tier — or asks a clarifying question if the count is genuinely ambiguous.</p>
+          <div class="agent-io"><b>In:</b> redacted free text + prior answers<br><b>Out:</b> ParsedProcess JSON (rounds, competencies, proposedTier, questions)</div>
+          <div class="agent-status mono"><span class="status-dot" data-agent-dot="parser"></span><span data-agent-status="parser">—</span></div>
+        </div>
+        <div class="agent-card">
+          <div class="ac-top"><h3>Record Matcher</h3><span class="agent-kind model">Model</span></div>
+          <p class="desc">Ranks anonymized records against a role description by competency overlap, not keywords — every result names at least one gap, never just a pitch.</p>
+          <div class="agent-io"><b>In:</b> role text + candidate pool (already floor-filtered)<br><b>Out:</b> fitScore, matched[], gaps[], rationale per record</div>
+          <div class="agent-status mono"><span class="status-dot" data-agent-dot="matcher"></span><span data-agent-status="matcher">—</span></div>
+        </div>
+        <div class="agent-card">
+          <div class="ac-top"><h3>Interview Brief</h3><span class="agent-kind model">Model</span></div>
+          <p class="desc">Written once an intro is approved: what's already been assessed, what's safe to skip, what to probe instead. This is what makes "start at round four" real.</p>
+          <div class="agent-io"><b>In:</b> the approved record<br><b>Out:</b> alreadyAssessed[], safeToSkip[], probeInstead[], neverSkip[], recommendedQuestions[]</div>
+          <div class="agent-status mono"><span class="status-dot" data-agent-dot="brief"></span><span data-agent-status="brief">—</span></div>
+        </div>
+        <div class="agent-card">
+          <div class="ac-top"><h3>Redaction</h3><span class="agent-kind det">Deterministic</span></div>
+          <p class="desc">Regex pass that strips emails, phone numbers, URLs and @handles before any text reaches a model. Runs first, always, on every listing and every reply.</p>
+          <div class="agent-io"><b>In:</b> raw candidate text<br><b>Out:</b> cleaned text + count of what was removed</div>
+          <div class="agent-status mono"><span class="status-dot"></span><span>Always active — no model in the loop</span></div>
+        </div>
+        <div class="agent-card">
+          <div class="ac-top"><h3>Redaction Audit</h3><span class="agent-kind det">Deterministic here</span></div>
+          <p class="desc">Checks a record against the live pool before publish: does it share tier, function and region with at least 8 others? Below that floor, detail is generalized until it clears — never published thin.</p>
+          <div class="agent-io"><b>In:</b> the record + a live cohort count<br><b>Out:</b> k, decision (publish / generalize), generalization steps</div>
+          <div class="agent-status mono"><span class="status-dot"></span><span>Active — the k-anonymity floor is code, not a model call, in both this demo and production (the model-scored risk pass in <code>src/redactionAudit.ts</code> isn't wired into this static build)</span></div>
+        </div>
+        <div class="agent-card">
+          <div class="ac-top"><h3>Pattern Review</h3><span class="agent-kind model">Model · batch</span></div>
+          <p class="desc">Phase-2 fraud/inflation detection — reads across the pool for records that don't match a company's typical process, reused evidence, or coordinated gaming. Runs in batch, never on the write path.</p>
+          <div class="agent-io"><b>In:</b> a record + pool statistics + near-duplicate score<br><b>Out:</b> signals[], recommendation (clear/flag/hold)</div>
+          <div class="agent-status mono"><span class="status-dot off"></span><span>Not wired into this demo — no write-path or admin queue exists here yet</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:var(--s-9)">
+      <span class="section-tag mono">Recent activity</span>
+      <h2 style="margin:var(--s-2) 0 var(--s-5)">What's happened on this circuit</h2>
+      <div class="activity-list" id="dash-activity"></div>
     </div>
   </div>
 </div>
@@ -1287,8 +1422,8 @@
     hiringBtn.setAttribute('aria-pressed', String(isHiring));
     candidateBtn.setAttribute('aria-pressed', String(!isHiring));
   }
-  hiringBtn.addEventListener('click', () => setAudience('hiring'));
-  candidateBtn.addEventListener('click', () => setAudience('candidate'));
+  hiringBtn?.addEventListener('click', () => setAudience('hiring'));
+  candidateBtn?.addEventListener('click', () => setAudience('candidate'));
 
   // Only in-page anchors take part in scroll tracking. App routes (#/circuit,
   // #/search, #/intros) are handled by the router and are not valid selectors.
@@ -1448,10 +1583,10 @@ function envBanner() {
   const has = !!apiKey();
   document.querySelectorAll("[data-envbanner]").forEach(el => {
     el.innerHTML = `<div class="notice">
-      <b>${has ? "Running standalone." : "Agent steps need a key."}</b>
+      <b>${has ? "Running standalone." : "Demo mode — simulated analysis."}</b>
       This is the hosted build, so the circuit is stored in your own browser rather than shared,
       ${has ? "and agent calls use the key you supplied."
-            : "and the agent steps are inactive until you add an Anthropic API key."}
+            : "and the analysis steps run a local simulation instead of a live model call — same pipeline, same tier and redaction rules, just no real Claude call yet. Add a key below for live model analysis."}
       <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
         <input type="password" id="k-in" placeholder="sk-ant-..." style="flex:1;min-width:220px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);padding:9px 11px;font-family:var(--font-m);font-size:12px;color:var(--ink)">
         <button class="btn sm" id="k-save">${has ? "Replace key" : "Save key"}</button>
@@ -1470,6 +1605,50 @@ function envBanner() {
   document.querySelectorAll("#k-clear").forEach(b => b.onclick = () => {
     setApiKey(""); toast("Key removed."); envBanner();
   });
+  updateAgentStatuses();
+}
+
+/* ============================================================
+   DASHBOARD / CONSOLE
+   ============================================================ */
+function updateAgentStatuses() {
+  const live = !HOSTED || !!apiKey();
+  ["parser", "matcher", "brief"].forEach(id => {
+    const dot = document.querySelector(`[data-agent-dot="${id}"]`);
+    const label = document.querySelector(`[data-agent-status="${id}"]`);
+    if (dot) dot.className = "status-dot" + (live ? "" : " sim");
+    if (label) label.textContent = live ? "Live — calls the Anthropic API" : "Simulated — no API key set, runs a local heuristic with the same schema";
+  });
+  const modeDot = document.getElementById("dash-mode-dot");
+  const modeLabel = document.getElementById("dash-mode-label");
+  if (modeDot) modeDot.className = "status-dot" + (live ? "" : " sim");
+  if (modeLabel) modeLabel.textContent = live ? "Live model" : "Simulated (demo mode)";
+}
+
+async function renderDashboard() {
+  updateAgentStatuses();
+  const [pool, feed, intros] = await Promise.all([
+    sget("elestar:records", true, []),
+    sget("elestar:circuit", true, null),
+    sget("elestar:intros", true, []),
+  ]);
+  const feedList = feed || SEED;
+  const recEl = document.getElementById("dash-stat-records");
+  const postEl = document.getElementById("dash-stat-posts");
+  const introEl = document.getElementById("dash-stat-intros");
+  if (recEl) recEl.textContent = (pool || []).length;
+  if (postEl) postEl.textContent = feedList.length;
+  if (introEl) introEl.textContent = (intros || []).filter(i => i.status === "pending").length;
+
+  const act = document.getElementById("dash-activity");
+  if (!act) return;
+  const recent = feedList.slice(0, 6);
+  act.innerHTML = recent.length
+    ? recent.map(p => `<div class="activity-item">
+        <span class="at-text">${esc(p.cid)} — ${esc(p.text)}</span>
+        <span class="at-meta">${esc((p.tier || "standard"))} · ${ago(p.at)} ago</span>
+      </div>`).join("")
+    : `<div class="activity-item"><span class="at-text">Nothing listed yet — run the pipeline above to seed the circuit.</span></div>`;
 }
 
 const K_FLOOR = 8;                       // k-anonymity floor before publish
@@ -1659,9 +1838,175 @@ function generalize(record) {
 }
 
 /* ---------- agent ---------- */
+/* ============================================================
+   DEMO-MODE FALLBACK
+   When there's no live model to call (no API key, or the API is
+   unreachable), the pipeline still has to be demoable end-to-end —
+   a founder showing this to a cofounder can't be blocked on typing
+   in a key first. These heuristics run against the SAME redacted
+   text and produce the SAME schema shape the real agent returns, so
+   everything downstream (computeTier, k-anonymity, matching, briefs)
+   is exercised for real. Only the "what would the model conclude"
+   step is simulated, and the UI says so rather than pretending.
+   ============================================================ */
+let usedSimulatedAnalysis = false;
+
+const ROUND_PATTERNS = [
+  { rx: /take[\s-]?home/i, type: "take_home", label: "Take-home" },
+  { rx: /system design/i, type: "system_design", label: "System design" },
+  { rx: /\bcase (study|round|interview)\b/i, type: "case", label: "Case study" },
+  { rx: /\b(onsite|on-site|final panel|final round|committee|offer[\s-]stage)\b/i, type: "final", label: "Final round" },
+  { rx: /(?<!final )(?<!final-)\bpanel\b/i, type: "panel", label: "Panel" },
+  { rx: /\b(coding|technical|algorithm|whiteboard)\b/i, type: "technical", label: "Technical" },
+  { rx: /\b(recruiter screen|phone screen|intro call|screening call|\bscreen\b)/i, type: "screen", label: "Recruiter screen" },
+  { rx: /\b(behavioral|culture fit|hiring manager|hm chat)\b/i, type: "other", label: "Hiring manager conversation" },
+];
+const VAGUE_RX = /\b(a few|some|couple( of)?|several)\b[^.]{0,25}(technical|interview|round|call)/i;
+const OUTCOME_RX = [
+  [/went with (someone|a candidate) internal|filled internally/i, "internal_candidate"],
+  [/req (was )?closed|role (was )?closed|headcount (was )?(pulled|frozen)|position (was )?cancell?ed/i, "req_closed"],
+  [/went with (someone|another candidate)|another candidate|competitive|chose someone else/i, "competitive_loss"],
+  [/comp(ensation)? (mismatch|didn't align|too low)|salary|level (mismatch|disagreement)/i, "comp_mismatch"],
+  [/withdrew|pulled out|decided not to continue|dropped out/i, "candidate_withdrew"],
+  [/below (the )?bar|didn't pass|not (a )?good fit|performance/i, "performance"],
+];
+const SECTOR_RX = [
+  [/fintech|payments|banking/i, "fintech"], [/health(care)?|biotech|medtech/i, "healthcare"],
+  [/e-?commerce|retail/i, "e-commerce"], [/\bsaas\b|enterprise software/i, "enterprise software"],
+  [/\bai\b|machine learning|\bml\b/i, "AI/ML"], [/crypto|web3|blockchain/i, "crypto"],
+  [/gaming|game studio/i, "gaming"], [/logistics|supply chain/i, "logistics"],
+];
+
+const NUMBER_WORDS = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10 };
+function extractNumber(str) {
+  if (!str) return null;
+  const digit = str.match(/\b(\d{1,2})\b/);
+  if (digit) return Number(digit[1]);
+  const word = str.toLowerCase().match(/\b(one|two|three|four|five|six|seven|eight|nine|ten)\b/);
+  return word ? NUMBER_WORDS[word[1]] : null;
+}
+
+function mockParse(userText) {
+  const desc = (userText.match(/<description>([\s\S]*?)<\/description>/) || [, userText])[1];
+  const clarifications = (userText.match(/<clarifications>([\s\S]*?)<\/clarifications>/) || [])[1];
+  const vagueMatch = desc.match(VAGUE_RX);
+
+  const rounds = [];
+  const seen = new Set();
+  for (const p of ROUND_PATTERNS) {
+    if (p.rx.test(desc) && !seen.has(p.type)) {
+      seen.add(p.type);
+      rounds.push({ index: rounds.length + 1, type: p.type, label: p.label, cleared: true });
+    }
+  }
+  if (!rounds.length) rounds.push({ index: 1, type: "screen", label: "Recruiter screen", cleared: true });
+
+  // A clarification answer with a real number resolves the vague round
+  // count directly, rather than re-running the same heuristic on text
+  // that hasn't changed — that's what made the same question loop before.
+  const clarifiedCount = clarifications ? extractNumber(clarifications) : null;
+  if (vagueMatch && clarifiedCount) {
+    const vagueType = /technical/i.test(vagueMatch[0]) ? "technical" : "other";
+    const pattern = ROUND_PATTERNS.find(p => p.type === vagueType);
+    const expanded = Array.from({ length: clarifiedCount }, (_, i) => ({ type: vagueType, label: `${pattern?.label || "Interview"} ${i + 1}` }));
+    const idx = rounds.findIndex(r => r.type === vagueType);
+    if (idx >= 0) rounds.splice(idx, 1, ...expanded); else rounds.push(...expanded);
+    rounds.forEach((r, i) => { r.index = i + 1; r.cleared = true; });
+  }
+
+  const vague = !!vagueMatch && !clarifiedCount;
+  let roundsConfidence = vague ? 0.45 : 0.82;
+  const questions = vague ? ["How many rounds were there in total — can you give an exact number?"] : [];
+
+  let outcome = "unstated";
+  for (const [rx, val] of OUTCOME_RX) if (rx.test(desc)) { outcome = val; break; }
+
+  let sector = null;
+  for (const [rx, val] of SECTOR_RX) if (rx.test(desc)) { sector = val; break; }
+  const sizeMatch = desc.match(/[~about]*\s?(\d{2,5})\s*(?:people|employees)/i);
+  // Weeks can be written as a digit ("4-week") or a number word ("four-week") —
+  // the digit-only version silently dropped loopLengthWeeks (and therefore the
+  // <2-week/6-round demotion rule) on any description using the word form.
+  const weeksMatch = desc.match(/\b(\d+|one|two|three|four|five|six|seven|eight|nine|ten)[\s-]?week/i);
+  const weeksRaw = weeksMatch ? weeksMatch[1].toLowerCase() : null;
+  const loopWeeksParsed = weeksRaw ? (Number(weeksRaw) || NUMBER_WORDS[weeksRaw] || null) : null;
+  const stage = /series [a-e]\b/i.test(desc) ? desc.match(/series [a-e]\b/i)[0] : (/\bpublic\b/i.test(desc) ? "public" : null);
+
+  const compTypes = [...new Set(rounds.map(r => r.type))]
+    .filter(t => ["system_design", "technical", "case", "take_home"].includes(t))
+    .slice(0, 5);
+  const competencies = compTypes.map(t => ({
+    name: t === "system_design" ? "system design" : t === "take_home" ? "applied problem-solving" : t === "case" ? "case reasoning" : "coding",
+    depth: "assessed",
+  }));
+  if (!competencies.length) competencies.push({ name: "role fundamentals", depth: "mentioned" });
+
+  const roundsCleared = rounds.length;
+  const loopLengthWeeks = loopWeeksParsed;
+  const proposedTier = computeTier({ roundsCleared, roundsConfidence, loopLengthWeeks, knownOfferRate: null });
+
+  const headline = `cleared a ${roundsCleared}-round${sector ? " " + sector : ""} loop — ${rounds.slice(0, 2).map(r => r.label.toLowerCase()).join(", then ")}`;
+
+  return {
+    rounds, roundsCleared, roundsTotal: roundsCleared, roundsConfidence,
+    processType: "external", function: "", seniority: "",
+    employerProfile: { sector, stage, sizeBand: sizeMatch ? sizeMatch[1] : null, region: null },
+    loopLengthWeeks, outcome, competencies, proposedTier, questions, headline,
+  };
+}
+
+function mockMatch(userJson) {
+  const { role, candidates } = JSON.parse(userJson);
+  const roleWords = new Set((role.toLowerCase().match(/[a-z]+/g) || []));
+  const results = candidates.map(c => {
+    const compNames = (c.competencies || []).map(x => (x.name || "").toLowerCase());
+    const matched = compNames.filter(n => [...roleWords].some(w => n.includes(w) || w.includes(n)));
+    const overlap = compNames.length ? matched.length / compNames.length : 0;
+    const fitScore = Math.round(Math.min(96, 30 + overlap * 55 + (c.tier === "apex" ? 8 : c.tier === "elite" ? 5 : 0)));
+    const unmatched = compNames.filter(n => !matched.includes(n));
+    const gap = unmatched[0] || "a full round on this specific stack";
+    return {
+      recordId: c.recordId, fitScore,
+      matched: matched.length ? matched : compNames.slice(0, 1),
+      gaps: [gap],
+      rationale: `Overlaps on ${matched.length ? matched.join(", ") : "the general shape of the loop"}; no signal yet on ${gap}.`,
+    };
+  });
+  return { results };
+}
+
+const COMPETENCY_ROUND_TYPE = {
+  "system design": "system_design", "applied problem-solving": "take_home",
+  "case reasoning": "case", coding: "technical",
+};
+
+function mockBrief(userJson) {
+  const { record } = JSON.parse(userJson);
+  const comps = record.competencies || [];
+  const rounds = record.rounds || [];
+  const roundFor = (compName) => rounds.find(r => r.type === COMPETENCY_ROUND_TYPE[compName]) || rounds[0];
+  const alreadyAssessed = comps.map(c => ({ competency: c.name, depth: c.depth, format: roundFor(c.name)?.label || "interview" }));
+  const safeToSkip = comps.filter(c => c.depth === "assessed").slice(0, 2)
+    .map(c => ({ round: roundFor(c.name)?.label || c.name, redundantWith: "their prior loop" }));
+  const probeInstead = comps.filter(c => c.depth !== "assessed").map(c => c.name);
+  const neverSkip = ["Team fit and working style", "Anything domain-specific to your company", "The final decision-maker conversation"];
+  const outcomeContext = OUTCOME_LABEL[record.outcome] ? `Their prior loop ended in: ${OUTCOME_LABEL[record.outcome]}. No further detail was given.` : "No outcome was stated.";
+  // A concrete question per gap, not just the gap's name — this is what
+  // an interviewer actually reads off the brief before the call.
+  const recommendedQuestions = probeInstead.length
+    ? probeInstead.map(name => `Walk me through a recent example that shows your ${name}.`)
+    : ["Their loop already assessed everything on this brief — ask about team fit and what they're optimizing for next."];
+  return { alreadyAssessed, safeToSkip, probeInstead, neverSkip, outcomeContext, recommendedQuestions };
+}
+
 async function askClaude(system, user, maxTokens = 1600) {
   if (HOSTED && !apiKey()) {
-    throw new Error("no API key set — add one in the banner above, or run this inside Claude");
+    usedSimulatedAnalysis = true;
+    await new Promise(r => setTimeout(r, 450 + Math.random() * 300));
+    if (system === PARSE_SYSTEM) return mockParse(user);
+    if (system === MATCH_SYSTEM) return mockMatch(user);
+    if (system === BRIEF_SYSTEM) return mockBrief(user);
+    throw new Error("no simulated path for this step");
   }
   const headers = { "Content-Type": "application/json" };
   if (HOSTED) {
@@ -1746,29 +2091,52 @@ Report the previous outcome without softening or dramatising. "req_closed" is th
 and carries no negative signal. If "unstated", say the candidate gave no reason and speculate about
 nothing. No adjectives about the candidate. No sales language.
 
+recommendedQuestions: one concrete, askable question per item in probeInstead — specific enough to
+use verbatim in an interview, not a restatement of the gap's name.
+
 Return ONLY: {"alreadyAssessed":[{"competency":"","depth":"","format":""}],
-"safeToSkip":[{"round":"","redundantWith":""}],"probeInstead":[""],"neverSkip":[""],"outcomeContext":""}`;
+"safeToSkip":[{"round":"","redundantWith":""}],"probeInstead":[""],"neverSkip":[""],
+"recommendedQuestions":[""],"outcomeContext":""}`;
 
 /* ============================================================
    ROUTER
    ============================================================ */
-const PAGES = ["landing", "circuit", "list", "search", "intros"];
+const PAGES = ["dashboard", "landing", "circuit", "search", "intros"];
 function route() {
   const h = location.hash;
   const m = h.match(/^#\/(\w+)/);
-  const name = m && PAGES.includes(m[1]) ? m[1] : "landing";
+  // #/list is the old route name for what is now the dashboard's live-demo
+  // panel — kept as an alias so any bookmarked/external link still resolves.
+  const raw = m ? (m[1] === "list" ? "dashboard" : m[1]) : "dashboard";
+  const name = PAGES.includes(raw) ? raw : "dashboard";
   PAGES.forEach(p => {
     const el = document.getElementById("page-" + p);
-    if (el) el.hidden = p !== name;
+    if (!el) return;
+    el.hidden = p !== name;
+    if (el.hidden) {
+      // Leaving a page collapses any expanded record detail in it, so a
+      // hidden page never leaves a live, still-bound [data-intro] button
+      // sitting in the document after you've moved on from it.
+      el.querySelectorAll(".record-detail:not([hidden])").forEach(d => { d.hidden = true; });
+      el.querySelectorAll("[data-view]").forEach(b => { b.textContent = "Open record"; });
+    }
   });
   document.querySelectorAll(".tabs a.approute").forEach(a =>
     a.classList.toggle("active", a.getAttribute("href") === "#/" + name));
   if (name !== "landing") window.scrollTo(0, 0);
+  if (name === "dashboard") renderDashboard();
   if (name === "circuit") renderCircuit();
   if (name === "intros") renderIntros();
   if (name === "search") renderSearchIdle();
 }
 window.addEventListener("hashchange", route);
+
+/* Renders a step's real structured output as a collapsible JSON panel, so
+   someone watching the demo can see exactly what each agent produced
+   rather than just a pass/fail trace line. */
+function jsonBlock(label, obj, opened = false) {
+  return `<details class="jsonblock"${opened ? " open" : ""}><summary>${esc(label)}</summary><pre>${esc(JSON.stringify(obj, null, 2))}</pre></details>`;
+}
 
 function toast(msg, ms = 3200) {
   const t = document.createElement("div");
@@ -1815,6 +2183,12 @@ async function runListing() {
 
   const btn = document.getElementById("list-run");
   const out = document.getElementById("list-out");
+  // Read any clarifying answers out of #list-qs BEFORE wiping #list-out —
+  // it lives inside that container, so clearing first always erased the
+  // answers before they could be read, and the same question kept firing.
+  const answers = pendingQuestions
+    ? [...document.querySelectorAll("#list-qs input")].map((i, n) => pendingQuestions[n] + " → " + i.value).join("; ")
+    : "";
   btn.disabled = true; out.innerHTML = "";
   const traceEl = document.getElementById("list-trace");
   const t = Trace(traceEl, [
@@ -1831,24 +2205,23 @@ async function runListing() {
     const { text, removed } = redact(raw);
     await new Promise(r => setTimeout(r, 260));
     t.done(0, removed.length ? "stripped " + removed.join(", ") : "nothing to strip");
+    out.insertAdjacentHTML("beforeend", jsonBlock("Step 1 output — redaction", { removedFromText: removed.length ? removed : "nothing matched", textPassedToParser: text }));
 
     /* 2 — parse */
-    t.run(1, "calling model");
-    const answers = pendingQuestions
-      ? [...document.querySelectorAll("#list-qs input")].map((i, n) => pendingQuestions[n] + " → " + i.value).join("; ")
-      : "";
+    t.run(1, usedSimulatedAnalysis || (HOSTED && !apiKey()) ? "running simulated parser" : "calling model");
     const parsed = await askClaude(PARSE_SYSTEM,
       "<description>\n" + text + "\n</description>" +
       (answers ? "\n<clarifications>" + answers + "</clarifications>" : ""));
-    t.done(1, parsed.roundsCleared + " rounds · confidence " + Number(parsed.roundsConfidence).toFixed(2));
+    t.done(1, parsed.roundsCleared + " rounds · confidence " + Number(parsed.roundsConfidence).toFixed(2) + (usedSimulatedAnalysis ? " · simulated" : " · live model"));
+    out.insertAdjacentHTML("beforeend", jsonBlock("Step 2 output — Process Parser (" + (usedSimulatedAnalysis ? "simulated" : "live model") + ")", parsed, true));
 
     /* clarifying questions short-circuit */
     if (parsed.questions && parsed.questions.length && !answers) {
       pendingQuestions = parsed.questions;
-      out.innerHTML =
+      out.insertAdjacentHTML("beforeend",
         `<div class="qs" id="list-qs"><h4>Before this can be listed</h4>` +
         parsed.questions.map(q => `<div class="q"><p>${esc(q)}</p><input type="text" placeholder="Short answer"></div>`).join("") +
-        `<button class="btn solid sm" id="list-again">Answer and continue</button></div>`;
+        `<button class="btn solid sm" id="list-again">Answer and continue</button></div>`);
       document.getElementById("list-again").onclick = runListing;
       t.run(2, "waiting on answers"); btn.disabled = false; return;
     }
@@ -1865,6 +2238,11 @@ async function runListing() {
     const overridden = tier !== parsed.proposedTier;
     await new Promise(r => setTimeout(r, 220));
     t.done(2, overridden ? `model said ${parsed.proposedTier} → rules set ${tier}` : tier);
+    out.insertAdjacentHTML("beforeend", jsonBlock("Step 3 output — deterministic tier rule (no model call)", {
+      inputs: { roundsCleared: parsed.roundsCleared, roundsConfidence: parsed.roundsConfidence, loopLengthWeeks: parsed.loopLengthWeeks, knownOfferRate: null },
+      modelProposedTier: parsed.proposedTier, ruleDecidedTier: tier, overridden,
+      rule: "rules may only lower the model's proposal, never raise it; brand is never an input",
+    }));
 
     /* 4 — k-anonymity */
     t.run(3);
@@ -1873,6 +2251,7 @@ async function runListing() {
       id: myId() + "-" + Date.now().toString(36).slice(-4),
       owner: myId(),
       tier, evidence: "self_attested",
+      roundsConfidence: parsed.roundsConfidence,
       function: parsed.function || "unspecified",
       seniority: parsed.seniority || "",
       rounds: parsed.rounds || [],
@@ -1897,6 +2276,11 @@ async function runListing() {
     }
     const thin = k < K_FLOOR;
     t.done(3, `k=${k}` + (genNote ? " · " + genNote : "") + (thin ? " · below floor, published with detail withheld" : " · clears floor"));
+    out.insertAdjacentHTML("beforeend", jsonBlock("Step 4 output — k-anonymity / privacy audit (deterministic)", {
+      cohortKey: [record.tier, record.function, record.employerProfile.region || "unknown"].join("|"),
+      k, floor: K_FLOOR, decision: thin ? "generalize (still below floor after generalizing — published with detail withheld)" : "publish",
+      generalizationSteps: record.generalized || [],
+    }));
     if (thin) record.thinCohort = true;
 
     /* 5 — publish */
@@ -1914,18 +2298,20 @@ async function runListing() {
     const mine = (await sget("elestar:mine", false, [])) || [];
     mine.unshift(record.id); await sset("elestar:mine", mine, false);
     t.done(4, "live on the circuit");
+    out.insertAdjacentHTML("beforeend", jsonBlock("Step 5 output — published record", record));
 
-    out.innerHTML = recordCard(record, { own: true }) +
+    out.insertAdjacentHTML("beforeend", recordCard(record, { own: true }) +
       (thin ? `<div class="notice"><b>Published with detail withheld.</b> Only ${k} other live records share your
        combination of tier, function and region — below our floor of ${K_FLOOR}. Employer stage and size are hidden
        until the pool thickens. Nothing identifying has been shared.</div>` : "") +
       (overridden ? `<div class="notice"><b>Tier set by rule, not by model.</b> The model proposed
-       ${parsed.proposedTier}; the deterministic rules returned ${tier}. Rules can lower a proposal, never raise it.</div>` : "");
+       ${parsed.proposedTier}; the deterministic rules returned ${tier}. Rules can lower a proposal, never raise it.</div>` : ""));
     toast("Listed. It's on the circuit now.");
+    renderDashboard();
   } catch (err) {
     t.fail(4, String(err.message || err));
-    out.innerHTML = `<div class="notice"><b>Nothing was published.</b> ${esc(String(err.message || err))}.
-      This pipeline fails closed — an unpublished record is an annoyance, a wrongly published one is not.</div>`;
+    out.insertAdjacentHTML("beforeend", `<div class="notice"><b>Nothing was published.</b> ${esc(String(err.message || err))}.
+      This pipeline fails closed — an unpublished record is an annoyance, a wrongly published one is not.</div>`);
   } finally {
     btn.disabled = false;
   }
@@ -1984,7 +2370,7 @@ async function runSearch() {
       .sort((a, b) => b.fitScore - a.fitScore);
     out.innerHTML = rows.map(m => recordCard(byId[m.recordId], { match: m })).join("")
       || `<div class="empty">The model returned nothing rankable. Try a fuller role description.</div>`;
-    bindIntroButtons();
+    bindIntroButtons(out);
   } catch (err) {
     t.fail(1, String(err.message || err));
     out.innerHTML = `<div class="notice">Ranking is unavailable right now — ${esc(String(err.message || err))}.
@@ -1995,8 +2381,8 @@ async function runSearch() {
 /* ============================================================
    INTROS
    ============================================================ */
-function bindIntroButtons() {
-  document.querySelectorAll("[data-intro]").forEach(b => {
+function bindIntroButtons(scope = document) {
+  scope.querySelectorAll("[data-intro]").forEach(b => {
     b.onclick = async () => {
       const rid = b.dataset.intro;
       const intros = (await sget("elestar:intros", true, [])) || [];
@@ -2079,12 +2465,18 @@ async function makeBrief(recordId, btn) {
   try {
     const b = await askClaude(BRIEF_SYSTEM, JSON.stringify({ record: r, role: "as described in the request" }), 1800);
     const cap = 2;   // never recommend skipping more than half a loop
+    const evidenceLabel = (r.evidence || "self_attested").replace("_", "-");
+    const confPct = Number.isFinite(r.roundsConfidence) ? Math.round(r.roundsConfidence * 100) + "%" : "not recorded";
     holder.innerHTML = `<div class="brief">
+      <h4>Evidence &amp; confidence</h4>
+      <p style="font-size:13.5px;line-height:1.6"><b>Evidence level:</b> ${esc(evidenceLabel)} — how this record's rounds were substantiated.
+      <b>Parser confidence:</b> ${esc(confPct)} — how sure the process parser was about the round count.</p>
       <h4>Already assessed</h4><ul>${(b.alreadyAssessed || []).map(a =>
         `<li><b>${esc(a.competency)}</b> — ${esc(a.depth)}, ${esc(a.format)}</li>`).join("")}</ul>
       <h4>Safe to skip</h4><ul class="skip">${(b.safeToSkip || []).slice(0, cap).map(s =>
         `<li><b>${esc(s.round)}</b> — redundant with ${esc(s.redundantWith)}</li>`).join("")}</ul>
       <h4>Probe instead</h4><ul>${(b.probeInstead || []).map(p => `<li>${esc(p)}</li>`).join("")}</ul>
+      <h4>Recommended questions</h4><ul>${(b.recommendedQuestions || []).map(p => `<li>${esc(p)}</li>`).join("")}</ul>
       <h4>Never skip</h4><ul>${(b.neverSkip || []).map(p => `<li>${esc(p)}</li>`).join("")}</ul>
       <h4>Why the last process ended</h4><p style="font-size:13.5px;line-height:1.6">${esc(b.outcomeContext || "")}</p>
     </div>`;
@@ -2151,6 +2543,7 @@ async function renderCircuit() {
         <div class="post-acts">
           <button data-react="${p.id}" class="${reacted.includes(p.id) ? "on" : ""}">▲ ${p.reactions || 0}</button>
           <button data-reply="${p.id}">${(p.replies || []).length} ${((p.replies || []).length === 1) ? "reply" : "replies"}</button>
+          ${p.recordId ? `<button data-view="${esc(p.recordId)}">Open record</button>` : ""}
         </div>
         ${(p.replies || []).length ? `<div class="replies">${p.replies.map(r =>
           `<div class="reply"><b>${esc(r.cid)}</b> — ${esc(r.text)}</div>`).join("")}</div>` : ""}
@@ -2158,6 +2551,7 @@ async function renderCircuit() {
           <input type="text" placeholder="Reply as ${esc(myId())} — no names, no employers">
           <button class="btn sm" data-send="${p.id}">Post</button>
         </div>
+        <div class="record-detail" hidden></div>
       </div>`;
     el.appendChild(card);
     specimen(card.querySelector("canvas"), hashSeed(p.id), tier, 420, 200 + (hashSeed(p.id) % 120));
@@ -2169,6 +2563,20 @@ async function renderCircuit() {
     box.hidden = !box.hidden; if (!box.hidden) box.querySelector("input").focus();
   });
   el.querySelectorAll("[data-send]").forEach(b => b.onclick = () => sendReply(b.dataset.send, b.previousElementSibling));
+  el.querySelectorAll("[data-view]").forEach(b => b.onclick = () => openRecordDetail(b.dataset.view, b));
+}
+
+async function openRecordDetail(recordId, btn) {
+  const holder = btn.closest(".meta").querySelector(".record-detail");
+  if (!holder.hidden) { holder.hidden = true; btn.textContent = "Open record"; return; }
+  const pool = (await sget("elestar:records", true, [])) || [];
+  const r = pool.find(x => x.id === recordId);
+  holder.innerHTML = r
+    ? recordCard(r, { own: false })
+    : `<div class="empty">This record's full detail isn't in your local pool yet — only its headline made the circuit post.</div>`;
+  holder.hidden = false;
+  btn.textContent = "Hide record";
+  if (r) bindIntroButtons(holder);
 }
 
 function hashSeed(str) {
@@ -2260,6 +2668,11 @@ function recordCard(r, opts = {}) {
 
 /* ---------- boot ---------- */
 document.getElementById("list-run").onclick = runListing;
+document.getElementById("list-example").onclick = () => {
+  document.getElementById("list-input").value =
+    "Series B fintech, senior backend engineer. Recruiter screen, technical interview, system design, final panel with two engineers and VP. Four-week process.";
+  toast("Example loaded — click Run the pipeline.");
+};
 document.getElementById("search-run").onclick = runSearch;
 document.getElementById("search-q").addEventListener("keydown", e => { if (e.key === "Enter") runSearch(); });
 document.querySelectorAll("[data-myid]").forEach(el => el.textContent = myId());
