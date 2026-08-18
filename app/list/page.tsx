@@ -6,8 +6,8 @@ import { K_FLOOR } from "../../src/redactionAudit";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "List a process — Elestar",
-  description: "Watch an interview process become an anonymous, verified record.",
+  title: "Verify — Elestar",
+  description: "Forward a recruiter email to prove@elestar.ai and watch it become an anonymous, verified record.",
 };
 
 /**
@@ -21,9 +21,9 @@ export default function ListPage() {
   return (
     <div className="wrap section">
       <SectionHead
-        kicker="List a process"
-        title="Turn an interview loop into evidence"
-        sub="Forward the emails the recruiter sent you. Elestar reads them to see how far you got, redacts identity, structures the rounds, verifies the company domain, and publishes only if the privacy audit clears."
+        kicker="Verify"
+        title="Verify your interview"
+        sub="Forward the recruiter or interview email to prove@elestar.ai. Elestar receives it, parses how far the loop got, checks public evidence, and publishes only if verification and the privacy audit both clear."
       />
 
       <div

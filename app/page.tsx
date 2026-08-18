@@ -44,7 +44,7 @@ export default function HomePage() {
 
             <div className="row-wrap" style={{ gap: 12 }}>
               <Link href="/list" className="btn-primary" style={{ textDecoration: "none" }}>
-                Run the pipeline
+                Verify an interview
               </Link>
               <Link href="/circuit" className="btn-ghost" style={{ textDecoration: "none" }}>
                 See the Circuit
@@ -89,16 +89,16 @@ export default function HomePage() {
 
         <div className="grid-cards">
           {[
-            { n: "01", t: "Ingest", d: "A candidate forwards the recruiter emails. The agent reads them to see how far the loop got." },
-            { n: "02", t: "Redact", d: "Identifiers are stripped on the server, before any prompt exists." },
-            { n: "03", t: "Structure", d: "Prose becomes typed rounds, competencies and tested depth." },
-            { n: "04", t: "Tier", d: "Deterministic rules. Rounds cleared decides it; brand never does." },
-            { n: "05", t: "Verify", d: "The From: domain is resolved against public evidence. The mailbox never becomes public." },
+            { n: "01", t: "Receive", d: "The candidate forwards the recruiter email to prove@elestar.ai. Elestar receives it. Nothing is typed into a form." },
+            { n: "02", t: "Parse", d: "The mail is read for company, role, rounds and how far the loop got. Identifiers never leave the server." },
+            { n: "03", t: "Identify", d: "Company domain and role are extracted. The mailbox stays private." },
+            { n: "04", t: "Research", d: "Public catalog evidence for that domain is gathered. Not a live crawl unless later configured." },
+            { n: "05", t: "Cross-check", d: "Mail evidence, stated experience and public evidence have to agree." },
             { n: "06", t: "Privacy audit", d: `Re-identification risk scored against a hard k=${K_FLOOR} cohort floor.` },
             { n: "07", t: "Publish", d: "An anonymous record enters the pool — or does not, and stays private." },
             { n: "08", t: "Search", d: "A hiring team describes a role and gets ranked, explainable matches." },
-            { n: "09", t: "Intro", d: "The candidate approves. That is the only way identity moves." },
-            { n: "10", t: "Brief", d: "What was tested, what to skip, what to probe, what is still unknown." },
+            { n: "09", t: "Signals", d: "Verified loops aggregate into what companies are actually testing for." },
+            { n: "10", t: "Intro / brief", d: "The candidate approves. That is the only way identity moves." },
           ].map((step) => (
             <div key={step.n} className="card-flat stack-3 hoverable">
               <div className="row" style={{ gap: 10 }}>

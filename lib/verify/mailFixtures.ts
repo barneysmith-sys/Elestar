@@ -50,9 +50,9 @@ We'll set up a few technical interviews next. I'll send times.
 
 export const CRYPTO_FORWARDS = `From: Sam Patel <hiring@vaultkit.example>
 Date: Mon, 5 Jan 2026 08:00:00 +0000
-Subject: Recruiter screen, take-home, then the loop
+Subject: Loop complete — Head of Engineering
 
-Recruiter screen this week, then a take-home, technical interview, system design, panel, and a final round. We're a 30 person seed stage crypto company in London. The loop runs about 8 weeks. They went with another candidate.
+Recruiter screen, take-home, technical interview, system design, panel, and a final round. We're a 30 person seed stage crypto company in London. The loop runs about 8 weeks. They went with another candidate.
 `;
 
 export const MISMATCH_FORWARDS = `From: Riley Ng <recruiting@harbor-clinic.example>

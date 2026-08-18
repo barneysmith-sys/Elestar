@@ -43,6 +43,11 @@ export interface ForwardedMailEvidence {
   digest: string;
   lastReached: RoundType | null;
   lastReachedLabel: string | null;
+  /** Best-effort role from subject/body. Never a mailbox. */
+  extractedRole: string | null;
+  /** Date header of the latest message, if present. */
+  interviewDate: string | null;
+  processSignals: string[];
   trace: string[];
 }
 
@@ -188,6 +193,9 @@ export function parseForwardedMail(raw: string): ForwardedMailEvidence {
 
   const rejected = messages.some((m) => m.signals.some((s) => s.event === "rejected")) || REJECTED.test(raw);
   const digest = buildDigest(messages, lastReachedLabel, rejected);
+  const extractedRole = extractRole(raw);
+  const interviewDate = [...messages].reverse().find((m) => m.date)?.date ?? null;
+  const processSignals = uniqueRounds(messages).map((r) => r.label);
 
   return {
     messages,
@@ -197,8 +205,20 @@ export function parseForwardedMail(raw: string): ForwardedMailEvidence {
     digest,
     lastReached,
     lastReachedLabel,
+    extractedRole,
+    interviewDate,
+    processSignals,
     trace,
   };
+}
+
+function extractRole(raw: string): string | null {
+  const text = raw.replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, " ");
+  const re =
+    /\b((?:head of|vp of|senior|staff|principal|lead)\s+\w+(?:\s+\w+)?\s+(?:engineer|engineering|manager|designer|scientist|analyst|director))\b/gi;
+  const matches = [...text.matchAll(re)].map((m) => m[1]!.replace(/\s+/g, " ").trim());
+  const clean = matches.find((role) => !/\b(recruiter|interview|round|screen|panel|loop)\b/i.test(role));
+  return clean ?? null;
 }
 
 function furthestRound(messages: ParsedForwardedMessage[]): MailRoundSignal | null {

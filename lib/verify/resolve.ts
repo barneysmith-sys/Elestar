@@ -69,7 +69,7 @@ const CATALOG: CatalogEntry[] = [
       { id: "lp-careers", source: "catalog://ledgerpay.example/careers", claim: "Engineering hiring loop lists recruiter screen, technical interview, system design, final panel.", about: "process" },
       { id: "lp-jd", source: "catalog://ledgerpay.example/jobs/senior-backend", claim: "Open senior backend role emphasises distributed systems and payments infrastructure.", about: "role" },
       { id: "lp-about", source: "catalog://ledgerpay.example/about", claim: "Company describes itself as a Series B payments / fintech firm.", about: "company" },
-      { id: "lp-talent", source: "catalog://ledgerpay.example/talent", claim: "Recruiting page uses a company-domain talent@ mailbox.", about: "recruiting" },
+      { id: "lp-talent", source: "catalog://ledgerpay.example/talent", claim: "Recruiting page uses a company-domain talent mailbox.", about: "recruiting" },
     ],
   },
   {

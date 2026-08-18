@@ -45,7 +45,7 @@ export default function SystemPage() {
                 { t: "Evidence depth weighting", d: `assessed ${DEPTH_WEIGHT.assessed} · probed ${DEPTH_WEIGHT.probed} · mentioned ${DEPTH_WEIGHT.mentioned}. A competency that only came up in conversation is worth almost nothing.`, m: "src/matchRecords.ts" },
                 { t: "Recency discounting", d: "Under 3 months 1.0×, under 6 months 0.9×, under 12 months 0.75×, older 0.5×.", m: "recencyMultiplier()" },
                 { t: "Fail-closed gating", d: "Every error path in the pipeline ends in withheld or pending review. None of them end in a live public record.", m: "lib/pipeline.ts" },
-                { t: "Recruiter-email isolation", d: "Forwarded mail is how we learn how far the loop got. The From: mailbox is a verification credential, stored owner-only on processes and asserted absent from every public payload.", m: "lib/verify/email.ts" },
+                { t: "Recruiter-email isolation", d: "Candidates forward mail to prove@elestar.ai. The From: mailbox is a verification credential, stored owner-only and asserted absent from every public payload.", m: "lib/verify/email.ts" },
               ].map((item) => (
                 <div key={item.t} className="card-flat stack-2">
                   <div className="row-between" style={{ gap: 12 }}>

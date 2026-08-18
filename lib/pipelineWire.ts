@@ -1,43 +1,61 @@
 /**
- * The wire format of the listing pipeline.
+ * The wire format of the verification pipeline.
  *
  * Separate from lib/pipeline.ts because that module is `server-only` and the
  * runner view needs these shapes. Every payload here is something the UI
- * animates against, which is the point: each stage's visual state is driven by
- * a real message from a real state transition, not by a timer pretending to be
- * one.
+ * animates against: each stage's visual state is driven by a real message
+ * from a real state transition, not by a timer pretending to be one.
+ *
+ * The raw forwarded email never travels on this wire. Mailboxes, headers and
+ * signatures stay on the server.
  */
 
 import type { RedactionSpan } from "../src/redact";
 import type { ParsedProcess, RedactionAudit, Tier } from "../src/types";
 import type { Engine } from "./capabilities";
+import type { InboxArrival } from "./ingest/inbound";
 import type { DossierRecord } from "./records";
 import type { VerificationResult } from "./verify/types";
 
-export type PipelineStep = "ingest" | "redact" | "parse" | "tier" | "verify" | "audit" | "publish";
+export type PipelineStep =
+  | "receive"
+  | "parse_mail"
+  | "identify"
+  | "research"
+  | "match"
+  | "audit"
+  | "publish";
+
 export type PipelineStatus = "running" | "ok" | "error" | "blocked";
 
-export const STEP_ORDER: PipelineStep[] = ["ingest", "redact", "parse", "tier", "verify", "audit", "publish"];
+export const STEP_ORDER: PipelineStep[] = [
+  "receive",
+  "parse_mail",
+  "identify",
+  "research",
+  "match",
+  "audit",
+  "publish",
+];
 
 export const STEP_TITLE: Record<PipelineStep, string> = {
-  ingest: "Ingest",
-  redact: "Redact",
-  parse: "Structure",
-  tier: "Tier",
-  verify: "Verify",
-  audit: "Privacy audit",
-  publish: "Publish",
+  receive: "Email received",
+  parse_mail: "Parsing interview signals",
+  identify: "Identifying company + role",
+  research: "Checking public evidence",
+  match: "Cross-checking experience",
+  audit: "Running privacy audit",
+  publish: "Verification complete",
 };
 
-/** What the agent is doing while a stage is running. */
 export const STEP_ACTIVITY: Record<PipelineStep, string> = {
-  ingest: "Reading the forwarded recruiter mail for how far the loop got…",
-  redact: "Checking for identifying information…",
-  parse: "Reading the process, detecting rounds and competencies…",
-  tier: "Applying the deterministic tier rules…",
-  verify: "Resolving the recruiter domain and comparing public evidence…",
+  receive: "Inbound at prove@elestar.ai…",
+  parse_mail: "Reading the forwarded mail for rounds, dates and instructions…",
+  identify: "Extracting company domain, role and how far the loop got…",
+  research: "Gathering public company and role evidence…",
+  match: "Comparing the mail, the stated experience and the public record…",
   audit: "Measuring re-identification risk and cohort size…",
-  publish: "Writing the anonymous record…",
+  publish: "Deciding whether the anonymous record can go live…",
 };
 
 export interface StepMessage {
@@ -72,47 +90,67 @@ export interface MetaMessage {
   persistence: boolean;
   persistenceLabel: string;
   authenticated: boolean;
+  simulation: boolean;
+  inbox: string;
 }
 
 export type PipelineMessage = MetaMessage | StepMessage | QuestionsMessage | DoneMessage;
 
-// ---- per-stage payloads ---------------------------------------------------
-
-export interface IngestStepData {
-  messageCount: number;
-  lastReachedLabel: string | null;
-  fromDomain: string;
-  messages: {
-    subject: string;
-    date: string | null;
-    fromDomain: string;
-    maskedFrom: string;
-    signalLabels: string[];
-  }[];
+export interface ReceiveStepData {
+  arrival: InboxArrival;
 }
 
-export interface RedactStepData {
-  spans: RedactionSpan[];
+export interface ParseMailStepData {
+  messageCount: number;
+  processSignals: string[];
+  lastReachedLabel: string | null;
+  interviewDate: string | null;
+  extractedRole: string | null;
+  fromDomain: string;
+  maskedFrom: string;
+  subjects: string[];
   removed: { kind: string; count: number }[];
+  spans: RedactionSpan[];
   originalLength: number;
 }
 
-export interface ParseStepData {
+export interface IdentifyStepData {
+  recruiterDomain: string;
+  role: string | null;
+  lastReachedLabel: string | null;
+  processSignals: string[];
+  interviewDate: string | null;
   parsed: ParsedProcess;
-}
-
-export interface TierStepData {
   tier: Tier;
   ruleTier: Tier;
   roundsCleared: number;
   roundsConfidence: number;
 }
 
-export interface VerifyStepData {
-  /** Domain only. The mailbox never travels on this payload. */
+export interface ResearchStepData {
+  domain: string;
+  companyLabel: string;
+  found: boolean;
+  evidenceKind: "catalog" | "live_public" | "none";
+  sector: string | null;
+  stage: string | null;
+  evidence: VerificationResult["evidence"];
+}
+
+export interface MatchStepData {
   domain: string;
   maskedSignal: string;
   verification: VerificationResult;
+  structured: {
+    company: string;
+    role: string | null;
+    interview_signal: string | null;
+    recruiter_domain: string;
+    process_signals: string[];
+    evidence: VerificationResult["evidence"];
+    confidence: number;
+    status: VerificationResult["status"];
+  };
 }
 
 export interface AuditStepData {

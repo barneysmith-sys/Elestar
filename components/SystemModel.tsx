@@ -21,32 +21,32 @@ interface AgentSpec {
 
 const AGENTS: AgentSpec[] = [
   {
-    name: "Ingest",
-    does: "Reads forwarded recruiter mail for how far the loop got. From: domain is the signal; the mailbox stays private.",
+    name: "Receive",
+    does: "Accepts a forward at prove@elestar.ai. Demo simulates the same inbound. Raw mail never becomes public.",
+    module: "lib/ingest/inbound.ts",
+    kind: "deterministic",
+  },
+  {
+    name: "Parse mail",
+    does: "Extracts rounds, role, dates and process signals. Identifiers are stripped first.",
     module: "lib/verify/forwardedMail.ts",
     kind: "deterministic",
   },
   {
-    name: "Redact",
-    does: "Strips emails, phone numbers, URLs, handles and known names before any prompt is built.",
-    module: "src/redact.ts",
-    kind: "deterministic",
-  },
-  {
-    name: "Structure",
-    does: "Turns prose into typed rounds, competencies and depth. Asks rather than guesses.",
+    name: "Identify",
+    does: "Company domain + role + how far the loop got. Tier from rounds cleared; brand is not an input.",
     module: "src/parseProcess.ts",
     kind: "judgement",
   },
   {
-    name: "Tier",
-    does: "Rounds cleared decides the tier. Rules may lower a proposal, never raise it. Brand is not an input.",
-    module: "computeTier()",
+    name: "Research",
+    does: "Public catalog evidence for the sender domain. Labelled catalog, not a live crawl.",
+    module: "lib/verify/resolve.ts",
     kind: "deterministic",
   },
   {
-    name: "Verify",
-    does: "From: domain → public evidence → structured match. Mailbox never leaves the owner boundary.",
+    name: "Cross-check",
+    does: "Mail vs stated experience vs public evidence. Failed verification never publishes.",
     module: "lib/reasoners/verify.ts",
     kind: "judgement",
   },
@@ -63,10 +63,10 @@ const AGENTS: AgentSpec[] = [
     kind: "deterministic",
   },
   {
-    name: "Match",
-    does: "Ranks records on depth-weighted overlap and discounted recency. Always names a gap.",
-    module: "src/matchRecords.ts",
-    kind: "judgement",
+    name: "Signals",
+    does: "Aggregates published loops into what companies are actually testing for.",
+    module: "lib/signals.ts",
+    kind: "deterministic",
   },
   {
     name: "Brief",
@@ -76,8 +76,8 @@ const AGENTS: AgentSpec[] = [
   },
 ];
 
-const INPUTS = ["Forwarded recruiter emails", "Notes, if any", "Role, if stated"];
-const OUTPUTS = ["Anonymous record", "Ranked matches", "Interview brief"];
+const INPUTS = ["Forward to prove@elestar.ai", "Notes the mail doesn't carry"];
+const OUTPUTS = ["Anonymous record", "Signals", "Interview brief"];
 
 export function SystemModel() {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -114,7 +114,7 @@ export function SystemModel() {
             Where the agents operate
           </h2>
           <p className="lede" style={{ maxWidth: "64ch" }}>
-            Nine stages between forwarded recruiter mail and reusable intelligence. Four of them are
+            Nine stages between a forward to prove@elestar.ai and reusable intelligence. Five of them are
             deterministic rules that behave identically every time and never depend on a model being
             available.
           </p>

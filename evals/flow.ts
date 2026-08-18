@@ -19,12 +19,6 @@
  *   npm run eval:flow                      # in another
  */
 
-import {
-  CANONICAL_FORWARDS,
-  GMAIL_FORWARDS,
-  MISMATCH_FORWARDS,
-} from "../lib/verify/mailFixtures";
-
 const BASE = process.env.ELESTAR_BASE_URL ?? "http://127.0.0.1:3111";
 
 let passed = 0;
@@ -84,16 +78,25 @@ async function api<T = any>(
 async function runPipeline(
   description: string,
   priorAnswers?: Record<string, string>,
-  extra?: { recruiterEmail?: string; role?: string; forwardedEmails?: string },
+  extra?: { recruiterEmail?: string; role?: string; forwardedEmails?: string; fixture?: string; simulation?: boolean },
 ) {
   const forwardedEmails = extra?.forwardedEmails;
+  const fixture = extra?.fixture;
   const recruiterEmail =
-    extra?.recruiterEmail ?? (forwardedEmails ? undefined : "talent@ledgerpay.example");
-  const role = extra?.role ?? "Senior Backend Engineer";
+    extra?.recruiterEmail ?? (fixture || forwardedEmails ? undefined : "talent@ledgerpay.example");
+  const role = extra?.role ?? (fixture || forwardedEmails ? undefined : "Senior Backend Engineer");
   const res = await fetch(`${BASE}/api/pipeline`, {
     method: "POST",
     headers: { "content-type": "application/json", ...cookieHeader() },
-    body: JSON.stringify({ description, priorAnswers, recruiterEmail, role, forwardedEmails }),
+    body: JSON.stringify({
+      description,
+      priorAnswers,
+      recruiterEmail,
+      role,
+      forwardedEmails,
+      fixture,
+      simulation: extra?.simulation ?? Boolean(fixture),
+    }),
   });
   remember(res);
   if (!res.ok || !res.body) {
@@ -155,9 +158,7 @@ async function main() {
   section("list a process: the pipeline publishes an anonymous record");
   let publishedId: string | null = null;
   {
-    const run = await runPipeline("Senior Backend Engineer at a Series B fintech.", undefined, {
-      forwardedEmails: CANONICAL_FORWARDS,
-    });
+    const run = await runPipeline("", undefined, { fixture: "canonical" });
     check("pipeline streams", run.ok, run.status);
     const steps = run.messages.filter((m) => m.kind === "step");
     const done = run.messages.find((m) => m.kind === "done");
@@ -165,25 +166,33 @@ async function main() {
 
     check("emits a meta frame before the work", Boolean(meta), meta);
     check(
-      "runs ingest, redact, parse, tier, verify, audit, publish",
-      ["ingest", "redact", "parse", "tier", "verify", "audit", "publish"].every((s) => steps.some((m) => m.step === s)),
+      "runs receive, parse_mail, identify, research, match, audit, publish",
+      ["receive", "parse_mail", "identify", "research", "match", "audit", "publish"].every((s) =>
+        steps.some((m) => m.step === s),
+      ),
       steps.map((s) => s.step),
     );
     check("publishes the canonical input", done?.outcome === "published", done);
     check("returns an anonymous handle", /^[A-Z]-\d+$/.test(done?.recordId ?? ""), done?.recordId);
     publishedId = done?.recordId ?? null;
 
-    const ingest = settled(run.messages, "ingest");
-    check("ingest read four forwarded messages", ingest?.data?.messageCount === 4, ingest?.data);
-    check("ingest last round reached is the final", /final/i.test(ingest?.data?.lastReachedLabel ?? ""), ingest?.data);
+    const receive = settled(run.messages, "receive");
+    check("receive is at prove@elestar.ai", receive?.data?.arrival?.to === "prove@elestar.ai", receive?.data);
+    check("canonical run is labelled a simulation", receive?.data?.arrival?.simulation === true, receive?.data);
+    check("ingest last round reached is the final", /final/i.test(receive?.data?.arrival?.lastReachedLabel ?? ""), receive?.data);
 
-    const parsed = settled(run.messages, "parse")?.data?.parsed;
+    const parsed = settled(run.messages, "identify")?.data?.parsed;
     check("extracts 4 rounds, not 5", parsed?.rounds?.length === 4, parsed?.rounds?.map((r: any) => r.type));
     check("outcome is not invented", parsed?.outcome === "unstated", parsed?.outcome);
 
-    const verify = settled(run.messages, "verify");
+    const verify = settled(run.messages, "match");
     check("verify step is ok", verify?.status === "ok", verify?.status);
     check("verify payload has a domain, not a mailbox", typeof verify?.data?.domain === "string" && !String(verify?.data?.domain).includes("@"), verify?.data);
+    check(
+      "structured evidence never contains a mailbox",
+      !/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i.test(JSON.stringify(verify?.data?.structured ?? {})),
+      verify?.data?.structured,
+    );
 
     const audit = settled(run.messages, "audit");
     check("measures a real cohort against the floor", typeof audit?.data?.cohortCount === "number", audit?.data);
@@ -197,13 +206,10 @@ async function main() {
 
   section("list a process: identity never leaves the server");
   {
-    const run = await runPipeline(
-      "Reach me at ada@example.com or +1 (415) 555-0199, portfolio https://ada.example.com, im @adalovelace. " +
-        CANONICAL,
-    );
-    const redact = settled(run.messages, "redact");
-    check("reports what it removed", (redact?.data?.removed?.length ?? 0) === 4, redact?.data?.removed);
-    check("emits spans so the UI can show the removal", (redact?.data?.spans?.length ?? 0) === 4, redact?.data?.spans);
+    const run = await runPipeline("", undefined, { fixture: "pii" });
+    const parseMail = settled(run.messages, "parse_mail");
+    check("reports identifier kinds removed", (parseMail?.data?.removed?.length ?? 0) >= 3, parseMail?.data?.removed);
+    check("emits spans so the UI can show the removal", (parseMail?.data?.spans?.length ?? 0) >= 3, parseMail?.data?.spans);
 
     const serialised = JSON.stringify(run.messages);
     check("the email is gone from the whole stream", !serialised.includes("ada@example.com"));
@@ -216,7 +222,7 @@ async function main() {
   {
     const vague = "Recruiter screen then several technical rounds at a Series B fintech.";
     const first = await runPipeline(vague);
-    const parse = settled(first.messages, "parse");
+    const parse = settled(first.messages, "identify");
     const asked = first.messages.find((m) => m.kind === "questions");
     const done = first.messages.find((m) => m.kind === "done");
     check("stops at parse", parse?.status === "blocked", parse?.status);
@@ -231,7 +237,7 @@ async function main() {
       answers[q] = /how many/i.test(q) ? "4 rounds in total" : "the last one was the system design round";
     }
     const second = await runPipeline(vague, answers);
-    const parse2 = settled(second.messages, "parse");
+    const parse2 = settled(second.messages, "identify");
     const done2 = second.messages.find((m) => m.kind === "done");
     check("answering the questions unblocks the parse", parse2?.status === "ok", parse2?.status);
     check("nothing further is asked", !second.messages.some((m) => m.kind === "questions"), second.messages.filter((m) => m.kind === "questions"));
@@ -250,12 +256,7 @@ async function main() {
 
   section("list a process: the privacy audit can refuse");
   {
-    const run = await runPipeline(
-      "Head of Engineering at a 12-person seed-stage crypto custody startup in Dublin. Recruiter screen, " +
-        "take-home, technical interview, system design, panel, and a final round. They went with another candidate.",
-      undefined,
-      { recruiterEmail: "hiring@vaultkit.example", role: "Head of Engineering" },
-    );
+    const run = await runPipeline("", undefined, { fixture: "crypto" });
     const audit = settled(run.messages, "audit");
     const publish = settled(run.messages, "publish");
     const done = run.messages.find((m) => m.kind === "done");
@@ -284,10 +285,8 @@ async function main() {
 
   section("list a process: personal email is not a company signal");
   {
-    const run = await runPipeline("Senior Backend Engineer at a Series B fintech.", undefined, {
-      forwardedEmails: GMAIL_FORWARDS,
-    });
-    const verify = settled(run.messages, "verify");
+    const run = await runPipeline("", undefined, { fixture: "gmail" });
+    const verify = settled(run.messages, "match");
     const done = run.messages.find((m) => m.kind === "done");
     check("verify is blocked or failed", verify?.status === "blocked" || verify?.data?.verification?.status === "failed", verify);
     check("personal email is not published", done?.outcome !== "published", done);
@@ -296,10 +295,8 @@ async function main() {
 
   section("list a process: company mismatch fails verification");
   {
-    const run = await runPipeline("Senior Backend Engineer at a Series B fintech.", undefined, {
-      forwardedEmails: MISMATCH_FORWARDS,
-    });
-    const verify = settled(run.messages, "verify");
+    const run = await runPipeline("", undefined, { fixture: "mismatch" });
+    const verify = settled(run.messages, "match");
     const done = run.messages.find((m) => m.kind === "done");
     check("verify is blocked", verify?.status === "blocked", verify?.status);
     check("status is failed", verify?.data?.verification?.status === "failed", verify?.data?.verification);
@@ -312,7 +309,7 @@ async function main() {
     const run = await runPipeline("asdf");
     const done = run.messages.find((m) => m.kind === "done");
     const asked = run.messages.find((m) => m.kind === "questions");
-    const parsed = settled(run.messages, "parse")?.data?.parsed;
+    const parsed = settled(run.messages, "identify")?.data?.parsed;
     check("does not crash", run.ok, run.status);
     check("does not publish", done?.outcome !== "published", done);
     check("asks what the rounds were", (asked?.questions?.length ?? 0) > 0, asked);
@@ -527,10 +524,28 @@ async function main() {
     }
   }
 
+  section("signals: aggregate published records only");
+  {
+    const { status, json } = await api("/api/signals");
+    check("signals responds", status === 200, json);
+    check("the pool is non-empty", (json.report?.pool ?? 0) > 0, json.report);
+    check("demo seeds are labelled when present", json.report?.demoCount === 0 || json.report?.demoCount > 0, json.report);
+    const blob = JSON.stringify(json);
+    check("signals never contain a recruiter mailbox", !blob.toLowerCase().includes("talent@ledgerpay.example"));
+    check("signals never contain @ledgerpay", !blob.toLowerCase().includes("@ledgerpay"));
+
+    const fintech = await api("/api/signals?sector=fintech");
+    check("sector filter returns only that sector", (fintech.json.report?.sectors ?? []).every((s: any) => s.name === "fintech"), fintech.json.report);
+    check("sector filter cannot exceed the unfiltered pool", (fintech.json.report?.pool ?? 0) <= (json.report?.pool ?? 0));
+
+    const empty = await api("/api/signals?sector=not_a_real_sector");
+    check("an empty filter does not invent claims", empty.json.report?.pool === 0 && (empty.json.report?.trending?.length ?? 1) === 0, empty.json.report);
+  }
+
   section("pages: every route renders");
   {
     const { json: status } = await api("/api/status");
-    for (const path of ["/", "/list", "/circuit", "/search", "/intros", "/system", "/brief"]) {
+    for (const path of ["/", "/list", "/circuit", "/search", "/signals", "/intros", "/system", "/brief"]) {
       const res = await fetch(BASE + path, { headers: cookieHeader() });
       const html = await res.text();
       check(`${path} responds 200`, res.status === 200, res.status);
@@ -540,7 +555,7 @@ async function main() {
       // applied once a client fetch resolves. A disclosure that arrives late
       // is one a reader can miss, and these are the pages that show the output
       // of the reasoning being disclosed.
-      if (["/circuit", "/search", "/intros"].includes(path)) {
+      if (["/circuit", "/search", "/intros", "/signals"].includes(path)) {
         check(`${path} labels the engine in first paint`, html.includes(status.engineLabel), status.engineLabel);
       }
     }

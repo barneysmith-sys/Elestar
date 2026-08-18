@@ -5,9 +5,10 @@ import { usePathname } from "next/navigation";
 import { Wordmark } from "./primitives";
 
 const LINKS = [
-  { href: "/list", label: "List a process" },
+  { href: "/list", label: "Verify" },
   { href: "/circuit", label: "Circuit" },
   { href: "/search", label: "Search" },
+  { href: "/signals", label: "Signals" },
   { href: "/intros", label: "Intros" },
   { href: "/system", label: "System" },
 ];

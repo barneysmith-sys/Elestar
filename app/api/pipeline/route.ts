@@ -3,6 +3,7 @@ import { runPipeline } from "../../../lib/pipeline";
 import { getSession, demoSessionCookie } from "../../../lib/session";
 import { getCapabilities, engineLabel, persistenceLabel, reasoningEngine } from "../../../lib/capabilities";
 import { collectEmails } from "../../../lib/verify/email";
+import { FIXTURE_IDS, INBOUND_FIXTURES, PROVE_INBOX, isFixtureId } from "../../../lib/ingest/inbound";
 
 export const dynamic = "force-dynamic";
 
@@ -14,18 +15,14 @@ const RequestZ = z
     priorAnswers: z.record(z.string(), z.string()).optional(),
     recruiterEmail: z.string().max(254).optional(),
     role: z.string().max(200).optional(),
+    fixture: z.enum(FIXTURE_IDS).optional(),
+    simulation: z.boolean().optional(),
   })
-  .refine((v) => Boolean(v.description?.trim() || v.forwardedEmails?.trim()), {
-    message: "Forwarded recruiter emails or notes are required",
-  });
+  .refine(
+    (v) => Boolean(v.fixture || v.description?.trim() || v.forwardedEmails?.trim()),
+    { message: "Forward a recruiter email to prove@elestar.ai, or simulate an inbound fixture." },
+  );
 
-/**
- * Streams the listing pipeline as server-sent events, one message per stage.
- *
- * The stream opens with a `meta` message declaring which engines are actually
- * in play, so the client can label the run before any reasoning happens
- * rather than retrofitting a disclaimer onto results.
- */
 export async function POST(req: Request): Promise<Response> {
   const session = await getSession();
 
@@ -36,11 +33,23 @@ export async function POST(req: Request): Promise<Response> {
       headers: { "Content-Type": "application/json" },
     });
   }
-  const { description, forwardedEmails, knownNames, priorAnswers, recruiterEmail, role } = parsedBody.data;
-  const leakNet = collectEmails(description, forwardedEmails, recruiterEmail);
+  const {
+    description,
+    forwardedEmails,
+    knownNames,
+    priorAnswers,
+    recruiterEmail,
+    role,
+    fixture,
+    simulation,
+  } = parsedBody.data;
+
+  const fixtureRaw = fixture && isFixtureId(fixture) ? INBOUND_FIXTURES[fixture].raw : "";
+  const leakNet = collectEmails(description, forwardedEmails, recruiterEmail, fixtureRaw);
 
   const capabilities = getCapabilities();
   const encoder = new TextEncoder();
+  const isSimulation = Boolean(simulation || fixture);
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
@@ -61,6 +70,8 @@ export async function POST(req: Request): Promise<Response> {
         persistence: capabilities.persistence,
         persistenceLabel: persistenceLabel(capabilities.persistence),
         authenticated: session.authenticated,
+        simulation: isSimulation,
+        inbox: PROVE_INBOX,
       });
 
       try {
@@ -71,16 +82,13 @@ export async function POST(req: Request): Promise<Response> {
           knownNames,
           priorAnswers,
           recruiterEmail,
-          role,
+          role: fixture ? INBOUND_FIXTURES[fixture].role : role,
+          fixture,
+          simulation: isSimulation,
         })) {
           send(message);
         }
       } catch {
-        // Belt-and-suspenders: runPipeline already fails closed on every step
-        // it controls, but an unexpected throw here must still reach the
-        // client as an explicit failure, never a silently truncated stream
-        // that could read as "it worked." A recruiter-email leak in a frame
-        // also lands here and withholds rather than sending the frame.
         send({
           kind: "done",
           outcome: "withheld",

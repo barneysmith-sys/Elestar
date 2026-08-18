@@ -143,6 +143,7 @@ const REGIONS: [RegExp, string][] = [
 
 const SIZE_BANDS: [RegExp, string][] = [
   [/\b(\d{1,2})\s*(?:-|to|–)\s*(\d{1,2})\s*(?:people|employees|person)\b/, "1-50"],
+  [/\b(?:\d{1,2}|a dozen)[-\s]?(?:person|people|employees?)\b/, "1-50"],
   [/\b(?:under|fewer than|less than)\s*(?:50|fifty)\b/, "1-50"],
   [/\b(?:50|fifty)\s*(?:-|to|–)\s*(?:100|hundred)\b/, "50-100"],
   [/\b(?:1\d\d|2\d\d|3\d\d|4\d\d)\s*(?:people|employees)\b/, "100-500"],

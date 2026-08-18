@@ -17,6 +17,8 @@ import { buildInterviewBriefDeterministic } from "../lib/reasoners/brief";
 import { verifyProcessDeterministic } from "../lib/reasoners/verify";
 import { assertNoRecruiterEmail, parseRecruiterSignal } from "../lib/verify/email";
 import { parseForwardedMail } from "../lib/verify/forwardedMail";
+import { aggregateSignals, filterSignalRecords } from "../lib/signals";
+import type { DossierRecord } from "../lib/records";
 import {
   CANONICAL_FORWARDS,
   GMAIL_FORWARDS,
@@ -383,6 +385,7 @@ section("ingest: forwarded recruiter mail shows how far they got");
   );
   check("last round reached is the final", mail.lastReached === "final", mail.lastReachedLabel);
   check("From: domain is ledgerpay.example", mail.primarySignal.domain === "ledgerpay.example", mail.primarySignal);
+  check("extracts the role from the subject", /senior backend engineer/i.test(mail.extractedRole ?? ""), mail.extractedRole);
   check("raw mailbox is held privately", mail.recruiterEmails.includes("talent@ledgerpay.example"));
   check("digest never contains the mailbox", !mail.digest.toLowerCase().includes("talent@ledgerpay.example"), mail.digest);
   check("public messages never contain the mailbox", !JSON.stringify(mail.messages).toLowerCase().includes("talent@ledgerpay.example"));
@@ -403,6 +406,66 @@ section("ingest: forwarded recruiter mail shows how far they got");
 
   const gmail = parseForwardedMail(GMAIL_FORWARDS);
   check("gmail From: is a personal signal", gmail.primarySignal.kind === "personal", gmail.primarySignal);
+}
+
+section("signals: only published records, filters are real");
+{
+  const published = stubRecord({ id: "A-1", sector: "fintech", competency: "Distributed systems", round: "system_design", publish: true, demo: true });
+  const withheld = stubRecord({ id: "A-2", sector: "fintech", competency: "Distributed systems", round: "system_design", publish: false, demo: false });
+  const other = stubRecord({ id: "A-3", sector: "healthtech", competency: "Applied ML", round: "technical", publish: true, demo: false });
+
+  const all = aggregateSignals([published, withheld, other]);
+  check("withheld records are not in the pool", all.pool === 2, all.pool);
+  check("demo seeds are counted and labelled", all.demoCount === 1, all);
+  check("competency share uses the published denom", all.competencies[0]!.count >= 1, all.competencies);
+
+  const fintech = aggregateSignals([published, withheld, other], { sector: "fintech" });
+  check("sector filter keeps only fintech", fintech.pool === 1 && fintech.sectors.every((s) => s.name === "fintech"), fintech);
+
+  const noDemo = aggregateSignals([published, withheld, other], { excludeDemo: true });
+  check("excludeDemo drops seeds", noDemo.pool === 1 && noDemo.demoCount === 0, noDemo);
+
+  const empty = aggregateSignals([published, withheld, other], { sector: "not_a_sector" });
+  check("unknown filter is empty rather than invented", empty.pool === 0 && empty.trending.length === 0, empty);
+  check("filterSignalRecords never returns a withheld row", filterSignalRecords([published, withheld], {}).every((r) => r.redactionDecision === "publish"));
+}
+
+function stubRecord(args: {
+  id: string;
+  sector: string;
+  competency: string;
+  round: "system_design" | "technical";
+  publish: boolean;
+  demo: boolean;
+}): DossierRecord {
+  return {
+    id: args.id,
+    rowId: args.id,
+    processId: `${args.id}-p`,
+    userId: `${args.id}-u`,
+    tier: "verified",
+    evidence: "corroborated",
+    redactionDecision: args.publish ? "publish" : "withhold",
+    parsed: {
+      rounds: [{ index: 1, type: "screen", label: "Screen", cleared: true }, { index: 2, type: args.round, label: args.round, cleared: true }],
+      roundsCleared: 2,
+      roundsTotal: 2,
+      roundsConfidence: 0.9,
+      processType: "external",
+      employerProfile: { sector: args.sector, stage: "series_b", sizeBand: "100-500", region: "north_america" },
+      loopLengthWeeks: 4,
+      outcome: "unstated",
+      competencies: [{ name: args.competency, depth: "assessed", roundIndex: 2 }],
+      proposedTier: "verified",
+      evidence: "corroborated",
+      needsReview: false,
+      questions: [],
+      notes: null,
+    },
+    audit: null,
+    createdAt: new Date().toISOString(),
+    demo: args.demo,
+  };
 }
 
 // ---------------------------------------------------------------------------

@@ -61,9 +61,10 @@ deterministic. They are real in both modes.
 | Route | What it is |
 |---|---|
 | `/` | What the product does, and the pipeline in order |
-| `/list` | Submit a process and watch the pipeline execute on it |
+| `/list` | Verify: forward to prove@elestar.ai, or simulate inbound |
 | `/circuit` | The published pool, anonymous, filterable |
 | `/search` | Rank the pool against a role, with explicit gaps |
+| `/signals` | Aggregate intelligence over published loops |
 | `/intros` | The candidate's inbox: approve or decline an intro |
 | `/brief` | The interview brief, gated on an approved intro |
 | `/system` | Which stages are rules and which are judgement |
@@ -126,15 +127,18 @@ targets Supabase or the in-memory demo store behind one interface;
 
 ### Forwarded recruiter mail
 
-Candidates **forward the emails a recruiter sent them**. The ingest step reads
-From / Subject / Date / body to see how far the loop got. The From: domain is
-the verification credential; the mailbox itself is not public identity. Catalog
-evidence is compared against company / role / process. The address is stored
-owner-only on `processes.recruiter_email` (see
-`supabase/migrations/00000000000002_recruiter_signal.sql`) and asserted absent
-from every public payload via `assertNoRecruiterEmail`. Personal mailbox
-providers fail closed. A failed verification is never published. This is not
-inbox access and not a crawl of a recruiter's mail server.
+Candidates **forward the recruiter or interview email to `prove@elestar.ai`**.
+They do not type a recruiter address into a form. The receive step accepts
+the inbound, parsing extracts company domain, role and how far the loop got,
+research gathers public catalog evidence, and a cross-check scores
+verification. The mailbox is stored owner-only on `processes.recruiter_email`
+and asserted absent from every public payload via `assertNoRecruiterEmail`.
+Personal mailbox providers fail closed. A failed verification is never
+published.
+
+The Vercel demo cannot receive real mail. `/list` simulates an arrival at
+`prove@elestar.ai` and then runs the **same** pipeline. The UI is labelled
+as a simulation.
 
 ## Install
 

@@ -5,68 +5,76 @@ import { K_FLOOR } from "../src/redactionAudit";
 import type { ParsedProcess, RedactionAudit, Tier } from "../src/types";
 import { reasonAudit, reasonParse, reasonVerify } from "./agents";
 import { reasoningEngine, type Engine } from "./capabilities";
+import {
+  isFixtureId,
+  PROVE_INBOX,
+  receiveFixture,
+  receiveInbound,
+  type FixtureId,
+} from "./ingest/inbound";
 import { cohortCount, insertDossier, insertProcess } from "./store";
 import { assertNoRecruiterEmail, maskEmail, parseRecruiterSignal } from "./verify/email";
-import { parseForwardedMail } from "./verify/forwardedMail";
+import { collectPublicEvidence, resolveCompany } from "./verify/resolve";
 import type {
   AuditStepData,
   DoneMessage,
-  IngestStepData,
-  ParseStepData,
+  IdentifyStepData,
+  MatchStepData,
+  ParseMailStepData,
   PipelineMessage,
   PipelineStatus,
   PipelineStep,
   PublishStepData,
-  RedactStepData,
+  ReceiveStepData,
+  ResearchStepData,
   StepMessage,
-  TierStepData,
-  VerifyStepData,
 } from "./pipelineWire";
 
 export type * from "./pipelineWire";
 
 export interface RunPipelineArgs {
   userId: string;
-  /** Optional notes — company stage, extra context the mail doesn't carry. */
-  description: string;
-  /** Recruiter emails the candidate forwarded. Primary evidence of how far they got. */
+  description?: string;
   forwardedEmails?: string;
   knownNames?: string[];
   priorAnswers?: Record<string, string>;
   recruiterEmail?: string;
   role?: string;
+  /** Demo: process a canned inbound as if it arrived at prove@elestar.ai. */
+  fixture?: FixtureId;
+  simulation?: boolean;
 }
 
 /**
- * Orchestrates ingest -> redact -> parse -> tier -> verify -> audit -> publish
- * and yields a message per step. This function is the ONLY thing that writes
- * records for the listing flow, and when Supabase is configured it always
- * does so through the service-role client — no agent in src/ ever touches the
- * database, and RLS has no write policy for anon/authenticated on any of
- * these tables regardless.
+ * Orchestrates the verification pipeline:
+ *   receive → parse_mail → identify → research → match → audit → publish
  *
- * Fails closed throughout: any thrown error, any low-confidence parse, a
- * failed recruiter-domain verification, and any redaction decision short of
- * "publish" all end in something other than a live public record.
- *
- * Candidates forward recruiter mail. The ingest step reads those messages to
- * see how far the loop got. The From: domain is the verification credential.
- * The mailbox is never yielded on a pipeline message, never copied onto a
- * public record, and asserted absent from every step payload before it leaves here.
+ * Production trigger is an email arriving at prove@elestar.ai. The demo
+ * calls the same function with a fixture id and `simulation: true`.
  */
 export async function* runPipeline(args: RunPipelineArgs): AsyncGenerator<PipelineMessage> {
-  const notes = args.description.trim();
-  const forwardedEmails = args.forwardedEmails?.trim() ?? "";
-  const sourceText = [notes, forwardedEmails].filter(Boolean).join("\n\n");
-  const { userId, priorAnswers, role } = args;
+  const simulation = Boolean(args.simulation || args.fixture);
+  const inbound = args.fixture && isFixtureId(args.fixture)
+    ? receiveFixture(args.fixture, true)
+    : receiveInbound({
+        raw: args.forwardedEmails?.trim() ?? "",
+        notes: args.description,
+        role: args.role,
+        simulation,
+      });
 
-  const mail = parseForwardedMail(forwardedEmails);
+  const notes = (args.description?.trim() || inbound.notes).trim();
+  const raw = inbound.raw;
+  const sourceText = [notes, raw].filter(Boolean).join("\n\n");
+  const { userId, priorAnswers } = args;
+  const mail = inbound.evidence;
   const recruiterEmails = [
     ...mail.recruiterEmails,
     ...(args.recruiterEmail ? [args.recruiterEmail] : []),
   ];
   const recruiterEmail =
     mail.primarySignal.email || args.recruiterEmail || recruiterEmails[0] || undefined;
+  const role = (args.role?.trim() || inbound.role || mail.extractedRole || "").trim();
   const knownNames = [
     ...(args.knownNames ?? []),
     ...recruiterEmails,
@@ -101,118 +109,137 @@ export async function* runPipeline(args: RunPipelineArgs): AsyncGenerator<Pipeli
     return msg;
   };
 
-  // ---- 1. ingest forwarded mail ------------------------------------------
-  yield emit("ingest", "running", "Reading the forwarded recruiter mail for how far the loop got…");
-  const ingestData: IngestStepData = {
-    messageCount: mail.messages.length,
-    lastReachedLabel: mail.lastReachedLabel,
-    fromDomain: mail.primarySignal.domain,
-    messages: mail.messages.map((m) => ({
-      subject: m.subject,
-      date: m.date,
-      fromDomain: m.fromDomain,
-      maskedFrom: m.maskedFrom,
-      signalLabels: m.signals.map((s) => `${s.label} · ${s.event}`),
-    })),
-  };
+  // ---- 1. receive --------------------------------------------------------
+  yield emit("receive", "running", `Inbound at ${PROVE_INBOX}…`);
   yield emit(
-    "ingest",
-    "ok",
+    "receive",
+    mail.messages.length > 0 ? "ok" : "blocked",
     mail.messages.length > 0
-      ? `Read ${mail.messages.length} forwarded message(s). Last round reached: ${mail.lastReachedLabel ?? "unstated"}.`
-      : "No forwarded messages. Using the candidate's notes.",
-    { engine: "deterministic", trace: mail.trace, data: ingestData },
+      ? simulation
+        ? `Simulated arrival at ${PROVE_INBOX} — ${mail.messages.length} message(s). The browser did not send mail.`
+        : `Received ${mail.messages.length} forwarded message(s) at ${PROVE_INBOX}.`
+      : `Nothing arrived at ${PROVE_INBOX}. Forward a recruiter or interview email to verify.`,
+    {
+      engine: "deterministic",
+      trace: [
+        simulation
+          ? `DEMO MODE · simulated ingest. Production uses the same pipeline when mail arrives at ${PROVE_INBOX}.`
+          : `Inbound accepted at ${PROVE_INBOX}.`,
+        ...mail.trace,
+      ],
+      data: { arrival: inbound.arrival } satisfies ReceiveStepData,
+    },
   );
 
-  // ---- 2. redact -----------------------------------------------------
-  yield emit("redact", "running", "Removing anything identifying before this reaches a model…");
+  if (mail.messages.length === 0 && !notes) {
+    yield finish(
+      "withheld",
+      undefined,
+      undefined,
+      undefined,
+      `No forwarded email was received at ${PROVE_INBOX}. Nothing was published.`,
+    );
+    return;
+  }
+
+  // ---- 2. parse mail (redact first, then extract signals) ----------------
+  yield emit("parse_mail", "running", "Parsing interview signals from the forwarded mail…");
   let removedCount = 0;
-  let redactedText = sourceText;
+  let redactedNotes = notes;
   try {
     const r = redact(sourceText, { knownNames });
     assertRedacted(r.text);
     removedCount = r.removed.reduce((n, x) => n + x.count, 0);
-    redactedText = r.text;
+    redactedNotes = redact(notes, { knownNames }).text;
+    const parseMailData: ParseMailStepData = {
+      messageCount: mail.messages.length,
+      processSignals: mail.processSignals,
+      lastReachedLabel: mail.lastReachedLabel,
+      interviewDate: mail.interviewDate,
+      extractedRole: mail.extractedRole,
+      fromDomain: mail.primarySignal.domain,
+      maskedFrom: inbound.arrival.fromMasked,
+      subjects: mail.messages.map((m) => m.subject),
+      removed: r.removed,
+      spans: r.spans,
+      originalLength: sourceText.length,
+    };
     yield emit(
-      "redact",
+      "parse_mail",
       "ok",
-      removedCount > 0
-        ? `Redacted ${removedCount} identifying token(s) before anything left the server.`
-        : "Nothing identifying found in the text. Checked for emails, phone numbers, URLs and handles.",
-      {
-        data: {
-          spans: r.spans,
-          removed: r.removed,
-          originalLength: sourceText.length,
-        } satisfies RedactStepData,
-      },
+      mail.lastReachedLabel
+        ? `Last round reached: ${mail.lastReachedLabel}. ${removedCount > 0 ? `Stripped ${removedCount} identifying token(s).` : "No identifiers in the mail body."}`
+        : `Parsed ${mail.messages.length} message(s). ${removedCount > 0 ? `Stripped ${removedCount} identifying token(s).` : ""}`.trim(),
+      { engine: "deterministic", trace: mail.trace, data: parseMailData },
     );
   } catch {
-    yield emit("redact", "error", "Redaction failed, so nothing was sent anywhere. Stopping here.");
+    yield emit("parse_mail", "error", "Could not safely read the forwarded mail. Stopping here.");
     yield finish("withheld", undefined, undefined, undefined, "We couldn't safely process this yet. Nothing was published or shared.");
     return;
   }
 
-  const parseInput = mail.digest
-    ? `${mail.digest}\n\n${redact(notes, { knownNames }).text}`
-    : redactedText;
+  const parseInput = mail.digest ? `${mail.digest}\n\n${redactedNotes}` : redactedNotes;
 
-  // ---- 3. parse --------------------------------------------------------
-  yield emit("parse", "running", "Reading your description and structuring it into rounds…");
+  // ---- 3. identify company + role (structure the loop) -------------------
+  yield emit("identify", "running", "Identifying company, role and how far the loop got…");
   let parsed: ParsedProcess;
   let parseEngine: Engine;
+  let parseTrace: string[] = [];
   try {
     const result = await reasonParse({ description: parseInput, knownNames, priorAnswers });
     parsed = result.value;
     parseEngine = result.engine;
+    parseTrace = result.trace;
 
     if (parsed.questions.length > 0) {
       yield emit(
-        "parse",
+        "identify",
         "blocked",
         `${parsed.questions.length} quick question${parsed.questions.length > 1 ? "s" : ""} before we can size this correctly.`,
-        { engine: parseEngine, trace: result.trace, data: { parsed } satisfies ParseStepData },
+        {
+          engine: parseEngine,
+          trace: result.trace,
+          data: identifyData(parsed, parsed.proposedTier, mail, role),
+        },
       );
       const questionsMsg = { kind: "questions" as const, questions: parsed.questions, priorParse: parsed };
       leakCheck(questionsMsg);
       yield questionsMsg;
-      return; // client collects answers and re-POSTs with priorAnswers
+      return;
     }
-
-    yield emit(
-      "parse",
-      "ok",
-      `Parsed ${parsed.rounds.length} round(s), ${parsed.roundsCleared} cleared, ${parsed.competencies.length} competenc${parsed.competencies.length === 1 ? "y" : "ies"}.`,
-      { engine: parseEngine, trace: result.trace, data: { parsed } satisfies ParseStepData },
-    );
   } catch {
-    // Every attempt failed schema validation. Fail closed: keep the raw
-    // submission for a human to look at, compute nothing, publish nothing.
-    yield emit("parse", "error", "We couldn't parse this confidently. A person will review it.");
+    yield emit("identify", "error", "We couldn't parse this confidently. A person will review it.");
     await persistRawForReview(userId, sourceText, recruiterEmail);
     yield finish("pending_review", undefined, undefined, undefined, "This needs a person to look at it — we'll follow up.");
     return;
   }
 
-  // ---- 4. tier -----------------------------------------------------------
-  // computeTier already ran inside the parse step (it's what clamped
-  // proposedTier); re-run it here only to show the rule's independent verdict
-  // next to the model's, so the candidate can see why.
-  yield emit("tier", "running", "Applying the deterministic tier rules…");
   const ruleTier = computeTier({
     roundsCleared: parsed.roundsCleared,
     roundsConfidence: parsed.roundsConfidence,
     loopLengthWeeks: parsed.loopLengthWeeks,
     knownOfferRate: null,
   });
-  yield emit("tier", "ok", tierExplanation(parsed, ruleTier), {
-    data: {
-      tier: parsed.proposedTier,
-      ruleTier,
-      roundsCleared: parsed.roundsCleared,
-      roundsConfidence: parsed.roundsConfidence,
-    } satisfies TierStepData,
-  });
+
+  yield emit(
+    "identify",
+    "ok",
+    [
+      role ? `Role: ${role}.` : mail.extractedRole ? `Role: ${mail.extractedRole}.` : "Role unstated.",
+      mail.primarySignal.domain ? `Sender domain ${mail.primarySignal.domain}.` : "No company domain.",
+      `Tier ${parsed.proposedTier} from ${parsed.roundsCleared} round(s) cleared.`,
+    ].join(" "),
+    {
+      engine: parseEngine,
+      trace: [
+        ...parseTrace,
+        role ? `Role taken as "${role}".` : "No role named.",
+        `Sender domain ${mail.primarySignal.domain || "(none)"}. The mailbox stays private.`,
+        tierExplanation(parsed, ruleTier),
+      ],
+      data: identifyData(parsed, ruleTier, mail, role),
+    },
+  );
 
   if (parsed.needsReview || parsed.roundsConfidence < 0.6) {
     yield emit("publish", "blocked", "Low-confidence parse — held for a person to confirm before it can publish.");
@@ -234,32 +261,66 @@ export async function* runPipeline(args: RunPipelineArgs): AsyncGenerator<Pipeli
     return;
   }
 
-  // ---- 5. verify recruiter signal ----------------------------------------
-  yield emit("verify", "running", "Resolving the recruiter domain and comparing public evidence…");
+  // ---- 4. research public evidence ---------------------------------------
+  yield emit("research", "running", "Checking public company and role evidence…");
   const signal = parseRecruiterSignal(recruiterEmail);
+  const company = signal.domain ? resolveCompany(signal.domain) : resolveCompany("");
+  const publicEvidence = collectPublicEvidence(company).map((e) => ({
+    id: e.id,
+    kind: e.kind,
+    source: e.source,
+    claim: e.claim,
+    about: e.about,
+  }));
+  const researchData: ResearchStepData = {
+    domain: signal.domain,
+    companyLabel: company.found ? company.displayName : signal.domain || "(none)",
+    found: company.found,
+    evidenceKind: company.found ? "catalog" : "none",
+    sector: company.sector,
+    stage: company.stage,
+    evidence: publicEvidence,
+  };
+  yield emit(
+    "research",
+    company.found ? "ok" : "ok",
+    company.found
+      ? `Catalog evidence for ${company.displayName} (${publicEvidence.length} public signal(s)). Not a live crawl.`
+      : signal.domain
+        ? `No public catalog evidence for ${signal.domain}. Holding rather than inventing a company.`
+        : "No company domain to research.",
+    {
+      engine: "deterministic",
+      trace: [
+        company.found
+          ? `Resolved ${signal.domain} to a catalog profile. Evidence kind: catalog.`
+          : `Unknown or empty domain — no public profile.`,
+      ],
+      data: researchData,
+    },
+  );
+
+  // ---- 5. cross-check / verification agent -------------------------------
+  yield emit("match", "running", "Cross-checking the mail against the stated experience and public evidence…");
 
   if (signal.kind === "invalid" || !signal.email) {
-    const verifyData: VerifyStepData = {
+    const matchData = matchPayload(signal.domain, maskEmail(signal.email), {
+      status: "failed",
+      confidence: 0,
+      companyMatch: false,
+      roleMatch: false,
+      processMatch: false,
+      evidence: [],
+      inconsistencies: [signal.reason],
+      reasoning: signal.reason,
+      privacyStatus: "pending",
       domain: signal.domain,
-      maskedSignal: maskEmail(signal.email),
-      verification: {
-        status: "failed",
-        confidence: 0,
-        companyMatch: false,
-        roleMatch: false,
-        processMatch: false,
-        evidence: [],
-        inconsistencies: [signal.reason],
-        reasoning: signal.reason,
-        privacyStatus: "pending",
-        domain: signal.domain,
-        companyLabel: signal.domain || "(none)",
-        evidenceKind: "none",
-      },
-    };
-    yield emit("verify", "blocked", "No usable recruiter signal — nothing will be published.", {
+      companyLabel: signal.domain || "(none)",
+      evidenceKind: "none",
+    }, role, mail);
+    yield emit("match", "blocked", "No usable company signal from the forwarded From: line — nothing will be published.", {
       engine: "deterministic",
-      data: verifyData,
+      data: matchData,
     });
     await persistRawForReview(userId, sourceText, recruiterEmail);
     yield finish(
@@ -267,7 +328,7 @@ export async function* runPipeline(args: RunPipelineArgs): AsyncGenerator<Pipeli
       undefined,
       undefined,
       parsed.proposedTier,
-      "A company recruiter address is required to verify this process. Nothing was published.",
+      "A company recruiter address on the forwarded mail is required to verify this process. Nothing was published.",
     );
     return;
   }
@@ -283,24 +344,20 @@ export async function* runPipeline(args: RunPipelineArgs): AsyncGenerator<Pipeli
     verification = result.value;
     verifyTrace = result.trace;
   } catch {
-    yield emit("verify", "error", "Verification failed closed. Nothing was published.");
+    yield emit("match", "error", "Verification failed closed. Nothing was published.");
     await persistRawForReview(userId, sourceText, recruiterEmail);
     yield finish("withheld", undefined, undefined, parsed.proposedTier, "We couldn't verify this yet. Nothing was published or shared.");
     return;
   }
 
-  const verifyData: VerifyStepData = {
-    domain: verification.domain,
-    maskedSignal: maskEmail(signal.email),
-    verification,
-  };
-  leakCheck(verifyData);
+  const matchData = matchPayload(verification.domain, maskEmail(signal.email), verification, role, mail);
+  leakCheck(matchData);
 
   if (verification.status === "failed") {
-    yield emit("verify", "blocked", verification.reasoning, {
+    yield emit("match", "blocked", verification.reasoning, {
       engine: "deterministic",
       trace: verifyTrace,
-      data: verifyData,
+      data: matchData,
     });
     const processId = await insertProcess({ userId, rawDescription: sourceText, parsed, recruiterEmail });
     await insertDossier({
@@ -322,10 +379,10 @@ export async function* runPipeline(args: RunPipelineArgs): AsyncGenerator<Pipeli
   }
 
   if (verification.status === "needs_review") {
-    yield emit("verify", "blocked", verification.reasoning, {
+    yield emit("match", "blocked", verification.reasoning, {
       engine: "deterministic",
       trace: verifyTrace,
-      data: verifyData,
+      data: matchData,
     });
     const processId = await insertProcess({ userId, rawDescription: sourceText, parsed, recruiterEmail });
     await insertDossier({
@@ -347,13 +404,13 @@ export async function* runPipeline(args: RunPipelineArgs): AsyncGenerator<Pipeli
   }
 
   parsed = { ...parsed, evidence: "corroborated" };
-  yield emit("verify", "ok", verification.reasoning, {
+  yield emit("match", "ok", verification.reasoning, {
     engine: "deterministic",
     trace: verifyTrace,
-    data: verifyData,
+    data: matchData,
   });
 
-  // ---- 6. audit redaction -------------------------------------------------
+  // ---- 6. privacy audit --------------------------------------------------
   yield emit("audit", "running", "Checking whether this can be published without identifying you…");
   let audit: RedactionAudit;
   let auditEngine: Engine = reasoningEngine();
@@ -366,9 +423,6 @@ export async function* runPipeline(args: RunPipelineArgs): AsyncGenerator<Pipeli
     auditEngine = result.engine;
     auditTrace = result.trace;
   } catch {
-    // reasonAudit already fails closed internally, but if the cohort-count
-    // query itself throws, mirror that same fail-closed behavior rather than
-    // let an exception skip publish.
     audit = {
       riskScore: 100,
       quasiIdentifiers: [],
@@ -384,7 +438,7 @@ export async function* runPipeline(args: RunPipelineArgs): AsyncGenerator<Pipeli
     data: { audit, cohortCount: cohort, kFloor: K_FLOOR } satisfies AuditStepData,
   });
 
-  // ---- 7. publish ----------------------------------------------------------
+  // ---- 7. publication decision -------------------------------------------
   const processId = await insertProcess({ userId, rawDescription: sourceText, parsed, recruiterEmail });
   const record = await insertDossier({ processId, userId, parsed, audit });
   assertNoRecruiterEmail(record, recruiterEmails);
@@ -401,13 +455,55 @@ export async function* runPipeline(args: RunPipelineArgs): AsyncGenerator<Pipeli
     return;
   }
 
-  yield emit("publish", "ok", `Published as ${record.id} — anonymised, live in the Circuit.`, {
+  yield emit("publish", "ok", `Verified and published as ${record.id} — anonymised, live in the Circuit.`, {
     data: { record } satisfies PublishStepData,
   });
   yield finish("published", record.rowId, record.id, parsed.proposedTier, "Live in the Circuit, fully anonymised.");
 }
 
-// ---------------------------------------------------------------------------
+function identifyData(
+  parsed: ParsedProcess,
+  ruleTier: Tier,
+  mail: { lastReachedLabel: string | null; processSignals: string[]; interviewDate: string | null; primarySignal: { domain: string } },
+  role: string,
+): IdentifyStepData {
+  return {
+    recruiterDomain: mail.primarySignal.domain,
+    role: role || null,
+    lastReachedLabel: mail.lastReachedLabel,
+    processSignals: mail.processSignals,
+    interviewDate: mail.interviewDate,
+    parsed,
+    tier: parsed.proposedTier,
+    ruleTier,
+    roundsCleared: parsed.roundsCleared,
+    roundsConfidence: parsed.roundsConfidence,
+  };
+}
+
+function matchPayload(
+  domain: string,
+  maskedSignal: string,
+  verification: MatchStepData["verification"],
+  role: string,
+  mail: { lastReachedLabel: string | null; processSignals: string[] },
+): MatchStepData {
+  return {
+    domain,
+    maskedSignal,
+    verification,
+    structured: {
+      company: verification.companyLabel,
+      role: role || null,
+      interview_signal: mail.lastReachedLabel,
+      recruiter_domain: domain,
+      process_signals: mail.processSignals,
+      evidence: verification.evidence,
+      confidence: verification.confidence,
+      status: verification.status,
+    },
+  };
+}
 
 function step(
   step: PipelineStep,
