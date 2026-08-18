@@ -14,12 +14,13 @@ import type { Engine } from "./capabilities";
 import type { DossierRecord } from "./records";
 import type { VerificationResult } from "./verify/types";
 
-export type PipelineStep = "redact" | "parse" | "tier" | "verify" | "audit" | "publish";
+export type PipelineStep = "ingest" | "redact" | "parse" | "tier" | "verify" | "audit" | "publish";
 export type PipelineStatus = "running" | "ok" | "error" | "blocked";
 
-export const STEP_ORDER: PipelineStep[] = ["redact", "parse", "tier", "verify", "audit", "publish"];
+export const STEP_ORDER: PipelineStep[] = ["ingest", "redact", "parse", "tier", "verify", "audit", "publish"];
 
 export const STEP_TITLE: Record<PipelineStep, string> = {
+  ingest: "Ingest",
   redact: "Redact",
   parse: "Structure",
   tier: "Tier",
@@ -30,6 +31,7 @@ export const STEP_TITLE: Record<PipelineStep, string> = {
 
 /** What the agent is doing while a stage is running. */
 export const STEP_ACTIVITY: Record<PipelineStep, string> = {
+  ingest: "Reading the forwarded recruiter mail for how far the loop got…",
   redact: "Checking for identifying information…",
   parse: "Reading the process, detecting rounds and competencies…",
   tier: "Applying the deterministic tier rules…",
@@ -75,6 +77,19 @@ export interface MetaMessage {
 export type PipelineMessage = MetaMessage | StepMessage | QuestionsMessage | DoneMessage;
 
 // ---- per-stage payloads ---------------------------------------------------
+
+export interface IngestStepData {
+  messageCount: number;
+  lastReachedLabel: string | null;
+  fromDomain: string;
+  messages: {
+    subject: string;
+    date: string | null;
+    fromDomain: string;
+    maskedFrom: string;
+    signalLabels: string[];
+  }[];
+}
 
 export interface RedactStepData {
   spans: RedactionSpan[];

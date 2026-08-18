@@ -45,7 +45,7 @@ export default function SystemPage() {
                 { t: "Evidence depth weighting", d: `assessed ${DEPTH_WEIGHT.assessed} · probed ${DEPTH_WEIGHT.probed} · mentioned ${DEPTH_WEIGHT.mentioned}. A competency that only came up in conversation is worth almost nothing.`, m: "src/matchRecords.ts" },
                 { t: "Recency discounting", d: "Under 3 months 1.0×, under 6 months 0.9×, under 12 months 0.75×, older 0.5×.", m: "recencyMultiplier()" },
                 { t: "Fail-closed gating", d: "Every error path in the pipeline ends in withheld or pending review. None of them end in a live public record.", m: "lib/pipeline.ts" },
-                { t: "Recruiter-email isolation", d: "The mailbox is a verification credential, not public identity. It is stored owner-only on processes and asserted absent from every public payload.", m: "lib/verify/email.ts" },
+                { t: "Recruiter-email isolation", d: "Forwarded mail is how we learn how far the loop got. The From: mailbox is a verification credential, stored owner-only on processes and asserted absent from every public payload.", m: "lib/verify/email.ts" },
               ].map((item) => (
                 <div key={item.t} className="card-flat stack-2">
                   <div className="row-between" style={{ gap: 12 }}>
@@ -65,7 +65,7 @@ export default function SystemPage() {
               {[
                 { t: "Structuring", d: "Prose into typed rounds and competencies. Without a model, a rule-based parser reads the same signals and shows every rule that fired. It is weaker on unusual prose and admits it.", m: "src/parseProcess.ts / lib/reasoners/parse.ts" },
                 { t: "Re-identification risk", d: "How identifying a record is. Without a model, quasi-identifiers are scored by weight. There is deliberately no fallthrough if a configured model fails — a failed privacy read withholds rather than retrying on something weaker.", m: "src/redactionAudit.ts / lib/reasoners/audit.ts" },
-                { t: "Verification", d: "Recruiter-email domain against public catalog evidence. v1 is deterministic. A later model path can refine needs_review, but it cannot publish a failed verification. The mailbox never reaches this stage.", m: "lib/reasoners/verify.ts" },
+                { t: "Verification", d: "From: domain against public catalog evidence. v1 is deterministic. A later model path can refine needs_review, but it cannot publish a failed verification. The mailbox never reaches this stage.", m: "lib/reasoners/verify.ts" },
                 { t: "Matching", d: "Ranking against a role. Without a model, scoring is a weighted sum of the four components, computed from the same depth and recency constants.", m: "src/matchRecords.ts / lib/reasoners/match.ts" },
                 { t: "Brief prose", d: "The narrative. The provenance ledger underneath it — known, inferred, unknown — is a deterministic read of the record either way, so a model-written brief carries the same accounting.", m: "src/interviewBrief.ts / lib/reasoners/brief.ts" },
               ].map((item) => (

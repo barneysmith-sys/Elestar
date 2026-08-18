@@ -89,11 +89,11 @@ export default function HomePage() {
 
         <div className="grid-cards">
           {[
-            { n: "01", t: "Ingest", d: "A candidate describes the loop and provides the recruiter email as a private verification signal." },
+            { n: "01", t: "Ingest", d: "A candidate forwards the recruiter emails. The agent reads them to see how far the loop got." },
             { n: "02", t: "Redact", d: "Identifiers are stripped on the server, before any prompt exists." },
             { n: "03", t: "Structure", d: "Prose becomes typed rounds, competencies and tested depth." },
             { n: "04", t: "Tier", d: "Deterministic rules. Rounds cleared decides it; brand never does." },
-            { n: "05", t: "Verify", d: "The recruiter domain is resolved against public evidence. The mailbox never becomes public." },
+            { n: "05", t: "Verify", d: "The From: domain is resolved against public evidence. The mailbox never becomes public." },
             { n: "06", t: "Privacy audit", d: `Re-identification risk scored against a hard k=${K_FLOOR} cohort floor.` },
             { n: "07", t: "Publish", d: "An anonymous record enters the pool — or does not, and stays private." },
             { n: "08", t: "Search", d: "A hiring team describes a role and gets ranked, explainable matches." },
@@ -121,6 +121,7 @@ export default function HomePage() {
                 "A job board",
                 "A resume database",
                 "A candidate marketplace",
+                "Inbox access, or a scrape of a recruiter's mail",
                 "An interview coach",
                 "A recruiting CRM",
                 "A dashboard of AI numbers that mean nothing",

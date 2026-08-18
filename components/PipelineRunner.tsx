@@ -26,6 +26,7 @@ import {
   STEP_TITLE,
   type AuditStepData,
   type DoneMessage,
+  type IngestStepData,
   type MetaMessage,
   type ParseStepData,
   type PipelineMessage,
@@ -44,9 +45,17 @@ import {
   describeScope,
 } from "../lib/records";
 import { EngineBadge, ErrorNote, Label, Mark, TierBadge } from "./primitives";
+import {
+  CANONICAL_FORWARDS,
+  CRYPTO_FORWARDS,
+  GMAIL_FORWARDS,
+  HEALTHTECH_FORWARDS,
+  MISMATCH_FORWARDS,
+} from "../lib/verify/mailFixtures";
 
 /** Minimum time a stage stays on screen, so each one is legible. */
 const DWELL_MS: Record<PipelineStep, number> = {
+  ingest: 1600,
   redact: 1500,
   parse: 2100,
   tier: 1300,
@@ -55,54 +64,55 @@ const DWELL_MS: Record<PipelineStep, number> = {
   publish: 1200,
 };
 
-export const EXAMPLES: { label: string; text: string; note: string; recruiterEmail: string; role: string }[] = [
+export const EXAMPLES: {
+  label: string;
+  note: string;
+  role: string;
+  forwards: string;
+  notes: string;
+}[] = [
   {
     label: "Full loop, rejected at the final",
-    note: "Publishes. Four rounds, three cleared, outcome never stated.",
+    note: "Publishes. Four forwarded messages, three rounds cleared, outcome never stated.",
     role: "Senior Backend Engineer",
-    recruiterEmail: "talent@ledgerpay.example",
-    text:
-      "Senior Backend Engineer at a Series B fintech.\nRecruiter screen.\nTechnical interview.\nSystem design.\nFinal panel.\nCandidate was rejected after the final round.",
+    forwards: CANONICAL_FORWARDS,
+    notes: "Senior Backend Engineer at a Series B fintech.",
   },
   {
     label: "Ambiguous round count",
     note: "Stops and asks. The parser will not guess a round count.",
     role: "Backend Engineer",
-    recruiterEmail: "talent@northwind-health.example",
-    text:
-      "I interviewed at a Series A healthtech company, maybe 40 people. Recruiter screen and then a few technical interviews. Never heard back.",
+    forwards: HEALTHTECH_FORWARDS,
+    notes: "Series A healthtech company, maybe 40 people. Never heard back.",
   },
   {
     label: "Too identifiable to publish",
     note: "Blocked by the privacy audit. Small company, long specific loop.",
     role: "Head of Engineering",
-    recruiterEmail: "hiring@vaultkit.example",
-    text:
-      "Recruiter screen, take-home, technical interview, system design, panel, and a final round at a 30 person seed stage crypto company in London over 8 weeks. They went with another candidate.",
+    forwards: CRYPTO_FORWARDS,
+    notes: "Head of Engineering at a 12-person seed-stage crypto custody startup in Dublin.",
   },
   {
     label: "Contains contact details",
     note: "Shows redaction removing real identifiers before anything leaves.",
     role: "Senior Backend Engineer",
-    recruiterEmail: "talent@ledgerpay.example",
-    text:
-      "Reach me at ada@example.com or +1 (415) 555-0199 — portfolio at https://ada.example.com, handle @adalovelace.\nSenior Backend Engineer at a Series B fintech. Recruiter screen, technical interview, system design, final panel. Rejected after the final round.",
+    forwards: CANONICAL_FORWARDS,
+    notes:
+      "Reach me at ada@example.com or +1 (415) 555-0199 — portfolio at https://ada.example.com, handle @adalovelace.\nSenior Backend Engineer at a Series B fintech.",
   },
   {
     label: "Company mismatch",
     note: "Verification fails. Fintech loop against a healthcare recruiter domain.",
     role: "Senior Backend Engineer",
-    recruiterEmail: "recruiting@harbor-clinic.example",
-    text:
-      "Senior Backend Engineer at a Series B fintech.\nRecruiter screen.\nTechnical interview.\nSystem design.\nFinal panel.\nCandidate was rejected after the final round.",
+    forwards: MISMATCH_FORWARDS,
+    notes: "Senior Backend Engineer at a Series B fintech.",
   },
   {
     label: "Personal email",
     note: "Verification fails. A gmail address is not a company signal.",
     role: "Senior Backend Engineer",
-    recruiterEmail: "talent@gmail.com",
-    text:
-      "Senior Backend Engineer at a Series B fintech.\nRecruiter screen.\nTechnical interview.\nSystem design.\nFinal panel.\nCandidate was rejected after the final round.",
+    forwards: GMAIL_FORWARDS,
+    notes: "Senior Backend Engineer at a Series B fintech.",
   },
 ];
 
@@ -111,9 +121,9 @@ interface StageState {
 }
 
 export function PipelineRunner({ initialText }: { initialText?: string }) {
-  const [text, setText] = useState(initialText ?? EXAMPLES[0]!.text);
+  const [forwards, setForwards] = useState(EXAMPLES[0]!.forwards);
+  const [notes, setNotes] = useState(initialText ?? EXAMPLES[0]!.notes);
   const [role, setRole] = useState(EXAMPLES[0]!.role);
-  const [recruiterEmail, setRecruiterEmail] = useState(EXAMPLES[0]!.recruiterEmail);
   const [submittedText, setSubmittedText] = useState("");
   const [intakeLocked, setIntakeLocked] = useState(false);
   const [running, setRunning] = useState(false);
@@ -181,13 +191,13 @@ export function PipelineRunner({ initialText }: { initialText?: string }) {
 
   const run = useCallback(
     async (priorAnswers?: Record<string, string>) => {
-      const description = text.trim();
-      const email = recruiterEmail.trim();
-      if (!description || !email) return;
+      const description = notes.trim();
+      const forwardedEmails = forwards.trim();
+      if (!description && !forwardedEmails) return;
 
       setRunning(true);
       setIntakeLocked(true);
-      setSubmittedText(description);
+      setSubmittedText([description, forwardedEmails].filter(Boolean).join("\n\n"));
       setStages({});
       setActive(null);
       setQuestions(null);
@@ -201,8 +211,8 @@ export function PipelineRunner({ initialText }: { initialText?: string }) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             description,
+            forwardedEmails: forwardedEmails || undefined,
             priorAnswers,
-            recruiterEmail: email,
             role: role.trim() || undefined,
           }),
         });
@@ -253,7 +263,7 @@ export function PipelineRunner({ initialText }: { initialText?: string }) {
         if (!cancelled.current) setRunning(false);
       }
     },
-    [drain, text, recruiterEmail, role],
+    [drain, notes, forwards, role],
   );
 
   const parsed = (stages.parse?.message.data as ParseStepData | undefined)?.parsed ?? null;
@@ -264,22 +274,35 @@ export function PipelineRunner({ initialText }: { initialText?: string }) {
       {/* ---- intake ------------------------------------------------------ */}
       <section className="stack-4">
         <div className="row-between">
-          <Label>Describe the process</Label>
+          <Label>Forwarded recruiter emails</Label>
           {meta && <EngineBadge engine={meta.engine} label={meta.engineLabel} />}
         </div>
 
         <textarea
           className="field"
-          style={{ minHeight: 168 }}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
+          style={{ minHeight: 220 }}
+          value={forwards}
+          onChange={(e) => setForwards(e.target.value)}
           disabled={running}
-          maxLength={8000}
-          aria-label="Interview process description"
-          placeholder="Senior Backend Engineer at a Series B fintech. Recruiter screen, technical interview, system design, final panel. Rejected after the final round."
+          maxLength={24000}
+          aria-label="Forwarded recruiter emails"
+          placeholder="From: recruiter@company.example&#10;Subject: Recruiter screen&#10;&#10;Paste the emails they sent you. Elestar reads them to see how far you got."
         />
 
         <div className="split" style={{ gap: 16 }}>
+          <label className="stack-2">
+            <Label>Notes (optional)</Label>
+            <textarea
+              className="field"
+              style={{ minHeight: 84 }}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              disabled={running}
+              maxLength={8000}
+              aria-label="Notes about the process"
+              placeholder="Senior Backend Engineer at a Series B fintech."
+            />
+          </label>
           <label className="stack-2">
             <Label>Role (optional)</Label>
             <input
@@ -292,32 +315,15 @@ export function PipelineRunner({ initialText }: { initialText?: string }) {
               aria-label="Role"
               placeholder="Senior Backend Engineer"
             />
-          </label>
-          <label className="stack-2">
-            <Label>Recruiter email</Label>
-            {intakeLocked ? (
-              <div className="field" style={{ display: "flex", alignItems: "center", minHeight: 42 }}>
-                <span className="mono-sm">
-                  {(() => {
-                    const data = stages.verify?.message.data as VerifyStepData | undefined;
-                    if (data?.maskedSignal && data.domain) return `${data.maskedSignal} → ${data.domain}`;
-                    if (data?.domain) return data.domain;
-                    return "Signal accepted — mailbox stays on this side of the owner boundary.";
-                  })()}
-                </span>
-              </div>
-            ) : (
-              <input
-                type="email"
-                className="field"
-                value={recruiterEmail}
-                onChange={(e) => setRecruiterEmail(e.target.value)}
-                disabled={running}
-                maxLength={254}
-                required
-                aria-label="Recruiter email"
-                placeholder="talent@company.example"
-              />
+            {intakeLocked && (
+              <span className="mono-sm" style={{ color: "var(--muted)" }}>
+                {(() => {
+                  const data = stages.verify?.message.data as VerifyStepData | undefined;
+                  if (data?.maskedSignal && data.domain) return `From: ${data.maskedSignal} → ${data.domain}`;
+                  if (data?.domain) return data.domain;
+                  return "Mailbox stays on this side of the owner boundary.";
+                })()}
+              </span>
             )}
           </label>
         </div>
@@ -333,9 +339,9 @@ export function PipelineRunner({ initialText }: { initialText?: string }) {
                 disabled={running}
                 title={example.note}
                 onClick={() => {
-                  setText(example.text);
+                  setForwards(example.forwards);
+                  setNotes(example.notes);
                   setRole(example.role);
-                  setRecruiterEmail(example.recruiterEmail);
                   setIntakeLocked(false);
                 }}
               >
@@ -347,7 +353,7 @@ export function PipelineRunner({ initialText }: { initialText?: string }) {
           <button
             type="button"
             className="btn-primary"
-            disabled={running || !text.trim() || !recruiterEmail.trim()}
+            disabled={running || (!notes.trim() && !forwards.trim())}
             onClick={() => void run()}
           >
             {running ? "Running pipeline…" : "Run pipeline"}
@@ -355,9 +361,9 @@ export function PipelineRunner({ initialText }: { initialText?: string }) {
         </div>
 
         <p className="body-sm" style={{ fontSize: 12 }}>
-          Recruiter email is a verification credential, not public identity. Redaction runs first, then
-          the domain is checked against public evidence. Nothing publishes unless verification and the
-          privacy audit both clear.
+          Forward the emails the recruiter sent you. Elestar reads From, Subject and body to see
+          how far the loop got. The mailbox is a verification credential, not public identity —
+          nothing publishes unless verification and the privacy audit both clear.
         </p>
       </section>
 
@@ -370,6 +376,12 @@ export function PipelineRunner({ initialText }: { initialText?: string }) {
 
       {/* ---- stage panels ------------------------------------------------ */}
       <div className="stack-6">
+        {stages.ingest && (
+          <StagePanel step="ingest" state={stages.ingest}>
+            <IngestPanel data={stages.ingest.message.data as IngestStepData | undefined} />
+          </StagePanel>
+        )}
+
         {stages.redact && (
           <StagePanel step="redact" state={stages.redact}>
             <RedactPanel original={submittedText} data={stages.redact.message.data as RedactStepData} />
@@ -548,6 +560,65 @@ function StagePanel({
         </details>
       )}
     </section>
+  );
+}
+
+function IngestPanel({ data }: { data?: IngestStepData }) {
+  if (!data) return null;
+
+  return (
+    <div className="stack-4">
+      <div className="cols-3">
+        <div className="stack-2">
+          <Label>Messages read</Label>
+          <span className="ticker display-md">{data.messageCount}</span>
+        </div>
+        <div className="stack-2">
+          <Label>Last round reached</Label>
+          <span className="body-text">{data.lastReachedLabel ?? "Unstated"}</span>
+        </div>
+        <div className="stack-2">
+          <Label>Sender domain</Label>
+          <span className="mono-sm">{data.fromDomain || "—"}</span>
+        </div>
+      </div>
+
+      {data.messages.length > 0 && (
+        <div className="stack-2">
+          {data.messages.map((msg, i) => (
+            <div
+              key={`${msg.subject}-${i}`}
+              className="card animate-slide-up"
+              style={{ animationDelay: `${i * 90}ms`, opacity: 0, animationFillMode: "forwards", padding: "12px 16px" }}
+            >
+              <div className="row-between" style={{ gap: 12, alignItems: "flex-start" }}>
+                <div className="stack-2">
+                  <span className="body-text">{msg.subject}</span>
+                  <span className="mono-sm" style={{ color: "var(--muted)" }}>
+                    {msg.maskedFrom}
+                    {msg.date ? ` · ${msg.date}` : ""}
+                  </span>
+                </div>
+                <div className="row-wrap" style={{ justifyContent: "flex-end" }}>
+                  {msg.signalLabels.length > 0 ? (
+                    msg.signalLabels.map((label) => (
+                      <span key={label} className="chip chip-ok">{label}</span>
+                    ))
+                  ) : (
+                    <span className="chip">No round named</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <p className="body-sm" style={{ fontSize: 12 }}>
+        This is not inbox access. You forwarded the messages; the agent reads them to see how far
+        the loop got. The mailbox never leaves this stage.
+      </p>
+    </div>
   );
 }
 

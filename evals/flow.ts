@@ -19,6 +19,12 @@
  *   npm run eval:flow                      # in another
  */
 
+import {
+  CANONICAL_FORWARDS,
+  GMAIL_FORWARDS,
+  MISMATCH_FORWARDS,
+} from "../lib/verify/mailFixtures";
+
 const BASE = process.env.ELESTAR_BASE_URL ?? "http://127.0.0.1:3111";
 
 let passed = 0;
@@ -78,14 +84,16 @@ async function api<T = any>(
 async function runPipeline(
   description: string,
   priorAnswers?: Record<string, string>,
-  extra?: { recruiterEmail?: string; role?: string },
+  extra?: { recruiterEmail?: string; role?: string; forwardedEmails?: string },
 ) {
-  const recruiterEmail = extra?.recruiterEmail ?? "talent@ledgerpay.example";
+  const forwardedEmails = extra?.forwardedEmails;
+  const recruiterEmail =
+    extra?.recruiterEmail ?? (forwardedEmails ? undefined : "talent@ledgerpay.example");
   const role = extra?.role ?? "Senior Backend Engineer";
   const res = await fetch(`${BASE}/api/pipeline`, {
     method: "POST",
     headers: { "content-type": "application/json", ...cookieHeader() },
-    body: JSON.stringify({ description, priorAnswers, recruiterEmail, role }),
+    body: JSON.stringify({ description, priorAnswers, recruiterEmail, role, forwardedEmails }),
   });
   remember(res);
   if (!res.ok || !res.body) {
@@ -147,7 +155,9 @@ async function main() {
   section("list a process: the pipeline publishes an anonymous record");
   let publishedId: string | null = null;
   {
-    const run = await runPipeline(CANONICAL);
+    const run = await runPipeline("Senior Backend Engineer at a Series B fintech.", undefined, {
+      forwardedEmails: CANONICAL_FORWARDS,
+    });
     check("pipeline streams", run.ok, run.status);
     const steps = run.messages.filter((m) => m.kind === "step");
     const done = run.messages.find((m) => m.kind === "done");
@@ -155,13 +165,17 @@ async function main() {
 
     check("emits a meta frame before the work", Boolean(meta), meta);
     check(
-      "runs redact, parse, tier, verify, audit, publish",
-      ["redact", "parse", "tier", "verify", "audit", "publish"].every((s) => steps.some((m) => m.step === s)),
+      "runs ingest, redact, parse, tier, verify, audit, publish",
+      ["ingest", "redact", "parse", "tier", "verify", "audit", "publish"].every((s) => steps.some((m) => m.step === s)),
       steps.map((s) => s.step),
     );
     check("publishes the canonical input", done?.outcome === "published", done);
     check("returns an anonymous handle", /^[A-Z]-\d+$/.test(done?.recordId ?? ""), done?.recordId);
     publishedId = done?.recordId ?? null;
+
+    const ingest = settled(run.messages, "ingest");
+    check("ingest read four forwarded messages", ingest?.data?.messageCount === 4, ingest?.data);
+    check("ingest last round reached is the final", /final/i.test(ingest?.data?.lastReachedLabel ?? ""), ingest?.data);
 
     const parsed = settled(run.messages, "parse")?.data?.parsed;
     check("extracts 4 rounds, not 5", parsed?.rounds?.length === 4, parsed?.rounds?.map((r: any) => r.type));
@@ -178,6 +192,7 @@ async function main() {
     const serialised = JSON.stringify(run.messages);
     check("no company name survives anywhere in the stream", !/\bacme|stripe|monzo\b/i.test(serialised));
     check("the recruiter mailbox is gone from the whole stream", !serialised.toLowerCase().includes("talent@ledgerpay.example"));
+    check("recruiter display names do not ride the stream", !/maya chen/i.test(serialised), serialised.slice(0, 200));
   }
 
   section("list a process: identity never leaves the server");
@@ -269,7 +284,9 @@ async function main() {
 
   section("list a process: personal email is not a company signal");
   {
-    const run = await runPipeline(CANONICAL, undefined, { recruiterEmail: "talent@gmail.com" });
+    const run = await runPipeline("Senior Backend Engineer at a Series B fintech.", undefined, {
+      forwardedEmails: GMAIL_FORWARDS,
+    });
     const verify = settled(run.messages, "verify");
     const done = run.messages.find((m) => m.kind === "done");
     check("verify is blocked or failed", verify?.status === "blocked" || verify?.data?.verification?.status === "failed", verify);
@@ -279,7 +296,9 @@ async function main() {
 
   section("list a process: company mismatch fails verification");
   {
-    const run = await runPipeline(CANONICAL, undefined, { recruiterEmail: "recruiting@harbor-clinic.example" });
+    const run = await runPipeline("Senior Backend Engineer at a Series B fintech.", undefined, {
+      forwardedEmails: MISMATCH_FORWARDS,
+    });
     const verify = settled(run.messages, "verify");
     const done = run.messages.find((m) => m.kind === "done");
     check("verify is blocked", verify?.status === "blocked", verify?.status);

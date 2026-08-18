@@ -39,6 +39,7 @@ export async function GET(): Promise<Response> {
       "Recency discounting (src/matchRecords.ts recencyMultiplier)",
       "Fail-closed publish gating (lib/pipeline.ts)",
       "Intro approval gate (lib/store.ts, supabase/migrations RLS + CHECK)",
+      "Forwarded-mail ingest (lib/verify/forwardedMail.ts)",
       "Recruiter-email isolation (lib/verify/email.ts assertNoRecruiterEmail)",
     ],
     /** Judgement stages that fall back to rules when no model is configured. */

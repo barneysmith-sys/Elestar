@@ -16,6 +16,12 @@ import { matchRecordsDeterministic } from "../lib/reasoners/match";
 import { buildInterviewBriefDeterministic } from "../lib/reasoners/brief";
 import { verifyProcessDeterministic } from "../lib/reasoners/verify";
 import { assertNoRecruiterEmail, parseRecruiterSignal } from "../lib/verify/email";
+import { parseForwardedMail } from "../lib/verify/forwardedMail";
+import {
+  CANONICAL_FORWARDS,
+  GMAIL_FORWARDS,
+  HEALTHTECH_FORWARDS,
+} from "../lib/verify/mailFixtures";
 import { redact } from "../src/redact";
 import { computeTier } from "../src/parseProcess";
 import { K_FLOOR } from "../src/redactionAudit";
@@ -355,6 +361,48 @@ section("verify: recruiter signal");
   check("assertNoRecruiterEmail throws if payload includes it", threw);
   assertNoRecruiterEmail(ledger.verification, email);
   check("assertNoRecruiterEmail accepts a clean verification payload", true);
+
+  let threwMany = false;
+  try {
+    assertNoRecruiterEmail({ leak: email }, [email, "other@northwind-health.example"]);
+  } catch {
+    threwMany = true;
+  }
+  check("assertNoRecruiterEmail throws against any address in a list", threwMany);
+}
+
+section("ingest: forwarded recruiter mail shows how far they got");
+{
+  const mail = parseForwardedMail(CANONICAL_FORWARDS);
+  check("splits a four-message thread", mail.messages.length === 4, mail.messages.length);
+  check(
+    "round types reached are screen/technical/system_design/final",
+    JSON.stringify([...new Set(mail.messages.flatMap((m) => m.signals.map((s) => s.type)))].sort()) ===
+      JSON.stringify(["final", "screen", "system_design", "technical"].sort()),
+    mail.messages.map((m) => m.signals.map((s) => s.type)),
+  );
+  check("last round reached is the final", mail.lastReached === "final", mail.lastReachedLabel);
+  check("From: domain is ledgerpay.example", mail.primarySignal.domain === "ledgerpay.example", mail.primarySignal);
+  check("raw mailbox is held privately", mail.recruiterEmails.includes("talent@ledgerpay.example"));
+  check("digest never contains the mailbox", !mail.digest.toLowerCase().includes("talent@ledgerpay.example"), mail.digest);
+  check("public messages never contain the mailbox", !JSON.stringify(mail.messages).toLowerCase().includes("talent@ledgerpay.example"));
+
+  const parsedFromMail = parseProcessDeterministic({
+    description: `${mail.digest}\n\nSenior Backend Engineer at a Series B fintech.`,
+  }).parsed;
+  check("mail digest parses to 4 rounds", parsedFromMail.rounds.length === 4, parsedFromMail.rounds);
+  check("mail digest clears 3", parsedFromMail.roundsCleared === 3, parsedFromMail.roundsCleared);
+  check("mail digest does not invent an outcome", parsedFromMail.outcome === "unstated", parsedFromMail.outcome);
+
+  const vague = parseForwardedMail(HEALTHTECH_FORWARDS);
+  check("ambiguous thread still names a screen and a technical", vague.messages.length === 2, vague.messages.length);
+  const vagueParse = parseProcessDeterministic({
+    description: `${vague.digest}\n\n${HEALTHTECH_FORWARDS}\nSeries A healthtech, maybe 40 people.`,
+  }).parsed;
+  check("vague forwards still ask rather than guess", vagueParse.questions.length > 0, vagueParse.questions);
+
+  const gmail = parseForwardedMail(GMAIL_FORWARDS);
+  check("gmail From: is a personal signal", gmail.primarySignal.kind === "personal", gmail.primarySignal);
 }
 
 // ---------------------------------------------------------------------------

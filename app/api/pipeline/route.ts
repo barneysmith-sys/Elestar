@@ -2,16 +2,22 @@ import { z } from "zod";
 import { runPipeline } from "../../../lib/pipeline";
 import { getSession, demoSessionCookie } from "../../../lib/session";
 import { getCapabilities, engineLabel, persistenceLabel, reasoningEngine } from "../../../lib/capabilities";
+import { collectEmails } from "../../../lib/verify/email";
 
 export const dynamic = "force-dynamic";
 
-const RequestZ = z.object({
-  description: z.string().min(1).max(8000),
-  knownNames: z.array(z.string().max(120)).max(10).optional(),
-  priorAnswers: z.record(z.string(), z.string()).optional(),
-  recruiterEmail: z.string().max(254).optional(),
-  role: z.string().max(200).optional(),
-});
+const RequestZ = z
+  .object({
+    description: z.string().max(8000).optional().default(""),
+    forwardedEmails: z.string().max(24000).optional(),
+    knownNames: z.array(z.string().max(120)).max(10).optional(),
+    priorAnswers: z.record(z.string(), z.string()).optional(),
+    recruiterEmail: z.string().max(254).optional(),
+    role: z.string().max(200).optional(),
+  })
+  .refine((v) => Boolean(v.description?.trim() || v.forwardedEmails?.trim()), {
+    message: "Forwarded recruiter emails or notes are required",
+  });
 
 /**
  * Streams the listing pipeline as server-sent events, one message per stage.
@@ -30,7 +36,8 @@ export async function POST(req: Request): Promise<Response> {
       headers: { "Content-Type": "application/json" },
     });
   }
-  const { description, knownNames, priorAnswers, recruiterEmail, role } = parsedBody.data;
+  const { description, forwardedEmails, knownNames, priorAnswers, recruiterEmail, role } = parsedBody.data;
+  const leakNet = collectEmails(description, forwardedEmails, recruiterEmail);
 
   const capabilities = getCapabilities();
   const encoder = new TextEncoder();
@@ -38,9 +45,9 @@ export async function POST(req: Request): Promise<Response> {
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       const send = (obj: unknown) => {
-        if (recruiterEmail) {
-          const serialised = JSON.stringify(obj);
-          if (serialised.toLowerCase().includes(recruiterEmail.toLowerCase())) {
+        if (leakNet.length > 0) {
+          const serialised = JSON.stringify(obj).toLowerCase();
+          if (leakNet.some((email) => serialised.includes(email))) {
             throw new Error("recruiter email leaked onto the event stream");
           }
         }
@@ -60,6 +67,7 @@ export async function POST(req: Request): Promise<Response> {
         for await (const message of runPipeline({
           userId: session.userId,
           description,
+          forwardedEmails,
           knownNames,
           priorAnswers,
           recruiterEmail,

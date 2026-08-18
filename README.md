@@ -124,15 +124,17 @@ which one ran; `lib/store.ts` is the only module that persists records, and it
 targets Supabase or the in-memory demo store behind one interface;
 `lib/pipeline.ts` orchestrates the listing flow and fails closed at every step.
 
-### Recruiter email verification
+### Forwarded recruiter mail
 
-A recruiter address is a **verification credential**, not public identity. The
-pipeline extracts the company domain, looks up public catalog evidence, and
-compares company / role / process. The mailbox is stored owner-only on
-`processes.recruiter_email` (see `supabase/migrations/00000000000002_recruiter_signal.sql`)
-and is asserted absent from every public payload via
-`assertNoRecruiterEmail`. Personal mailbox providers fail closed. A failed
-verification is never published.
+Candidates **forward the emails a recruiter sent them**. The ingest step reads
+From / Subject / Date / body to see how far the loop got. The From: domain is
+the verification credential; the mailbox itself is not public identity. Catalog
+evidence is compared against company / role / process. The address is stored
+owner-only on `processes.recruiter_email` (see
+`supabase/migrations/00000000000002_recruiter_signal.sql`) and asserted absent
+from every public payload via `assertNoRecruiterEmail`. Personal mailbox
+providers fail closed. A failed verification is never published. This is not
+inbox access and not a crawl of a recruiter's mail server.
 
 ## Install
 

@@ -21,6 +21,12 @@ interface AgentSpec {
 
 const AGENTS: AgentSpec[] = [
   {
+    name: "Ingest",
+    does: "Reads forwarded recruiter mail for how far the loop got. From: domain is the signal; the mailbox stays private.",
+    module: "lib/verify/forwardedMail.ts",
+    kind: "deterministic",
+  },
+  {
     name: "Redact",
     does: "Strips emails, phone numbers, URLs, handles and known names before any prompt is built.",
     module: "src/redact.ts",
@@ -40,7 +46,7 @@ const AGENTS: AgentSpec[] = [
   },
   {
     name: "Verify",
-    does: "Recruiter-email domain → public evidence → structured match. Mailbox never leaves the owner boundary.",
+    does: "From: domain → public evidence → structured match. Mailbox never leaves the owner boundary.",
     module: "lib/reasoners/verify.ts",
     kind: "judgement",
   },
@@ -70,7 +76,7 @@ const AGENTS: AgentSpec[] = [
   },
 ];
 
-const INPUTS = ["Interview process", "Round descriptions", "Outcome, if stated", "Recruiter email (private signal)"];
+const INPUTS = ["Forwarded recruiter emails", "Notes, if any", "Role, if stated"];
 const OUTPUTS = ["Anonymous record", "Ranked matches", "Interview brief"];
 
 export function SystemModel() {
@@ -108,7 +114,7 @@ export function SystemModel() {
             Where the agents operate
           </h2>
           <p className="lede" style={{ maxWidth: "64ch" }}>
-            Eight stages between a description and reusable intelligence. Four of them are
+            Nine stages between forwarded recruiter mail and reusable intelligence. Four of them are
             deterministic rules that behave identically every time and never depend on a model being
             available.
           </p>

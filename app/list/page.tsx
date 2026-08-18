@@ -23,7 +23,7 @@ export default function ListPage() {
       <SectionHead
         kicker="List a process"
         title="Turn an interview loop into evidence"
-        sub="Describe a process in your own words. Elestar redacts it, structures it into rounds and competencies, applies the tier rules, audits it for re-identification risk, and publishes it only if it clears the floor."
+        sub="Forward the emails the recruiter sent you. Elestar reads them to see how far you got, redacts identity, structures the rounds, verifies the company domain, and publishes only if the privacy audit clears."
       />
 
       <div

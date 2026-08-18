@@ -5,8 +5,13 @@ import { getAuthenticatedUserId } from "../../../../lib/supabaseServer";
 export const dynamic = "force-dynamic";
 
 const RequestZ = z.object({
-  description: z.string().min(1).max(8000),
+  description: z.string().max(8000).optional().default(""),
+  forwardedEmails: z.string().max(24000).optional(),
   priorAnswers: z.record(z.string(), z.string()).optional(),
+  recruiterEmail: z.string().max(254).optional(),
+  role: z.string().max(200).optional(),
+}).refine((v) => Boolean(v.description?.trim() || v.forwardedEmails?.trim()), {
+  message: "Forwarded recruiter emails or notes are required",
 });
 
 /**
@@ -28,7 +33,7 @@ export async function POST(req: Request): Promise<Response> {
   if (!parsedBody.success) {
     return new Response("Invalid request body", { status: 400 });
   }
-  const { description, priorAnswers } = parsedBody.data;
+  const { description, forwardedEmails, priorAnswers, recruiterEmail, role } = parsedBody.data;
 
   const encoder = new TextEncoder();
   const stream = new ReadableStream<Uint8Array>({
@@ -37,7 +42,14 @@ export async function POST(req: Request): Promise<Response> {
         controller.enqueue(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`));
       };
       try {
-        for await (const message of runPipeline({ userId, description, priorAnswers })) {
+        for await (const message of runPipeline({
+          userId,
+          description,
+          forwardedEmails,
+          priorAnswers,
+          recruiterEmail,
+          role,
+        })) {
           send(message);
         }
       } catch {

@@ -117,12 +117,25 @@ export function maskEmail(email: string): string {
  * Throws if a string that should be public still contains a recruiter email.
  * Used at publish / brief / circuit boundaries so a leak is a crash, not a display bug.
  */
-export function assertNoRecruiterEmail(payload: unknown, recruiterEmail: string | undefined): void {
-  if (!recruiterEmail) return;
-  const needle = recruiterEmail.toLowerCase();
-  if (!needle.includes("@")) return;
+export function assertNoRecruiterEmail(
+  payload: unknown,
+  recruiterEmail: string | string[] | undefined,
+): void {
+  const emails = (Array.isArray(recruiterEmail) ? recruiterEmail : recruiterEmail ? [recruiterEmail] : [])
+    .map((e) => e.toLowerCase())
+    .filter((e) => e.includes("@"));
+  if (emails.length === 0) return;
   const serialised = JSON.stringify(payload).toLowerCase();
-  if (serialised.includes(needle)) {
-    throw new Error("assertNoRecruiterEmail: recruiter address reached a public boundary");
+  for (const needle of emails) {
+    if (serialised.includes(needle)) {
+      throw new Error("assertNoRecruiterEmail: recruiter address reached a public boundary");
+    }
   }
+}
+
+/** Every mailbox in a paste, used as the leak net for the event stream. */
+export function collectEmails(...parts: (string | undefined | null)[]): string[] {
+  const text = parts.filter(Boolean).join("\n");
+  const found = text.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi) ?? [];
+  return [...new Set(found.map((e) => e.toLowerCase()))];
 }
