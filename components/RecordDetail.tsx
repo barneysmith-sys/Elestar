@@ -152,10 +152,18 @@ export function RecordDetail({
             <div className="body-sm">{describeScope(parsed) || "Scope not stated"}</div>
             <div className="row-wrap">
               <span className="chip">{TIER_MEANING[record.tier]}</span>
-              <span className="chip">{EVIDENCE_LABEL[record.evidence]}</span>
+              <span className={`chip ${record.evidence === "corroborated" ? "chip-ok" : ""}`}>
+                {EVIDENCE_LABEL[record.evidence]}
+              </span>
               <span className="chip">{freshness(record.createdAt)}</span>
               {record.demo && <span className="chip">Demo data</span>}
             </div>
+            {parsed.evidence === "corroborated" && (
+              <p className="body-sm" style={{ fontSize: 12 }}>
+                The submitted loop was corroborated against public recruiting evidence. The recruiter
+                mailbox is not part of this record.
+              </p>
+            )}
           </section>
 
           <hr className="rule" />

@@ -39,6 +39,15 @@ export async function GET(): Promise<Response> {
       "Recency discounting (src/matchRecords.ts recencyMultiplier)",
       "Fail-closed publish gating (lib/pipeline.ts)",
       "Intro approval gate (lib/store.ts, supabase/migrations RLS + CHECK)",
+      "Recruiter-email isolation (lib/verify/email.ts assertNoRecruiterEmail)",
+    ],
+    /** Judgement stages that fall back to rules when no model is configured. */
+    degradesToDeterministic: [
+      "Process structuring (lib/reasoners/parse.ts)",
+      "Re-identification risk (lib/reasoners/audit.ts)",
+      "Matching (lib/reasoners/match.ts)",
+      "Interview brief (lib/reasoners/brief.ts)",
+      "Recruiter-domain verification (lib/reasoners/verify.ts)",
     ],
   });
 }

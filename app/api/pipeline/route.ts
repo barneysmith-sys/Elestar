@@ -9,6 +9,8 @@ const RequestZ = z.object({
   description: z.string().min(1).max(8000),
   knownNames: z.array(z.string().max(120)).max(10).optional(),
   priorAnswers: z.record(z.string(), z.string()).optional(),
+  recruiterEmail: z.string().max(254).optional(),
+  role: z.string().max(200).optional(),
 });
 
 /**
@@ -28,7 +30,7 @@ export async function POST(req: Request): Promise<Response> {
       headers: { "Content-Type": "application/json" },
     });
   }
-  const { description, knownNames, priorAnswers } = parsedBody.data;
+  const { description, knownNames, priorAnswers, recruiterEmail, role } = parsedBody.data;
 
   const capabilities = getCapabilities();
   const encoder = new TextEncoder();
@@ -36,6 +38,12 @@ export async function POST(req: Request): Promise<Response> {
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       const send = (obj: unknown) => {
+        if (recruiterEmail) {
+          const serialised = JSON.stringify(obj);
+          if (serialised.toLowerCase().includes(recruiterEmail.toLowerCase())) {
+            throw new Error("recruiter email leaked onto the event stream");
+          }
+        }
         controller.enqueue(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`));
       };
 
@@ -54,6 +62,8 @@ export async function POST(req: Request): Promise<Response> {
           description,
           knownNames,
           priorAnswers,
+          recruiterEmail,
+          role,
         })) {
           send(message);
         }
@@ -61,7 +71,8 @@ export async function POST(req: Request): Promise<Response> {
         // Belt-and-suspenders: runPipeline already fails closed on every step
         // it controls, but an unexpected throw here must still reach the
         // client as an explicit failure, never a silently truncated stream
-        // that could read as "it worked."
+        // that could read as "it worked." A recruiter-email leak in a frame
+        // also lands here and withholds rather than sending the frame.
         send({
           kind: "done",
           outcome: "withheld",

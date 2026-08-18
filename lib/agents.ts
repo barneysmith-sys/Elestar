@@ -26,6 +26,9 @@ import { auditRedactionDeterministic } from "./reasoners/audit";
 import { buildInterviewBriefDeterministic, type AnnotatedBrief } from "./reasoners/brief";
 import { matchRecordsDeterministic } from "./reasoners/match";
 import { parseProcessDeterministic } from "./reasoners/parse";
+import { verifyProcessDeterministic } from "./reasoners/verify";
+import type { RecruiterSignal } from "./verify/email";
+import type { VerificationResult } from "./verify/types";
 
 export interface Reasoned<T> {
   value: T;
@@ -131,4 +134,25 @@ export async function reasonBrief(args: {
   }
 
   return { value: annotated, engine: "deterministic", trace: [] };
+}
+
+/**
+ * Verify a structured process against public evidence for the recruiter domain.
+ *
+ * The mailbox is stripped before this function runs. v1 is deterministic-only;
+ * if a model path is added later it still cannot bypass a `failed` status —
+ * verification is a gate, not a suggestion.
+ */
+export async function reasonVerify(args: {
+  signal: Omit<RecruiterSignal, "email">;
+  parsed: ParsedProcess;
+  role?: string;
+}): Promise<Reasoned<VerificationResult>> {
+  const signal: RecruiterSignal = { ...args.signal, email: "" };
+  const { verification, trace } = verifyProcessDeterministic({
+    signal,
+    parsed: args.parsed,
+    role: args.role,
+  });
+  return { value: verification, engine: "deterministic", trace };
 }

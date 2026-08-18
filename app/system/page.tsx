@@ -45,6 +45,7 @@ export default function SystemPage() {
                 { t: "Evidence depth weighting", d: `assessed ${DEPTH_WEIGHT.assessed} · probed ${DEPTH_WEIGHT.probed} · mentioned ${DEPTH_WEIGHT.mentioned}. A competency that only came up in conversation is worth almost nothing.`, m: "src/matchRecords.ts" },
                 { t: "Recency discounting", d: "Under 3 months 1.0×, under 6 months 0.9×, under 12 months 0.75×, older 0.5×.", m: "recencyMultiplier()" },
                 { t: "Fail-closed gating", d: "Every error path in the pipeline ends in withheld or pending review. None of them end in a live public record.", m: "lib/pipeline.ts" },
+                { t: "Recruiter-email isolation", d: "The mailbox is a verification credential, not public identity. It is stored owner-only on processes and asserted absent from every public payload.", m: "lib/verify/email.ts" },
               ].map((item) => (
                 <div key={item.t} className="card-flat stack-2">
                   <div className="row-between" style={{ gap: 12 }}>
@@ -64,6 +65,7 @@ export default function SystemPage() {
               {[
                 { t: "Structuring", d: "Prose into typed rounds and competencies. Without a model, a rule-based parser reads the same signals and shows every rule that fired. It is weaker on unusual prose and admits it.", m: "src/parseProcess.ts / lib/reasoners/parse.ts" },
                 { t: "Re-identification risk", d: "How identifying a record is. Without a model, quasi-identifiers are scored by weight. There is deliberately no fallthrough if a configured model fails — a failed privacy read withholds rather than retrying on something weaker.", m: "src/redactionAudit.ts / lib/reasoners/audit.ts" },
+                { t: "Verification", d: "Recruiter-email domain against public catalog evidence. v1 is deterministic. A later model path can refine needs_review, but it cannot publish a failed verification. The mailbox never reaches this stage.", m: "lib/reasoners/verify.ts" },
                 { t: "Matching", d: "Ranking against a role. Without a model, scoring is a weighted sum of the four components, computed from the same depth and recency constants.", m: "src/matchRecords.ts / lib/reasoners/match.ts" },
                 { t: "Brief prose", d: "The narrative. The provenance ledger underneath it — known, inferred, unknown — is a deterministic read of the record either way, so a model-written brief carries the same accounting.", m: "src/interviewBrief.ts / lib/reasoners/brief.ts" },
               ].map((item) => (
@@ -130,6 +132,36 @@ export default function SystemPage() {
               </div>
             ))}
           </div>
+
+          <section className="stack-4" style={{ paddingTop: 24 }}>
+            <Label>Recruiter email is a credential, not identity</Label>
+            <p className="body-text" style={{ maxWidth: "72ch" }}>
+              The address is how Elestar resolves a company domain and compares the submitted loop
+              to public recruiting evidence. It is never a public identifier: it lives owner-only on
+              <span className="mono-sm"> processes</span>, is stripped before the verify reasoner
+              runs, and is asserted absent from the Circuit, search, brief, and every SSE frame.
+            </p>
+            <div className="split" style={{ gap: 24 }}>
+              <div className="card-flat stack-2">
+                <span className="chip chip-ok">Deterministic</span>
+                <p className="body-sm">
+                  Parsing the mailbox, rejecting personal providers, extracting the domain, catalog
+                  lookup, and <span className="mono-sm">assertNoRecruiterEmail</span> at publish
+                  boundaries. v1 verification itself is also a rule table.
+                </p>
+                <span className="mono-sm" style={{ color: "var(--muted)", fontSize: 10 }}>lib/verify/email.ts · lib/reasoners/verify.ts</span>
+              </div>
+              <div className="card-flat stack-2" style={{ borderStyle: "dashed" }}>
+                <span className="chip chip-warn">Judgement</span>
+                <p className="body-sm">
+                  Matching company, role and process against public evidence. A later model path may
+                  refine <span className="mono-sm">needs_review</span>, but it cannot bypass
+                  <span className="mono-sm">failed</span> — verification is a gate.
+                </p>
+                <span className="mono-sm" style={{ color: "var(--muted)", fontSize: 10 }}>lib/reasoners/verify.ts</span>
+              </div>
+            </div>
+          </section>
 
           <div className="row-wrap">
             <Link href="/list" className="btn-primary btn-sm" style={{ textDecoration: "none" }}>

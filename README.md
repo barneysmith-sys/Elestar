@@ -13,8 +13,8 @@ npm install
 npm run dev            # http://localhost:3000
 ```
 
-No credentials are required. With no `ANTHROPIC_API_KEY` the four judgement
-steps (parse, privacy audit, match, brief) run on the deterministic reasoners in
+No credentials are required. With no `ANTHROPIC_API_KEY` the judgement
+steps (parse, verify, privacy audit, match, brief) run on the deterministic reasoners in
 `lib/reasoners/`, and every surface that shows their output is labelled
 `DEMO MODE · SIMULATED REASONING`. With no Supabase env vars, records persist to
 an in-memory store seeded with clearly-marked synthetic records so the Circuit
@@ -79,8 +79,9 @@ npm run eval:flow        # the product over HTTP, end to end
 
 `eval:flow` asserts the negative cases that matter: a brief is refused before
 approval and after a decline, no identity appears on a pending or declined
-request, a record held by the privacy audit is unreachable by handle, and no
-submitted email, phone number or handle survives anywhere in the event stream.
+request, a record held by the privacy audit is unreachable by handle, no
+submitted email, phone number or handle survives anywhere in the event stream,
+and a recruiter mailbox never appears on Circuit, search, or a brief.
 
 ## The agent layer
 
@@ -122,6 +123,16 @@ judgement step to a model or a deterministic reasoner and tags the result with
 which one ran; `lib/store.ts` is the only module that persists records, and it
 targets Supabase or the in-memory demo store behind one interface;
 `lib/pipeline.ts` orchestrates the listing flow and fails closed at every step.
+
+### Recruiter email verification
+
+A recruiter address is a **verification credential**, not public identity. The
+pipeline extracts the company domain, looks up public catalog evidence, and
+compares company / role / process. The mailbox is stored owner-only on
+`processes.recruiter_email` (see `supabase/migrations/00000000000002_recruiter_signal.sql`)
+and is asserted absent from every public payload via
+`assertNoRecruiterEmail`. Personal mailbox providers fail closed. A failed
+verification is never published.
 
 ## Install
 

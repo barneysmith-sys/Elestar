@@ -14,6 +14,8 @@ import { parseProcessDeterministic } from "../lib/reasoners/parse";
 import { auditRedactionDeterministic } from "../lib/reasoners/audit";
 import { matchRecordsDeterministic } from "../lib/reasoners/match";
 import { buildInterviewBriefDeterministic } from "../lib/reasoners/brief";
+import { verifyProcessDeterministic } from "../lib/reasoners/verify";
+import { assertNoRecruiterEmail, parseRecruiterSignal } from "../lib/verify/email";
 import { redact } from "../src/redact";
 import { computeTier } from "../src/parseProcess";
 import { K_FLOOR } from "../src/redactionAudit";
@@ -291,6 +293,68 @@ section("brief: known vs inferred vs unknown");
   check("confidence is 0..1", brief.confidence >= 0 && brief.confidence <= 1, brief.confidence);
   check("explains how confidence was reached", brief.confidenceBasis.length > 0);
   check("only lists assessed or probed competencies as tested", brief.alreadyAssessed.every((a) => a.depth !== "mentioned"), brief.alreadyAssessed);
+}
+
+section("verify: recruiter signal");
+{
+  const company = parseRecruiterSignal("talent@ledgerpay.example");
+  check("valid company email extracts domain", company.kind === "company" && company.domain === "ledgerpay.example", company);
+
+  const gmail = parseRecruiterSignal("talent@gmail.com");
+  check("gmail is personal and fails", gmail.kind === "personal", gmail);
+  const gmailVerify = verifyProcessDeterministic({
+    signal: gmail,
+    parsed: parseProcessDeterministic({ description: CANONICAL }).parsed,
+  });
+  check("gmail verification status is failed", gmailVerify.verification.status === "failed", gmailVerify.verification);
+
+  const invalid = parseRecruiterSignal("not-an-email");
+  check("invalid email fails", invalid.kind === "invalid", invalid);
+  const invalidVerify = verifyProcessDeterministic({
+    signal: invalid,
+    parsed: parseProcessDeterministic({ description: CANONICAL }).parsed,
+  });
+  check("invalid verification status is failed", invalidVerify.verification.status === "failed", invalidVerify.verification);
+
+  const parsed = parseProcessDeterministic({ description: CANONICAL }).parsed;
+  const ledger = verifyProcessDeterministic({
+    signal: parseRecruiterSignal("talent@ledgerpay.example"),
+    parsed,
+    role: "Senior Backend Engineer",
+  });
+  check("ledgerpay.example + canonical fintech parse → verified", ledger.verification.status === "verified", ledger.verification);
+
+  const mismatch = verifyProcessDeterministic({
+    signal: parseRecruiterSignal("recruiting@harbor-clinic.example"),
+    parsed,
+    role: "Senior Backend Engineer",
+  });
+  check(
+    "harbor-clinic.example + fintech parse → failed company mismatch",
+    mismatch.verification.status === "failed" && mismatch.verification.companyMatch === false,
+    mismatch.verification,
+  );
+
+  const unknown = verifyProcessDeterministic({
+    signal: parseRecruiterSignal("talent@unknown-corp.example"),
+    parsed,
+    role: "Senior Backend Engineer",
+  });
+  check("unknown domain → needs_review", unknown.verification.status === "needs_review", unknown.verification);
+
+  const email = "talent@ledgerpay.example";
+  const serialised = JSON.stringify(ledger.verification);
+  check("verification result JSON never contains the recruiter email", !serialised.toLowerCase().includes(email), serialised);
+
+  let threw = false;
+  try {
+    assertNoRecruiterEmail({ leak: email }, email);
+  } catch {
+    threw = true;
+  }
+  check("assertNoRecruiterEmail throws if payload includes it", threw);
+  assertNoRecruiterEmail(ledger.verification, email);
+  check("assertNoRecruiterEmail accepts a clean verification payload", true);
 }
 
 // ---------------------------------------------------------------------------

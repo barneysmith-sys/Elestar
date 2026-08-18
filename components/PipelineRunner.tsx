@@ -34,6 +34,7 @@ import {
   type RedactStepData,
   type StepMessage,
   type TierStepData,
+  type VerifyStepData,
 } from "../lib/pipelineWire";
 import {
   DEPTH_LABEL,
@@ -49,34 +50,59 @@ const DWELL_MS: Record<PipelineStep, number> = {
   redact: 1500,
   parse: 2100,
   tier: 1300,
+  verify: 2200,
   audit: 1900,
   publish: 1200,
 };
 
-export const EXAMPLES: { label: string; text: string; note: string }[] = [
+export const EXAMPLES: { label: string; text: string; note: string; recruiterEmail: string; role: string }[] = [
   {
     label: "Full loop, rejected at the final",
     note: "Publishes. Four rounds, three cleared, outcome never stated.",
+    role: "Senior Backend Engineer",
+    recruiterEmail: "talent@ledgerpay.example",
     text:
       "Senior Backend Engineer at a Series B fintech.\nRecruiter screen.\nTechnical interview.\nSystem design.\nFinal panel.\nCandidate was rejected after the final round.",
   },
   {
     label: "Ambiguous round count",
     note: "Stops and asks. The parser will not guess a round count.",
+    role: "Backend Engineer",
+    recruiterEmail: "talent@northwind-health.example",
     text:
       "I interviewed at a Series A healthtech company, maybe 40 people. Recruiter screen and then a few technical interviews. Never heard back.",
   },
   {
     label: "Too identifiable to publish",
     note: "Blocked by the privacy audit. Small company, long specific loop.",
+    role: "Head of Engineering",
+    recruiterEmail: "hiring@vaultkit.example",
     text:
       "Recruiter screen, take-home, technical interview, system design, panel, and a final round at a 30 person seed stage crypto company in London over 8 weeks. They went with another candidate.",
   },
   {
     label: "Contains contact details",
     note: "Shows redaction removing real identifiers before anything leaves.",
+    role: "Senior Backend Engineer",
+    recruiterEmail: "talent@ledgerpay.example",
     text:
       "Reach me at ada@example.com or +1 (415) 555-0199 — portfolio at https://ada.example.com, handle @adalovelace.\nSenior Backend Engineer at a Series B fintech. Recruiter screen, technical interview, system design, final panel. Rejected after the final round.",
+  },
+  {
+    label: "Company mismatch",
+    note: "Verification fails. Fintech loop against a healthcare recruiter domain.",
+    role: "Senior Backend Engineer",
+    recruiterEmail: "recruiting@harbor-clinic.example",
+    text:
+      "Senior Backend Engineer at a Series B fintech.\nRecruiter screen.\nTechnical interview.\nSystem design.\nFinal panel.\nCandidate was rejected after the final round.",
+  },
+  {
+    label: "Personal email",
+    note: "Verification fails. A gmail address is not a company signal.",
+    role: "Senior Backend Engineer",
+    recruiterEmail: "talent@gmail.com",
+    text:
+      "Senior Backend Engineer at a Series B fintech.\nRecruiter screen.\nTechnical interview.\nSystem design.\nFinal panel.\nCandidate was rejected after the final round.",
   },
 ];
 
@@ -86,7 +112,10 @@ interface StageState {
 
 export function PipelineRunner({ initialText }: { initialText?: string }) {
   const [text, setText] = useState(initialText ?? EXAMPLES[0]!.text);
+  const [role, setRole] = useState(EXAMPLES[0]!.role);
+  const [recruiterEmail, setRecruiterEmail] = useState(EXAMPLES[0]!.recruiterEmail);
   const [submittedText, setSubmittedText] = useState("");
+  const [intakeLocked, setIntakeLocked] = useState(false);
   const [running, setRunning] = useState(false);
   const [meta, setMeta] = useState<MetaMessage | null>(null);
   const [stages, setStages] = useState<Partial<Record<PipelineStep, StageState>>>({});
@@ -153,9 +182,11 @@ export function PipelineRunner({ initialText }: { initialText?: string }) {
   const run = useCallback(
     async (priorAnswers?: Record<string, string>) => {
       const description = text.trim();
-      if (!description) return;
+      const email = recruiterEmail.trim();
+      if (!description || !email) return;
 
       setRunning(true);
+      setIntakeLocked(true);
       setSubmittedText(description);
       setStages({});
       setActive(null);
@@ -168,17 +199,23 @@ export function PipelineRunner({ initialText }: { initialText?: string }) {
         const res = await fetch("/api/pipeline", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ description, priorAnswers }),
+          body: JSON.stringify({
+            description,
+            priorAnswers,
+            recruiterEmail: email,
+            role: role.trim() || undefined,
+          }),
         });
 
         if (!res.ok || !res.body) {
-          setError(
-            res.status === 400
-              ? "That submission wasn't accepted. Try describing the loop in a sentence or two."
-              : "The pipeline couldn't start. Nothing was published.",
-          );
-          setRunning(false);
-          return;
+            setError(
+              res.status === 400
+                ? "That submission wasn't accepted. Try describing the loop in a sentence or two."
+                : "The pipeline couldn't start. Nothing was published.",
+            );
+            setRunning(false);
+            setIntakeLocked(false);
+            return;
         }
 
         const reader = res.body.getReader();
@@ -216,7 +253,7 @@ export function PipelineRunner({ initialText }: { initialText?: string }) {
         if (!cancelled.current) setRunning(false);
       }
     },
-    [drain, text],
+    [drain, text, recruiterEmail, role],
   );
 
   const parsed = (stages.parse?.message.data as ParseStepData | undefined)?.parsed ?? null;
@@ -242,6 +279,49 @@ export function PipelineRunner({ initialText }: { initialText?: string }) {
           placeholder="Senior Backend Engineer at a Series B fintech. Recruiter screen, technical interview, system design, final panel. Rejected after the final round."
         />
 
+        <div className="split" style={{ gap: 16 }}>
+          <label className="stack-2">
+            <Label>Role (optional)</Label>
+            <input
+              type="text"
+              className="field"
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              disabled={running}
+              maxLength={200}
+              aria-label="Role"
+              placeholder="Senior Backend Engineer"
+            />
+          </label>
+          <label className="stack-2">
+            <Label>Recruiter email</Label>
+            {intakeLocked ? (
+              <div className="field" style={{ display: "flex", alignItems: "center", minHeight: 42 }}>
+                <span className="mono-sm">
+                  {(() => {
+                    const data = stages.verify?.message.data as VerifyStepData | undefined;
+                    if (data?.maskedSignal && data.domain) return `${data.maskedSignal} → ${data.domain}`;
+                    if (data?.domain) return data.domain;
+                    return "Signal accepted — mailbox stays on this side of the owner boundary.";
+                  })()}
+                </span>
+              </div>
+            ) : (
+              <input
+                type="email"
+                className="field"
+                value={recruiterEmail}
+                onChange={(e) => setRecruiterEmail(e.target.value)}
+                disabled={running}
+                maxLength={254}
+                required
+                aria-label="Recruiter email"
+                placeholder="talent@company.example"
+              />
+            )}
+          </label>
+        </div>
+
         <div className="row-between stack-mobile" style={{ gap: 12 }}>
           <div className="row-wrap">
             {EXAMPLES.map((example) => (
@@ -252,21 +332,32 @@ export function PipelineRunner({ initialText }: { initialText?: string }) {
                 style={{ cursor: running ? "not-allowed" : "pointer" }}
                 disabled={running}
                 title={example.note}
-                onClick={() => setText(example.text)}
+                onClick={() => {
+                  setText(example.text);
+                  setRole(example.role);
+                  setRecruiterEmail(example.recruiterEmail);
+                  setIntakeLocked(false);
+                }}
               >
                 {example.label}
               </button>
             ))}
           </div>
 
-          <button type="button" className="btn-primary" disabled={running || !text.trim()} onClick={() => void run()}>
+          <button
+            type="button"
+            className="btn-primary"
+            disabled={running || !text.trim() || !recruiterEmail.trim()}
+            onClick={() => void run()}
+          >
             {running ? "Running pipeline…" : "Run pipeline"}
           </button>
         </div>
 
         <p className="body-sm" style={{ fontSize: 12 }}>
-          Redaction runs on the server before any reasoning happens, and nothing publishes unless the
-          privacy audit clears it. Try the examples — one of them is designed not to publish.
+          Recruiter email is a verification credential, not public identity. Redaction runs first, then
+          the domain is checked against public evidence. Nothing publishes unless verification and the
+          privacy audit both clear.
         </p>
       </section>
 
@@ -331,6 +422,12 @@ export function PipelineRunner({ initialText }: { initialText?: string }) {
         {stages.tier && (
           <StagePanel step="tier" state={stages.tier}>
             <TierPanel data={stages.tier.message.data as TierStepData} parsed={parsed} />
+          </StagePanel>
+        )}
+
+        {stages.verify && (
+          <StagePanel step="verify" state={stages.verify}>
+            <VerifyPanel data={stages.verify.message.data as VerifyStepData | undefined} />
           </StagePanel>
         )}
 
@@ -631,6 +728,82 @@ function TierPanel({ data, parsed }: { data?: TierStepData; parsed: ParsedProces
               }`}
         </p>
       </div>
+    </div>
+  );
+}
+
+function VerifyPanel({ data }: { data?: VerifyStepData }) {
+  if (!data) return null;
+  const { verification, domain, maskedSignal } = data;
+  const matchChip = (ok: boolean, label: string) => (
+    <span className={`chip ${ok ? "chip-ok" : "chip-warn"}`}>
+      {label}: {ok ? "match" : "no match"}
+    </span>
+  );
+
+  return (
+    <div className="stack-6">
+      <div className="cols-3">
+        <div className="stack-2">
+          <Label>Domain</Label>
+          <span className="mono-sm">{domain || "—"}</span>
+          <span className="body-sm" style={{ fontSize: 12 }}>{maskedSignal}</span>
+        </div>
+        <div className="stack-2">
+          <Label>Company</Label>
+          <span className="body-text">{verification.companyLabel}</span>
+        </div>
+        <div className="stack-2">
+          <Label>Confidence</Label>
+          <span className="ticker display-md">{verification.confidence.toFixed(2)}</span>
+          <div className="conf-bar">
+            <div className="conf-bar-fill" style={{ width: `${Math.round(verification.confidence * 100)}%` }} />
+          </div>
+        </div>
+      </div>
+
+      <div className="row-wrap">
+        {matchChip(verification.companyMatch, "Company")}
+        {matchChip(verification.roleMatch, "Role")}
+        {matchChip(verification.processMatch, "Process")}
+        <span className={`chip ${verification.status === "verified" ? "chip-ok" : "chip-warn"}`}>
+          {verification.status.replace(/_/g, " ")}
+        </span>
+      </div>
+
+      {verification.evidence.length > 0 && (
+        <div className="stack-3">
+          <Label>Public evidence</Label>
+          <div className="stack-2">
+            {verification.evidence.map((item) => (
+              <div key={item.id} className="card stack-2">
+                <div className="row-between" style={{ gap: 12 }}>
+                  <span className="body-text">{item.claim}</span>
+                  <span className={`chip ${item.kind === "live_public" ? "chip-ink" : ""}`}>
+                    {item.kind === "live_public" ? "live" : "catalog"}
+                  </span>
+                </div>
+                <span className="mono-sm" style={{ color: "var(--muted)" }}>{item.about}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {verification.inconsistencies.length > 0 && (
+        <div className="stack-3">
+          <Label>Inconsistencies</Label>
+          <ul className="stack-2" style={{ listStyle: "none" }}>
+            {verification.inconsistencies.map((line) => (
+              <li key={line} className="body-sm">{line}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <p className="body-sm" style={{ fontSize: 12, maxWidth: "72ch" }}>
+        {verification.reasoning}
+      </p>
     </div>
   );
 }

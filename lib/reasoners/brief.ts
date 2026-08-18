@@ -179,7 +179,7 @@ export function buildInterviewBriefDeterministic(args: {
     clamp01(record.roundsConfidence * 0.6 + (facts.length ? known / facts.length : 0) * 0.4),
   );
 
-  return {
+  const brief: AnnotatedBrief = {
     alreadyAssessed,
     safeToSkip,
     probeInstead,
@@ -192,6 +192,9 @@ export function buildInterviewBriefDeterministic(args: {
       `resting on stated fact — ${known} known, ${facts.filter((f) => f.provenance === "inferred").length} inferred, ` +
       `${unknown} unknown (40%).`,
   };
+
+  assertBriefHasNoMailbox(brief, record);
+  return brief;
 }
 
 const OUTCOME_CONTEXT: Record<Exclude<ParsedProcess["outcome"], "unstated">, string> = {
@@ -230,6 +233,14 @@ function requestedCompetencies(roleDescription: string): string[] {
     [/\bon[- ]call|incident|reliability\b/i, "Operational debugging"],
   ];
   return table.filter(([re]) => re.test(roleDescription)).map(([, name]) => name);
+}
+
+/** Role text may mention a domain; the brief and the record must not carry a mailbox. */
+function assertBriefHasNoMailbox(brief: AnnotatedBrief, record: ParsedProcess): void {
+  const serialised = JSON.stringify({ brief, record });
+  if (/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i.test(serialised)) {
+    throw new Error("AnnotatedBrief would include an email address from the record");
+  }
 }
 
 function clamp01(n: number): number {

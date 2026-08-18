@@ -39,6 +39,12 @@ const AGENTS: AgentSpec[] = [
     kind: "deterministic",
   },
   {
+    name: "Verify",
+    does: "Recruiter-email domain → public evidence → structured match. Mailbox never leaves the owner boundary.",
+    module: "lib/reasoners/verify.ts",
+    kind: "judgement",
+  },
+  {
     name: "Privacy audit",
     does: "Scores re-identification risk and enforces a k=8 cohort floor. Fails closed.",
     module: "src/redactionAudit.ts",
@@ -64,7 +70,7 @@ const AGENTS: AgentSpec[] = [
   },
 ];
 
-const INPUTS = ["Interview process", "Round descriptions", "Outcome, if stated"];
+const INPUTS = ["Interview process", "Round descriptions", "Outcome, if stated", "Recruiter email (private signal)"];
 const OUTPUTS = ["Anonymous record", "Ranked matches", "Interview brief"];
 
 export function SystemModel() {
@@ -102,7 +108,7 @@ export function SystemModel() {
             Where the agents operate
           </h2>
           <p className="lede" style={{ maxWidth: "64ch" }}>
-            Seven stages between a description and reusable intelligence. Four of them are
+            Eight stages between a description and reusable intelligence. Four of them are
             deterministic rules that behave identically every time and never depend on a model being
             available.
           </p>

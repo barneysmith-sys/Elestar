@@ -84,20 +84,21 @@ export default function HomePage() {
         <SectionHead
           kicker="The idea"
           title="A process goes in. Reusable intelligence comes out."
-          sub="Nine steps, in order. Each one is a real stage in the repository, and you can watch all of them execute on your own input."
+          sub="Ten steps, in order. Each one is a real stage in the repository, and you can watch all of them execute on your own input."
         />
 
         <div className="grid-cards">
           {[
-            { n: "01", t: "Ingest", d: "A candidate describes the loop in their own words." },
+            { n: "01", t: "Ingest", d: "A candidate describes the loop and provides the recruiter email as a private verification signal." },
             { n: "02", t: "Redact", d: "Identifiers are stripped on the server, before any prompt exists." },
             { n: "03", t: "Structure", d: "Prose becomes typed rounds, competencies and tested depth." },
-            { n: "04", t: "Verify", d: "Deterministic tier rules. Rounds cleared decides it; brand never does." },
-            { n: "05", t: "Privacy audit", d: `Re-identification risk scored against a hard k=${K_FLOOR} cohort floor.` },
-            { n: "06", t: "Publish", d: "An anonymous record enters the pool — or does not, and stays private." },
-            { n: "07", t: "Search", d: "A hiring team describes a role and gets ranked, explainable matches." },
-            { n: "08", t: "Intro", d: "The candidate approves. That is the only way identity moves." },
-            { n: "09", t: "Brief", d: "What was tested, what to skip, what to probe, what is still unknown." },
+            { n: "04", t: "Tier", d: "Deterministic rules. Rounds cleared decides it; brand never does." },
+            { n: "05", t: "Verify", d: "The recruiter domain is resolved against public evidence. The mailbox never becomes public." },
+            { n: "06", t: "Privacy audit", d: `Re-identification risk scored against a hard k=${K_FLOOR} cohort floor.` },
+            { n: "07", t: "Publish", d: "An anonymous record enters the pool — or does not, and stays private." },
+            { n: "08", t: "Search", d: "A hiring team describes a role and gets ranked, explainable matches." },
+            { n: "09", t: "Intro", d: "The candidate approves. That is the only way identity moves." },
+            { n: "10", t: "Brief", d: "What was tested, what to skip, what to probe, what is still unknown." },
           ].map((step) => (
             <div key={step.n} className="card-flat stack-3 hoverable">
               <div className="row" style={{ gap: 10 }}>

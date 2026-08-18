@@ -84,7 +84,7 @@ export function RecordCard({
         </div>
         <div className="row-between" style={{ gap: 12 }}>
           <Label>Evidence</Label>
-          <span className="mono-sm" style={{ color: "var(--muted)" }}>
+          <span className="mono-sm" style={{ color: record.evidence === "corroborated" ? "var(--ink)" : "var(--muted)" }}>
             {EVIDENCE_LABEL[record.evidence]}
           </span>
         </div>

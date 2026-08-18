@@ -12,16 +12,18 @@ import type { RedactionSpan } from "../src/redact";
 import type { ParsedProcess, RedactionAudit, Tier } from "../src/types";
 import type { Engine } from "./capabilities";
 import type { DossierRecord } from "./records";
+import type { VerificationResult } from "./verify/types";
 
-export type PipelineStep = "redact" | "parse" | "tier" | "audit" | "publish";
+export type PipelineStep = "redact" | "parse" | "tier" | "verify" | "audit" | "publish";
 export type PipelineStatus = "running" | "ok" | "error" | "blocked";
 
-export const STEP_ORDER: PipelineStep[] = ["redact", "parse", "tier", "audit", "publish"];
+export const STEP_ORDER: PipelineStep[] = ["redact", "parse", "tier", "verify", "audit", "publish"];
 
 export const STEP_TITLE: Record<PipelineStep, string> = {
   redact: "Redact",
   parse: "Structure",
-  tier: "Verify",
+  tier: "Tier",
+  verify: "Verify",
   audit: "Privacy audit",
   publish: "Publish",
 };
@@ -31,6 +33,7 @@ export const STEP_ACTIVITY: Record<PipelineStep, string> = {
   redact: "Checking for identifying information…",
   parse: "Reading the process, detecting rounds and competencies…",
   tier: "Applying the deterministic tier rules…",
+  verify: "Resolving the recruiter domain and comparing public evidence…",
   audit: "Measuring re-identification risk and cohort size…",
   publish: "Writing the anonymous record…",
 };
@@ -88,6 +91,13 @@ export interface TierStepData {
   ruleTier: Tier;
   roundsCleared: number;
   roundsConfidence: number;
+}
+
+export interface VerifyStepData {
+  /** Domain only. The mailbox never travels on this payload. */
+  domain: string;
+  maskedSignal: string;
+  verification: VerificationResult;
 }
 
 export interface AuditStepData {

@@ -33,7 +33,7 @@ export type { DossierRecord, IntroRequest, RevealedIdentity };
 interface MemoryDb {
   dossiers: DossierRecord[];
   intros: IntroRequest[];
-  processes: Map<string, { userId: string; rawDescription: string; parsed: unknown }>;
+  processes: Map<string, { userId: string; rawDescription: string; parsed: unknown; recruiterEmail?: string }>;
   seq: number;
 }
 
@@ -63,6 +63,8 @@ export async function insertProcess(args: {
   userId: string;
   rawDescription: string;
   parsed: ParsedProcess | { needsReview: true; reason: string };
+  /** Owner-only verification credential. Never copied onto a dossier. */
+  recruiterEmail?: string;
 }): Promise<string> {
   if (getCapabilities().persistence) {
     const supabase = getSupabaseAdmin();
@@ -74,6 +76,7 @@ export async function insertProcess(args: {
         // Phase 1's textarea-only intake never collects a real employer name
         // and the model never sees identity either, so this stays null.
         employer_name_real: null,
+        recruiter_email: args.recruiterEmail ?? null,
         rounds: "rounds" in args.parsed ? args.parsed.rounds : [],
         parsed: args.parsed,
       })
@@ -89,6 +92,7 @@ export async function insertProcess(args: {
     userId: args.userId,
     rawDescription: args.rawDescription,
     parsed: args.parsed,
+    recruiterEmail: args.recruiterEmail,
   });
   return id;
 }
@@ -103,6 +107,9 @@ export async function insertDossier(args: {
 
   // The recruiter-browsable projection. Deliberately a whitelist rather than
   // a blacklist: a field has to be named here to ever reach a recruiter.
+  // Recruiter email, recruiter domain, and the verification mailbox are
+  // intentionally absent — even a corroborated evidence flag carries no
+  // company hostname.
   const publicRecord = {
     roundsCleared: parsed.roundsCleared,
     roundsTotal: parsed.roundsTotal,

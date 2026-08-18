@@ -75,11 +75,17 @@ async function api<T = any>(
 }
 
 /** Runs the SSE pipeline and collects every message it emitted. */
-async function runPipeline(description: string, priorAnswers?: Record<string, string>) {
+async function runPipeline(
+  description: string,
+  priorAnswers?: Record<string, string>,
+  extra?: { recruiterEmail?: string; role?: string },
+) {
+  const recruiterEmail = extra?.recruiterEmail ?? "talent@ledgerpay.example";
+  const role = extra?.role ?? "Senior Backend Engineer";
   const res = await fetch(`${BASE}/api/pipeline`, {
     method: "POST",
     headers: { "content-type": "application/json", ...cookieHeader() },
-    body: JSON.stringify({ description, priorAnswers }),
+    body: JSON.stringify({ description, priorAnswers, recruiterEmail, role }),
   });
   remember(res);
   if (!res.ok || !res.body) {
@@ -149,8 +155,8 @@ async function main() {
 
     check("emits a meta frame before the work", Boolean(meta), meta);
     check(
-      "runs redact, parse, tier, audit, publish",
-      ["redact", "parse", "tier", "audit", "publish"].every((s) => steps.some((m) => m.step === s)),
+      "runs redact, parse, tier, verify, audit, publish",
+      ["redact", "parse", "tier", "verify", "audit", "publish"].every((s) => steps.some((m) => m.step === s)),
       steps.map((s) => s.step),
     );
     check("publishes the canonical input", done?.outcome === "published", done);
@@ -161,12 +167,17 @@ async function main() {
     check("extracts 4 rounds, not 5", parsed?.rounds?.length === 4, parsed?.rounds?.map((r: any) => r.type));
     check("outcome is not invented", parsed?.outcome === "unstated", parsed?.outcome);
 
+    const verify = settled(run.messages, "verify");
+    check("verify step is ok", verify?.status === "ok", verify?.status);
+    check("verify payload has a domain, not a mailbox", typeof verify?.data?.domain === "string" && !String(verify?.data?.domain).includes("@"), verify?.data);
+
     const audit = settled(run.messages, "audit");
     check("measures a real cohort against the floor", typeof audit?.data?.cohortCount === "number", audit?.data);
     check("cohort clears the floor before publishing", (audit?.data?.cohortCount ?? 0) >= 8, audit?.data?.cohortCount);
 
     const serialised = JSON.stringify(run.messages);
     check("no company name survives anywhere in the stream", !/\bacme|stripe|monzo\b/i.test(serialised));
+    check("the recruiter mailbox is gone from the whole stream", !serialised.toLowerCase().includes("talent@ledgerpay.example"));
   }
 
   section("list a process: identity never leaves the server");
@@ -227,6 +238,8 @@ async function main() {
     const run = await runPipeline(
       "Head of Engineering at a 12-person seed-stage crypto custody startup in Dublin. Recruiter screen, " +
         "take-home, technical interview, system design, panel, and a final round. They went with another candidate.",
+      undefined,
+      { recruiterEmail: "hiring@vaultkit.example", role: "Head of Engineering" },
     );
     const audit = settled(run.messages, "audit");
     const publish = settled(run.messages, "publish");
@@ -252,6 +265,27 @@ async function main() {
     } else {
       check("a held record exposes no handle to reach", true);
     }
+  }
+
+  section("list a process: personal email is not a company signal");
+  {
+    const run = await runPipeline(CANONICAL, undefined, { recruiterEmail: "talent@gmail.com" });
+    const verify = settled(run.messages, "verify");
+    const done = run.messages.find((m) => m.kind === "done");
+    check("verify is blocked or failed", verify?.status === "blocked" || verify?.data?.verification?.status === "failed", verify);
+    check("personal email is not published", done?.outcome !== "published", done);
+    check("the gmail address is not in the stream", !JSON.stringify(run.messages).toLowerCase().includes("talent@gmail.com"));
+  }
+
+  section("list a process: company mismatch fails verification");
+  {
+    const run = await runPipeline(CANONICAL, undefined, { recruiterEmail: "recruiting@harbor-clinic.example" });
+    const verify = settled(run.messages, "verify");
+    const done = run.messages.find((m) => m.kind === "done");
+    check("verify is blocked", verify?.status === "blocked", verify?.status);
+    check("status is failed", verify?.data?.verification?.status === "failed", verify?.data?.verification);
+    check("mismatch is not published", done?.outcome !== "published", done);
+    check("the harbor mailbox is not in the stream", !JSON.stringify(run.messages).includes("recruiting@harbor-clinic.example"));
   }
 
   section("list a process: garbage input degrades gracefully");
@@ -404,6 +438,19 @@ async function main() {
       basis: brief.confidenceBasis,
     });
     check("the unstated outcome is not reported as a negative", JSON.stringify(brief).match(/\bfailed\b/i) === null, "no 'failed' claim");
+
+    const { json: circuit } = await api("/api/circuit");
+    const publicBlob = JSON.stringify({ records: circuit.records, brief: json });
+    check(
+      "circuit records + brief never contain the recruiter mailbox",
+      !publicBlob.toLowerCase().includes("talent@ledgerpay.example"),
+      publicBlob.slice(0, 200),
+    );
+    check(
+      "circuit records + brief never contain @ledgerpay",
+      !publicBlob.toLowerCase().includes("@ledgerpay"),
+      publicBlob.slice(0, 200),
+    );
   }
 
   section("intro: a decline closes the door");
