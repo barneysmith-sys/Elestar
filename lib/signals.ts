@@ -12,6 +12,7 @@
  */
 
 import type { DossierRecord } from "./records";
+import { inferRoleFamily } from "./records";
 import type { RoundType } from "../src/types";
 
 export interface SignalsFilter {
@@ -19,6 +20,7 @@ export interface SignalsFilter {
   stage?: string;
   round?: string;
   competency?: string;
+  role?: string;
   /** Inclusive lookback. 0 / undefined means all time. */
   days?: number;
   /** When true, drop demo seeds. */
@@ -49,6 +51,7 @@ export interface SignalsReport {
   rounds: NamedShare[];
   sectors: NamedShare[];
   stages: NamedShare[];
+  roles: NamedShare[];
   medianLoopWeeks: number | null;
   meanRounds: number | null;
   trending: TrendingClaim[];
@@ -65,6 +68,7 @@ const EMPTY: SignalsReport = {
   rounds: [],
   sectors: [],
   stages: [],
+  roles: [],
   medianLoopWeeks: null,
   meanRounds: null,
   trending: [],
@@ -79,6 +83,7 @@ export function filterSignalRecords(records: DossierRecord[], filter: SignalsFil
     if (filter.stage && r.parsed.employerProfile.stage !== filter.stage) return false;
     if (filter.round && !r.parsed.rounds.some((round) => round.type === filter.round)) return false;
     if (filter.competency && !r.parsed.competencies.some((c) => c.name === filter.competency)) return false;
+    if (filter.role && inferRoleFamily(r.parsed) !== filter.role) return false;
     if (filter.days && filter.days > 0) {
       const cutoff = Date.now() - filter.days * 86_400_000;
       if (new Date(r.createdAt).getTime() < cutoff) return false;
@@ -110,6 +115,10 @@ export function aggregateSignals(records: DossierRecord[], filter: SignalsFilter
     pool.map((r) => r.parsed.employerProfile.stage).filter((s): s is string => Boolean(s)),
     pool.length,
   );
+  const roles = share(
+    pool.map((r) => inferRoleFamily(r.parsed)).filter((s): s is string => Boolean(s)),
+    pool.length,
+  );
 
   const weeks = pool
     .map((r) => r.parsed.loopLengthWeeks)
@@ -128,6 +137,7 @@ export function aggregateSignals(records: DossierRecord[], filter: SignalsFilter
     rounds,
     sectors,
     stages,
+    roles,
     medianLoopWeeks,
     meanRounds: Number(meanRounds.toFixed(2)),
     trending: trendingClaims(pool, competencies, rounds, medianLoopWeeks),
@@ -268,6 +278,7 @@ export function parseSignalsFilter(input: {
   stage?: string;
   round?: string;
   competency?: string;
+  role?: string;
   days?: string | number;
   excludeDemo?: string | boolean;
 }): SignalsFilter {
@@ -277,6 +288,7 @@ export function parseSignalsFilter(input: {
     stage: emptyToUndef(input.stage),
     round: emptyToUndef(input.round),
     competency: emptyToUndef(input.competency),
+    role: emptyToUndef(input.role),
     days: Number.isFinite(daysRaw) && (daysRaw as number) > 0 ? (daysRaw as number) : undefined,
     excludeDemo: input.excludeDemo === true || input.excludeDemo === "true",
   };

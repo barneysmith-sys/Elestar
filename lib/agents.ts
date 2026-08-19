@@ -147,12 +147,14 @@ export async function reasonVerify(args: {
   signal: Omit<RecruiterSignal, "email">;
   parsed: ParsedProcess;
   role?: string;
+  mailLastReached?: import("../src/types").RoundType | null;
 }): Promise<Reasoned<VerificationResult>> {
   const signal: RecruiterSignal = { ...args.signal, email: "" };
   const { verification, trace } = verifyProcessDeterministic({
     signal,
     parsed: args.parsed,
     role: args.role,
+    mailLastReached: args.mailLastReached,
   });
   return { value: verification, engine: "deterministic", trace };
 }

@@ -13,7 +13,7 @@
 import { useCallback, useState } from "react";
 import type { MatchResult } from "../src/types";
 import type { DossierRecord, IntroRequest } from "../lib/records";
-import { DEPTH_LABEL, ROUND_LABEL, describeEmployer, describeScope, freshness } from "../lib/records";
+import { DEPTH_LABEL, ROUND_LABEL, describeEmployer, describeScope, freshness, furthestRoundLabel } from "../lib/records";
 import { EngineBadge, Empty, ErrorNote, Label, SectionHead, TierBadge } from "./primitives";
 import { RecordDetail } from "./RecordDetail";
 
@@ -95,8 +95,8 @@ export function SearchClient({
     <div className="wrap section">
       <SectionHead
         kicker="Search"
-        title="Ask the pool"
-        sub="Describe the role you are hiring for. Results are ranked on competency overlap weighted by how deeply each was tested, process similarity, seniority alignment and recency."
+        title="See what was already evaluated"
+        sub="Describe the role. Results lead with competencies that were actually tested, then verified interview stage. Identity stays hidden until they approve an intro."
         right={
           <EngineBadge
             engine={data?.meta.engine ?? initialEngine}
@@ -253,7 +253,12 @@ function ResultCard({
             {record.demo && <span className="chip">Demo data</span>}
           </div>
           <h3 className="display-sm" style={{ textTransform: "capitalize" }}>{describeEmployer(record.parsed)}</h3>
-          <div className="label">{describeScope(record.parsed) || "Scope not stated"} · {freshness(record.createdAt)}</div>
+          <div className="label">
+            Reached {furthestRoundLabel(record.parsed)} · {record.parsed.rounds.length} stages · {freshness(record.createdAt)}
+          </div>
+          <p className="body-sm" style={{ fontSize: 12, maxWidth: "62ch" }}>
+            Already demonstrated: {match.matched.slice(0, 4).join(", ") || describeScope(record.parsed) || "process shape only"}.
+          </p>
         </div>
 
         <div className="stack-2" style={{ minWidth: 132, alignItems: "flex-end" }}>

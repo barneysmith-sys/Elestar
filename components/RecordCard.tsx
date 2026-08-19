@@ -1,7 +1,7 @@
 "use client";
 
 import type { DossierRecord } from "../lib/records";
-import { EVIDENCE_LABEL, OUTCOME_LABEL, ROUND_LABEL, describeEmployer, describeScope, freshness } from "../lib/records";
+import { EVIDENCE_LABEL, ROUND_LABEL, describeEmployer, describeScope, freshness, furthestRoundLabel } from "../lib/records";
 import { Label, TierBadge } from "./primitives";
 
 /**
@@ -46,8 +46,15 @@ export function RecordCard({
       <div className="display-sm" style={{ textTransform: "capitalize", marginBottom: 4 }}>
         {describeEmployer(parsed)}
       </div>
-      <div className="label" style={{ marginBottom: 16 }}>
+      <div className="label" style={{ marginBottom: 10 }}>
         {describeScope(parsed) || "Scope not stated"}
+      </div>
+
+      <div className="stack-2" style={{ marginBottom: 14 }}>
+        <Label>Verified interview history</Label>
+        <div className="body-text" style={{ fontWeight: 400 }}>
+          Reached {furthestRoundLabel(parsed)} · {parsed.roundsCleared} of {parsed.roundsTotal ?? parsed.rounds.length} cleared
+        </div>
       </div>
 
       <div className="row-wrap" style={{ marginBottom: 16 }}>
@@ -77,9 +84,9 @@ export function RecordCard({
 
       <div className="stack-2">
         <div className="row-between" style={{ gap: 12 }}>
-          <Label>Outcome</Label>
+          <Label>Signals</Label>
           <span className="mono-sm" style={{ textAlign: "right", color: "var(--muted)" }}>
-            {OUTCOME_LABEL[parsed.outcome]}
+            {parsed.competencies.slice(0, 2).map((c) => c.name).join(" · ") || "None named"}
           </span>
         </div>
         <div className="row-between" style={{ gap: 12 }}>
@@ -87,6 +94,10 @@ export function RecordCard({
           <span className="mono-sm" style={{ color: record.evidence === "corroborated" ? "var(--ink)" : "var(--muted)" }}>
             {EVIDENCE_LABEL[record.evidence]}
           </span>
+        </div>
+        <div className="row-between" style={{ gap: 12 }}>
+          <Label>Privacy</Label>
+          <span className="mono-sm" style={{ color: "var(--muted)", textAlign: "right" }}>Identity, recruiter, company name withheld</span>
         </div>
         <div className="row-between" style={{ gap: 12 }}>
           <Label>Freshness</Label>

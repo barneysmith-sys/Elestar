@@ -115,6 +115,25 @@ export function describeScope(parsed: ParsedProcess): string {
     .join(" · ");
 }
 
+/** Furthest named round — how far the loop got, without a company name. */
+export function furthestRoundLabel(parsed: ParsedProcess): string {
+  if (parsed.rounds.length === 0) return "Unstated";
+  const last = parsed.rounds.reduce((best, round) => (round.index >= best.index ? round : best));
+  return ROUND_LABEL[last.type] ?? last.label;
+}
+
+export function inferRoleFamily(parsed: ParsedProcess): string | null {
+  const blob = parsed.competencies.map((c) => c.name.toLowerCase()).join(" ");
+  if (/product judgement|product sense|prioriti/.test(blob)) return "product";
+  if (/applied ml|data engineering|database design/.test(blob) && !/distributed systems/.test(blob)) return "data";
+  if (/engineering leadership|people management/.test(blob)) return "engineering_leadership";
+  if (/distributed|algorithms|api design|concurrency|infrastructure|frontend|security reasoning/.test(blob)) {
+    return "engineering";
+  }
+  if (parsed.rounds.some((r) => r.type === "technical" || r.type === "system_design")) return "engineering";
+  return null;
+}
+
 /** Whole months between now and an ISO timestamp. */
 export function monthsSince(iso: string): number {
   const days = (Date.now() - new Date(iso).getTime()) / 86_400_000;

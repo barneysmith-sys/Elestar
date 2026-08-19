@@ -17,6 +17,7 @@ export async function GET(req: Request): Promise<Response> {
     stage: url.searchParams.get("stage") ?? undefined,
     round: url.searchParams.get("round") ?? undefined,
     competency: url.searchParams.get("competency") ?? undefined,
+    role: url.searchParams.get("role") ?? undefined,
     days: url.searchParams.get("days") ?? undefined,
     excludeDemo: url.searchParams.get("excludeDemo") ?? undefined,
   });

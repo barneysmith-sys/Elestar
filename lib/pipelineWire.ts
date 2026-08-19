@@ -43,7 +43,7 @@ export const STEP_TITLE: Record<PipelineStep, string> = {
   parse_mail: "Parsing interview signals",
   identify: "Identifying company + role",
   research: "Checking public evidence",
-  match: "Cross-checking experience",
+  match: "Verifying interview stage",
   audit: "Running privacy audit",
   publish: "Verification complete",
 };

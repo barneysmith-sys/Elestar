@@ -187,6 +187,7 @@ async function main() {
 
     const verify = settled(run.messages, "match");
     check("verify step is ok", verify?.status === "ok", verify?.status);
+    check("verify payload names decision checks", (verify?.data?.verification?.checks?.length ?? 0) >= 4, verify?.data?.verification?.checks);
     check("verify payload has a domain, not a mailbox", typeof verify?.data?.domain === "string" && !String(verify?.data?.domain).includes("@"), verify?.data);
     check(
       "structured evidence never contains a mailbox",
@@ -302,6 +303,30 @@ async function main() {
     check("status is failed", verify?.data?.verification?.status === "failed", verify?.data?.verification);
     check("mismatch is not published", done?.outcome !== "published", done);
     check("the harbor mailbox is not in the stream", !JSON.stringify(run.messages).includes("recruiting@harbor-clinic.example"));
+  }
+
+  section("list a process: claimed stage vs mail is a contradiction");
+  {
+    const run = await runPipeline("", undefined, { fixture: "contradiction" });
+    const verify = settled(run.messages, "match");
+    const done = run.messages.find((m) => m.kind === "done");
+    check("contradiction is held for review", verify?.status === "blocked", verify?.status);
+    check("status is needs_review", verify?.data?.verification?.status === "needs_review", verify?.data?.verification);
+    check(
+      "the discrepancy is explained rather than a bare no",
+      (verify?.data?.verification?.inconsistencies ?? []).some((line: string) => /discrepancy|only supports/i.test(line)),
+      verify?.data?.verification?.inconsistencies,
+    );
+    check("contradiction is not published", done?.outcome !== "published", done);
+  }
+
+  section("list a process: NDA material never publishes");
+  {
+    const run = await runPipeline("", undefined, { fixture: "nda" });
+    const serialised = JSON.stringify(run.messages);
+    check("project codename is gone from the stream", !/nightingale/i.test(serialised), serialised.slice(0, 200));
+    check("confidential kind was stripped", (settled(run.messages, "parse_mail")?.data?.removed ?? []).some((r: any) => r.kind === "confidential"));
+    check("nda loop can still publish after stripping", run.messages.find((m) => m.kind === "done")?.outcome === "published");
   }
 
   section("list a process: garbage input degrades gracefully");
@@ -540,6 +565,9 @@ async function main() {
 
     const empty = await api("/api/signals?sector=not_a_real_sector");
     check("an empty filter does not invent claims", empty.json.report?.pool === 0 && (empty.json.report?.trending?.length ?? 1) === 0, empty.json.report);
+
+    const byRole = await api("/api/signals?role=engineering");
+    check("role family filter returns a real subset", (byRole.json.report?.pool ?? 0) > 0 && (byRole.json.report?.pool ?? 0) <= (json.report?.pool ?? 0), byRole.json.report);
   }
 
   section("pages: every route renders");
@@ -555,6 +583,10 @@ async function main() {
       // applied once a client fetch resolves. A disclosure that arrives late
       // is one a reader can miss, and these are the pages that show the output
       // of the reasoning being disclosed.
+      if (path === "/") {
+        check("/ states the product in first paint", /interview history|prove@elestar\.ai/i.test(html));
+        check("/ names the prove inbox", html.includes("prove@elestar.ai"));
+      }
       if (["/circuit", "/search", "/intros", "/signals"].includes(path)) {
         check(`${path} labels the engine in first paint`, html.includes(status.engineLabel), status.engineLabel);
       }

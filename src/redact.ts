@@ -8,6 +8,8 @@ const EMAIL = /[\w.+-]+@[\w-]+\.[\w.]+/g;
 const PHONE = /(\+?\d[\d\s().-]{7,}\d)/g;
 const URL = /\bhttps?:\/\/\S+/g;
 const HANDLE = /(^|\s)@[\w.-]{2,}/g;
+const CONFIDENTIAL_SENTENCE =
+  /[^.!?\n]*\b(nda|non[- ]disclosure(?: agreement)?|confidential (?:project|work|material|architecture|codebase)|do not (?:forward|share|disclose)|internal only)\b[^.!?\n]*[.!?]?/gi;
 
 /**
  * Where in the ORIGINAL text a redaction landed. Display-only: the UI uses
@@ -48,6 +50,11 @@ export function redact(input: string, opts: { knownNames?: string[] } = {}): Red
   tally("handle", (text.match(HANDLE) ?? []).length);
   text = text.replace(HANDLE, "$1[handle]");
 
+  const confidentialRe = new RegExp(CONFIDENTIAL_SENTENCE.source, "gi");
+  const confidentialHits = text.match(confidentialRe) ?? [];
+  tally("confidential", confidentialHits.length);
+  text = text.replace(new RegExp(CONFIDENTIAL_SENTENCE.source, "gi"), "[confidential]");
+
   // Names the app already knows for this account: the candidate's own name,
   // their current employer, anyone they listed as a reference.
   for (const name of opts.knownNames ?? []) {
@@ -76,6 +83,7 @@ function locateSpans(input: string, knownNames: string[]): RedactionSpan[] {
     { kind: "phone", re: new RegExp(PHONE.source, "g"), replacement: "[phone]" },
     { kind: "url", re: new RegExp(URL.source, "g"), replacement: "[url]" },
     { kind: "handle", re: new RegExp(HANDLE.source, "g"), replacement: "[handle]", group: 1 },
+    { kind: "confidential", re: new RegExp(CONFIDENTIAL_SENTENCE.source, "gi"), replacement: "[confidential]" },
     ...knownNames
       .filter((n) => n.trim().length >= 2)
       .map((n) => ({

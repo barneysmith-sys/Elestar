@@ -69,6 +69,13 @@ Subject: Final panel
 You're through to the final panel after system design. Technical interview is done. Candidate was rejected after the final round.
 `;
 
+export const SCREEN_ONLY_FORWARDS = `From: Maya Chen <talent@ledgerpay.example>
+Date: Mon, 3 Mar 2026 10:12:00 -0500
+Subject: Recruiter screen — Senior Backend Engineer
+
+Hi — confirming our 30-min recruiter screen tomorrow.
+`;
+
 export const GMAIL_FORWARDS = `From: Alex Rivera <talent@gmail.com>
 Date: Mon, 2 Mar 2026 10:00:00 -0500
 Subject: Recruiter screen

@@ -169,7 +169,7 @@ export function RecordDetail({
           <hr className="rule" />
 
           {/* 1. what was tested */}
-          <Section n="01" title="What was tested">
+          <Section n="01" title="Verified interview history">
             <div className="stack-3">
               {parsed.rounds.map((round) => {
                 const tested = parsed.competencies.filter((c) => c.roundIndex === round.index);
@@ -201,7 +201,7 @@ export function RecordDetail({
           </Section>
 
           {/* 2. what happened */}
-          <Section n="02" title="What happened">
+          <Section n="02" title="What the work established">
             <dl className="stack-3">
               <DRow
                 term="Depth reached"
@@ -220,7 +220,7 @@ export function RecordDetail({
           </Section>
 
           {/* 3. what evidence exists */}
-          <Section n="03" title="What evidence exists">
+          <Section n="03" title="Signals — what was evaluated">
             <div className="stack-3">
               {parsed.competencies.map((c) => (
                 <div key={c.name} className="row-between" style={{ gap: 16 }}>
@@ -237,8 +237,8 @@ export function RecordDetail({
             </p>
           </Section>
 
-          {/* 4. confidence */}
-          <Section n="04" title="How confident Elestar is">
+          {/* 4. evidence */}
+          <Section n="04" title="Evidence — why this is trusted">
             <div className="stack-4">
               <div className="stack-2">
                 <div className="row-between">
@@ -261,7 +261,23 @@ export function RecordDetail({
           </Section>
 
           {/* 5. what is still unknown */}
-          <Section n="05" title="What is still unknown">
+          <Section n="05" title="Privacy — what is deliberately hidden">
+            <ul className="stack-2" style={{ listStyle: "none" }}>
+              {[
+                "Candidate identity and contact details",
+                "Recruiter name, mailbox, headers and signature",
+                "Company brand — only generalised sector and stage",
+                "Confidential project material and NDA-marked sentences",
+              ].map((line) => (
+                <li key={line} className="row" style={{ gap: 10, alignItems: "flex-start" }}>
+                  <span className="chip" style={{ minWidth: 22, justifyContent: "center" }}>—</span>
+                  <span className="body-text">{line}</span>
+                </li>
+              ))}
+            </ul>
+          </Section>
+
+          <Section n="06" title="What is still unknown">
             <ul className="stack-2" style={{ listStyle: "none" }}>
               {unknowns(record).map((line) => (
                 <li key={line} className="row" style={{ gap: 10, alignItems: "flex-start" }}>
@@ -275,7 +291,7 @@ export function RecordDetail({
           <hr className="rule" />
 
           {/* intro state machine */}
-          <Section n="06" title="Intro">
+          <Section n="07" title="Intro">
             <div className="stack-4">
               <div className="row" style={{ gap: 0 }}>
                 {INTRO_STEPS.map((step, i) => {

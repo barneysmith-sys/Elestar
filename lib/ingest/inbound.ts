@@ -16,13 +16,14 @@ import {
   GMAIL_FORWARDS,
   HEALTHTECH_FORWARDS,
   MISMATCH_FORWARDS,
+  SCREEN_ONLY_FORWARDS,
 } from "../verify/mailFixtures";
 import { parseForwardedMail, type ForwardedMailEvidence } from "../verify/forwardedMail";
 import { maskEmail } from "../verify/email";
 
 export const PROVE_INBOX = "prove@elestar.ai";
 
-export const FIXTURE_IDS = ["canonical", "healthtech", "crypto", "pii", "mismatch", "gmail"] as const;
+export const FIXTURE_IDS = ["canonical", "healthtech", "crypto", "pii", "mismatch", "gmail", "contradiction", "nda"] as const;
 export type FixtureId = (typeof FIXTURE_IDS)[number];
 
 export interface InboundFixture {
@@ -84,6 +85,24 @@ export const INBOUND_FIXTURES: Record<FixtureId, InboundFixture> = {
     role: "Senior Backend Engineer",
     notes: "Senior Backend Engineer at a Series B fintech.",
     raw: GMAIL_FORWARDS,
+  },
+  contradiction: {
+    id: "contradiction",
+    label: "Claim vs mail clash",
+    note: "Holds for review. Notes claim a final; the mail only supports a screen.",
+    role: "Senior Backend Engineer",
+    notes:
+      "I reached the final round. Recruiter screen, technical interview, system design, and a final panel at a Series B fintech.",
+    raw: SCREEN_ONLY_FORWARDS,
+  },
+  nda: {
+    id: "nda",
+    label: "Contains NDA material",
+    note: "Confidential sentences are stripped. The loop can still verify.",
+    role: "Senior Backend Engineer",
+    notes:
+      "Project Nightingale is under NDA. Do not share the internal architecture. Senior Backend Engineer at a Series B fintech.",
+    raw: CANONICAL_FORWARDS,
   },
 };
 

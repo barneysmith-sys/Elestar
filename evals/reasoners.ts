@@ -23,6 +23,7 @@ import {
   CANONICAL_FORWARDS,
   GMAIL_FORWARDS,
   HEALTHTECH_FORWARDS,
+  SCREEN_ONLY_FORWARDS,
 } from "../lib/verify/mailFixtures";
 import { redact } from "../src/redact";
 import { computeTier } from "../src/parseProcess";
@@ -187,6 +188,13 @@ section("parse: a stated ending is not a stated stage");
     description: "Recruiter screen, technical interview, and a system design round at a Series B fintech.",
   });
   check("silence about the ending still asks", silent.parsed.questions.length > 0, silent.parsed.questions);
+
+  const reached = parseProcessDeterministic({
+    description:
+      "I reached the final round. Recruiter screen, technical interview, system design, and a final panel at a Series B fintech.",
+  });
+  check("naming the furthest stage does not ask which round was last", !reached.parsed.questions.includes("Which round was the last one you completed?"), reached.parsed.questions);
+  check("a reached-final claim still names a late stage", reached.parsed.rounds.some((r) => r.type === "final" || r.type === "panel"), reached.parsed.rounds.map((r) => r.type));
 }
 
 section("redact: identity never reaches a model");
@@ -202,6 +210,13 @@ section("redact: identity never reaches a model");
   check("reports spans for the UI", r.spans.length >= 4, r.spans);
   check("spans point at the original text", r.spans.every((s) => s.end > s.start));
   check("spans do not overlap", r.spans.every((s, i) => i === 0 || s.start >= r.spans[i - 1]!.end), r.spans);
+
+  const secret = redact(
+    "Project Nightingale is under NDA. Do not share the internal architecture. Senior Backend Engineer at a Series B fintech.",
+  );
+  check("confidential sentences become a token", secret.text.includes("[confidential]"), secret.text);
+  check("project codename does not survive", !/nightingale/i.test(secret.text), secret.text);
+  check("reports a confidential span", secret.removed.some((x) => x.kind === "confidential"), secret.removed);
 }
 
 section("audit: the k floor is a hard rule");
@@ -331,6 +346,26 @@ section("verify: recruiter signal");
     role: "Senior Backend Engineer",
   });
   check("ledgerpay.example + canonical fintech parse → verified", ledger.verification.status === "verified", ledger.verification);
+  check("verified payload includes decision checks", (ledger.verification.checks?.length ?? 0) >= 4, ledger.verification.checks);
+  check("verified checks are understandable labels", ledger.verification.checks.every((c) => c.label.length > 8), ledger.verification.checks);
+
+  const clashNotes =
+    "I reached the final round. Recruiter screen, technical interview, system design, and a final panel at a Series B fintech.";
+  const clashParsed = parseProcessDeterministic({ description: clashNotes }).parsed;
+  const screenOnly = parseForwardedMail(SCREEN_ONLY_FORWARDS);
+  const clash = verifyProcessDeterministic({
+    signal: parseRecruiterSignal("talent@ledgerpay.example"),
+    parsed: clashParsed,
+    role: "Senior Backend Engineer",
+    mailLastReached: screenOnly.lastReached,
+  });
+  check("final-round claim vs screen-only mail is held, not auto-verified", clash.verification.status === "needs_review", clash.verification);
+  check(
+    "the discrepancy is explained",
+    clash.verification.inconsistencies.some((line) => /discrepancy|only supports/i.test(line)),
+    clash.verification.inconsistencies,
+  );
+  check("stage check fails on the clash", clash.verification.checks.some((c) => c.id === "stage" && !c.pass), clash.verification.checks);
 
   const mismatch = verifyProcessDeterministic({
     signal: parseRecruiterSignal("recruiting@harbor-clinic.example"),
@@ -427,7 +462,12 @@ section("signals: only published records, filters are real");
 
   const empty = aggregateSignals([published, withheld, other], { sector: "not_a_sector" });
   check("unknown filter is empty rather than invented", empty.pool === 0 && empty.trending.length === 0, empty);
+  check("empty report still has a roles key", Array.isArray(empty.roles) && empty.roles.length === 0, empty.roles);
   check("filterSignalRecords never returns a withheld row", filterSignalRecords([published, withheld], {}).every((r) => r.redactionDecision === "publish"));
+
+  check("role family is counted from published records", all.roles.some((r) => r.name === "engineering"), all.roles);
+  const byRole = aggregateSignals([published, withheld, other], { role: "engineering" });
+  check("role filter is a real subset", byRole.pool > 0 && byRole.pool <= all.pool, byRole);
 }
 
 function stubRecord(args: {

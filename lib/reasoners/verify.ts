@@ -20,10 +20,10 @@
  * later says, because verification is a gate, not a suggestion.
  */
 
-import type { ParsedProcess } from "../../src/types";
+import type { ParsedProcess, RoundType } from "../../src/types";
 import type { RecruiterSignal } from "../verify/email";
 import { collectPublicEvidence, resolveCompany, type ResolvedCompany } from "../verify/resolve";
-import type { VerificationResult, VerificationStatus } from "../verify/types";
+import { verificationChecks, type VerificationResult, type VerificationStatus } from "../verify/types";
 
 export interface DeterministicVerifyResult {
   verification: VerificationResult;
@@ -31,10 +31,34 @@ export interface DeterministicVerifyResult {
   trace: string[];
 }
 
+const ROUND_RANK: Record<RoundType, number> = {
+  other: 0,
+  screen: 1,
+  take_home: 2,
+  technical: 3,
+  case: 3,
+  system_design: 4,
+  panel: 5,
+  final: 6,
+};
+
+const ROUND_NAME: Record<RoundType, string> = {
+  other: "behavioral round",
+  screen: "recruiter screen",
+  take_home: "take-home",
+  technical: "technical interview",
+  case: "case interview",
+  system_design: "system design",
+  panel: "panel",
+  final: "final round",
+};
+
 export function verifyProcessDeterministic(args: {
   signal: RecruiterSignal;
   parsed: ParsedProcess;
   role?: string;
+  /** Furthest round the forwarded mail actually reached. */
+  mailLastReached?: RoundType | null;
 }): DeterministicVerifyResult {
   const { signal, parsed } = args;
   const role = (args.role ?? "").toLowerCase();
@@ -70,6 +94,15 @@ export function verifyProcessDeterministic(args: {
         processMatch: false,
         evidence: [],
         inconsistencies: [`No public recruiting evidence found for ${signal.domain}.`],
+        checks: verificationChecks({
+          companyMatch: false,
+          roleMatch: false,
+          processMatch: false,
+          found: false,
+          stageSupported: false,
+          contradictions: [`No public recruiting evidence found for ${signal.domain}.`],
+          status: "needs_review",
+        }),
         reasoning:
           "The recruiter domain did not resolve to any public company or hiring-loop documentation we can cite. Holding rather than verifying on an empty record.",
         privacyStatus: "pending",
@@ -141,6 +174,20 @@ export function verifyProcessDeterministic(args: {
     inconsistencies.push(`Submitted rounds do not resemble the publicly described hiring loop.`);
   }
 
+  const claimedLast = furthestRound(parsed);
+  const mailLast = args.mailLastReached ?? null;
+  const stageGap =
+    mailLast && claimedLast ? ROUND_RANK[claimedLast] - ROUND_RANK[mailLast] : 0;
+  const stageClash = stageGap >= 3;
+  if (stageClash && mailLast && claimedLast) {
+    const line =
+      `The forwarded mail only supports a ${ROUND_NAME[mailLast]}. The submitted experience names a ${ROUND_NAME[claimedLast]}. That is a discrepancy, not a no — holding so this can be clarified.`;
+    inconsistencies.push(line);
+    trace.push(`Stage clash: mail reached ${mailLast}, claim names ${claimedLast}.`);
+  }
+
+  const stageSupported = !stageClash && (processMatch || Boolean(mailLast && claimedLast && ROUND_RANK[claimedLast] <= ROUND_RANK[mailLast] + 1));
+
   let status: VerificationStatus;
   let confidence: number;
   let reasoning: string;
@@ -151,6 +198,13 @@ export function verifyProcessDeterministic(args: {
     reasoning =
       "The recruiter domain resolves to a different kind of company than the one described in the submission. That is a contradiction, not an ambiguity, so this does not verify.";
     trace.push("Decision: failed — company mismatch.");
+  } else if (stageClash) {
+    status = "needs_review";
+    confidence = 0.35;
+    reasoning =
+      inconsistencies.find((line) => /discrepancy/i.test(line)) ??
+      "The forwarded mail and the submitted experience disagree about how far the loop got. Holding for clarification rather than verifying the claim.";
+    trace.push("Decision: needs_review — claimed stage is not supported by the mail.");
   } else if (!processMatch && submittedTypes.length >= 3 && company.knownRounds.length >= 3) {
     status = "needs_review";
     confidence = 0.4;
@@ -176,6 +230,16 @@ export function verifyProcessDeterministic(args: {
     trace.push(`Decision: verified — confidence ${confidence.toFixed(2)}.`);
   }
 
+  const checks = verificationChecks({
+    companyMatch,
+    roleMatch,
+    processMatch,
+    found: true,
+    stageSupported,
+    contradictions: inconsistencies,
+    status,
+  });
+
   return wrap(
     {
       status,
@@ -191,6 +255,7 @@ export function verifyProcessDeterministic(args: {
         about: e.about,
       })),
       inconsistencies,
+      checks,
       reasoning,
       privacyStatus: "pending",
       domain: signal.domain,
@@ -200,6 +265,14 @@ export function verifyProcessDeterministic(args: {
     company,
     trace,
   );
+}
+
+function furthestRound(parsed: ParsedProcess): RoundType | null {
+  let best: RoundType | null = null;
+  for (const round of parsed.rounds) {
+    if (!best || ROUND_RANK[round.type] >= ROUND_RANK[best]) best = round.type;
+  }
+  return best;
 }
 
 function wrap(
@@ -240,6 +313,15 @@ function failed(
     processMatch: false,
     evidence: [],
     inconsistencies: extra.inconsistencies ?? [reasoning],
+    checks: verificationChecks({
+      companyMatch: false,
+      roleMatch: false,
+      processMatch: false,
+      found: false,
+      stageSupported: false,
+      contradictions: extra.inconsistencies ?? [reasoning],
+      status: "failed",
+    }),
     reasoning,
     privacyStatus: "pending",
     domain: signal.domain,

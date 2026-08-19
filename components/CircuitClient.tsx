@@ -130,8 +130,8 @@ export function CircuitClient({
     <div className="wrap section">
       <SectionHead
         kicker="Circuit"
-        title="The intelligence network"
-        sub="Every record here came out of a real interview process, was structured, audited for re-identification risk, and published only once it could not be traced back to one person."
+        title="Verified interview records"
+        sub="Work that was tested, how far a loop got, and why that claim is trusted. Identity, recruiter mail, and company names stay off this wall."
         right={
           <EngineBadge
             engine={data?.meta.engine ?? initialEngine}

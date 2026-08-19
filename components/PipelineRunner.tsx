@@ -680,48 +680,53 @@ function ResearchPanel({ data }: { data?: ResearchStepData }) {
 function MatchPanel({ data }: { data?: MatchStepData }) {
   if (!data) return null;
   const { verification, structured } = data;
-  const matchChip = (ok: boolean, label: string) => (
-    <span className={`chip ${ok ? "chip-ok" : "chip-warn"}`}>
-      {label}: {ok ? "match" : "no match"}
-    </span>
-  );
+  const checks = verification.checks ?? [];
+  const verified = verification.status === "verified";
   return (
     <div className="stack-5">
-      <div className="cols-3">
+      <div className="row-between stack-mobile" style={{ gap: 16, alignItems: "flex-start" }}>
         <div className="stack-2">
-          <Label>Status</Label>
-          <span className={`chip ${verification.status === "verified" ? "chip-ok" : "chip-warn"}`}>
-            {verification.status.replace(/_/g, " ")}
-          </span>
+          <Label>{verified ? "Verified" : verification.status.replace(/_/g, " ")}</Label>
+          {structured.interview_signal && (
+            <div className="display-sm">{structured.interview_signal}</div>
+          )}
+          <p className="body-sm" style={{ maxWidth: "62ch" }}>{verification.reasoning}</p>
         </div>
-        <div className="stack-2">
+        <div className="stack-2" style={{ minWidth: 120, alignItems: "flex-end" }}>
           <Label>Confidence</Label>
-          <span className="ticker display-md">{verification.confidence.toFixed(2)}</span>
-          <div className="conf-bar">
+          <span className="ticker display-md">{Math.round(verification.confidence * 100)}%</span>
+          <div className="conf-bar" style={{ width: 120 }}>
             <div className="conf-bar-fill" style={{ width: `${Math.round(verification.confidence * 100)}%` }} />
           </div>
         </div>
-        <div className="stack-2">
-          <Label>Domain</Label>
-          <span className="mono-sm">{structured.recruiter_domain || "—"}</span>
-          <span className="body-sm" style={{ fontSize: 12 }}>{data.maskedSignal}</span>
-        </div>
       </div>
-      <div className="row-wrap">
-        {matchChip(verification.companyMatch, "Company")}
-        {matchChip(verification.roleMatch, "Role")}
-        {matchChip(verification.processMatch, "Process")}
-      </div>
-      <pre className="card" style={{ fontFamily: "var(--font-mono)", fontSize: 11, lineHeight: 1.7, overflow: "auto" }}>
-        {JSON.stringify(structured, null, 2)}
-      </pre>
-      {verification.inconsistencies.length > 0 && (
+      {checks.length > 0 && (
         <ul className="stack-2" style={{ listStyle: "none" }}>
-          {verification.inconsistencies.map((line) => (
-            <li key={line} className="body-sm">{line}</li>
+          {checks.map((check) => (
+            <li key={check.id} className="row" style={{ gap: 10, alignItems: "flex-start" }}>
+              <span className={`chip ${check.pass ? "chip-ok" : "chip-warn"}`} style={{ minWidth: 22, justifyContent: "center" }}>
+                {check.pass ? "✓" : "!"}
+              </span>
+              <span className="body-text">{check.label}</span>
+            </li>
           ))}
         </ul>
       )}
+      {verification.inconsistencies.length > 0 && (
+        <div className="stack-2">
+          <Label>What doesn&rsquo;t agree</Label>
+          <ul className="stack-2" style={{ listStyle: "none" }}>
+            {verification.inconsistencies.map((line) => (
+              <li key={line} className="body-sm">{line}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+      <div className="row-wrap">
+        <span className="chip">{structured.recruiter_domain || "no domain"}</span>
+        {structured.role && <span className="chip">{structured.role}</span>}
+        <span className="mono-sm" style={{ color: "var(--muted)" }}>{data.maskedSignal}</span>
+      </div>
     </div>
   );
 }

@@ -34,6 +34,7 @@ export function SignalsClient({
   const [stage, setStage] = useState("");
   const [round, setRound] = useState("");
   const [competency, setCompetency] = useState("");
+  const [role, setRole] = useState("");
   const [days, setDays] = useState("");
   const [excludeDemo, setExcludeDemo] = useState(false);
   const [data, setData] = useState<SignalsResponse | null>(null);
@@ -46,11 +47,12 @@ export function SignalsClient({
     if (stage) params.set("stage", stage);
     if (round) params.set("round", round);
     if (competency) params.set("competency", competency);
+    if (role) params.set("role", role);
     if (days) params.set("days", days);
     if (excludeDemo) params.set("excludeDemo", "true");
     const qs = params.toString();
     return qs ? `/api/signals?${qs}` : "/api/signals";
-  }, [sector, stage, round, competency, days, excludeDemo]);
+  }, [sector, stage, round, competency, role, days, excludeDemo]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -76,12 +78,13 @@ export function SignalsClient({
 
   const report = data?.report;
   const facets = useMemo(() => {
-    if (!report) return { sectors: [], stages: [], rounds: [], competencies: [] };
+    if (!report) return { sectors: [], stages: [], rounds: [], competencies: [], roles: [] };
     return {
       sectors: report.sectors.map((s) => s.name),
       stages: report.stages.map((s) => s.name),
       rounds: report.rounds.map((s) => s.name),
       competencies: report.competencies.map((s) => s.name),
+      roles: report.roles.map((s) => s.name),
     };
   }, [report]);
 
@@ -89,8 +92,8 @@ export function SignalsClient({
     <div className="wrap section">
       <SectionHead
         kicker="Signals"
-        title="What companies are actually testing for"
-        sub="Verified interview loops, aggregated. Individual candidates stay anonymous. Recruiter identity never enters this view."
+        title="Elestar is learning how hiring actually works"
+        sub="Verified loops, aggregated. Competencies, stages, and process patterns — never a person, a recruiter, or a company name."
         right={
           <EngineBadge
             engine={data?.meta.engine ?? initialEngine}
@@ -102,6 +105,7 @@ export function SignalsClient({
       <div className="card-flat stack-4" style={{ marginBottom: 40 }}>
         <div className="row-wrap" style={{ gap: 10 }}>
           <FilterSelect label="Company type" value={sector} onChange={setSector} options={unique(["", ...facets.sectors, sector])} />
+          <FilterSelect label="Role family" value={role} onChange={setRole} options={unique(["", ...facets.roles, role])} />
           <FilterSelect label="Stage" value={stage} onChange={setStage} options={unique(["", ...facets.stages, stage])} />
           <FilterSelect
             label="Interview stage"
@@ -126,7 +130,7 @@ export function SignalsClient({
           <div className="cols-4">
             <Stat n={report.pool} label="Records in view" />
             <Stat n={report.corroborated} label="Corroborated" />
-            <Stat n={report.demoCount} label="Demo seeds" hint={report.demoCount > 0 ? "labelled demo" : undefined} />
+            <Stat n={report.meanRounds ?? 0} label="Avg. stages" suffix={report.meanRounds === null ? "—" : report.meanRounds.toFixed(1)} />
             <Stat n={report.medianLoopWeeks ?? 0} label="Median weeks" suffix={report.medianLoopWeeks === null ? "—" : undefined} />
           </div>
 
@@ -167,8 +171,9 @@ export function SignalsClient({
             <ShareList title="Interview stages" rows={report.rounds} labelFor={(name) => ROUND_LABEL[name] ?? name} />
           </div>
 
-          <div className="split" style={{ gap: 40 }}>
+          <div className="cols-3" style={{ gap: 40 }}>
             <ShareList title="Company type" rows={report.sectors} />
+            <ShareList title="Role family" rows={report.roles} />
             <ShareList title="Company stage" rows={report.stages} />
           </div>
 

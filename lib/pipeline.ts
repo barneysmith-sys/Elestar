@@ -15,6 +15,7 @@ import {
 import { cohortCount, insertDossier, insertProcess } from "./store";
 import { assertNoRecruiterEmail, maskEmail, parseRecruiterSignal } from "./verify/email";
 import { collectPublicEvidence, resolveCompany } from "./verify/resolve";
+import { verificationChecks } from "./verify/types";
 import type {
   AuditStepData,
   DoneMessage,
@@ -312,6 +313,15 @@ export async function* runPipeline(args: RunPipelineArgs): AsyncGenerator<Pipeli
       processMatch: false,
       evidence: [],
       inconsistencies: [signal.reason],
+      checks: verificationChecks({
+        companyMatch: false,
+        roleMatch: false,
+        processMatch: false,
+        found: false,
+        stageSupported: false,
+        contradictions: [signal.reason],
+        status: "failed",
+      }),
       reasoning: signal.reason,
       privacyStatus: "pending",
       domain: signal.domain,
@@ -340,6 +350,7 @@ export async function* runPipeline(args: RunPipelineArgs): AsyncGenerator<Pipeli
       signal: { domain: signal.domain, localPart: signal.localPart, kind: signal.kind, reason: signal.reason },
       parsed,
       role,
+      mailLastReached: mail.lastReached,
     });
     verification = result.value;
     verifyTrace = result.trace;

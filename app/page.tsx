@@ -1,18 +1,24 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Label, Mark, SectionHead } from "../components/primitives";
+import { Label, Mark } from "../components/primitives";
 import { engineLabel, getCapabilities, persistenceLabel, reasoningEngine } from "../lib/capabilities";
+import { PROVE_INBOX } from "../lib/ingest/inbound";
 import { K_FLOOR } from "../src/redactionAudit";
 
 export const dynamic = "force-dynamic";
 
+const LOOP = [
+  { n: "01", t: "Work", d: "You already did the interviews, projects, and rounds." },
+  { n: "02", t: "Interview", d: "A company took you somewhere in its loop." },
+  { n: "03", t: "Prove it", d: `Forward that recruiter email to ${PROVE_INBOX}.` },
+  { n: "04", t: "Verified history", d: "How far you got becomes a private-evidence, public-signal record." },
+  { n: "05", t: "Get discovered", d: "Employers find you through what was tested, not a resume." },
+  { n: "06", t: "Skip redundant rounds", d: "If the signal holds, they don't have to re-run what you already passed." },
+];
+
 /**
- * The entry point. Deliberately short.
- *
- * This is a product console, not a marketing site — the landing page's whole
- * job is to answer "what is this" in about fifteen seconds and then get out of
- * the way. The real explanation is the pipeline running on live input, which is
- * one click from here.
+ * First screen: what this is, how it verifies, why it matters — in that order.
+ * Visual language is Josh's. Product claims are Elestar's.
  */
 export default function HomePage() {
   const capabilities = getCapabilities();
@@ -20,26 +26,16 @@ export default function HomePage() {
 
   return (
     <>
-      {/* ---- hero ---------------------------------------------------------- */}
-      <section className="wrap" style={{ paddingTop: 72, paddingBottom: 88 }}>
+      <section className="wrap" style={{ paddingTop: 72, paddingBottom: 72 }}>
         <div className="split-wide" style={{ alignItems: "center", gap: 64 }}>
           <div className="stack-6">
-            <Label>An intelligence layer for hiring</Label>
-
-            <h1 className="display-xl" style={{ maxWidth: "20ch" }}>
-              Every interview
-              <br />
-              generates evidence.
-              <br />
-              <span style={{ fontStyle: "italic", fontWeight: 300 }}>Almost all of it</span>
-              <br />
-              disappears.
+            <Label>Elestar</Label>
+            <h1 className="display-xl" style={{ maxWidth: "18ch" }}>
+              Your interview history shouldn&rsquo;t disappear when you don&rsquo;t get the job.
             </h1>
-
-            <p className="lede" style={{ maxWidth: "52ch" }}>
-              Candidates repeat interviews they have already passed. Hiring teams rebuild processes
-              they have already run. Elestar captures what a process actually tested, verifies it,
-              strips it of identity, and makes it reusable.
+            <p className="lede" style={{ maxWidth: "46ch" }}>
+              Prove how far you got. Keep the signal. Forward the recruiter email to{" "}
+              <span className="mono-sm" style={{ fontSize: 15 }}>{PROVE_INBOX}</span>.
             </p>
 
             <div className="row-wrap" style={{ gap: 12 }}>
@@ -47,14 +43,13 @@ export default function HomePage() {
                 Verify an interview
               </Link>
               <Link href="/circuit" className="btn-ghost" style={{ textDecoration: "none" }}>
-                See the Circuit
+                See verified records
               </Link>
             </div>
 
             <div className="row-wrap" style={{ gap: 8 }}>
               <span className={`engine-badge engine-${engine}`}>{engineLabel(engine)}</span>
               <span className="chip">{persistenceLabel(capabilities.persistence)}</span>
-              <span className="chip">No credentials required</span>
             </div>
           </div>
 
@@ -79,28 +74,29 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ---- the loop ------------------------------------------------------ */}
-      <section className="wrap section-sm" style={{ borderTop: "1px solid var(--border)" }}>
-        <SectionHead
-          kicker="The idea"
-          title="A process goes in. Reusable intelligence comes out."
-          sub="Ten steps, in order. Each one is a real stage in the repository, and you can watch all of them execute on your own input."
-        />
+      <section className="wrap" style={{ paddingBottom: 56 }}>
+        <div className="split" style={{ gap: 40 }}>
+          <div className="card-flat stack-3">
+            <Label>Candidate</Label>
+            <p className="display-sm">Post the work. Prove one interview with the original email.</p>
+            <p className="body-sm">Not the rest of your inbox. Not a recruiter address typed into a form.</p>
+          </div>
+          <div className="card-flat stack-3">
+            <Label>Employer</Label>
+            <p className="display-sm">See what was already evaluated. Skip the rounds that already happened.</p>
+            <p className="body-sm">Work first. Then verified interview signals. Identity only after they approve an intro.</p>
+          </div>
+        </div>
+      </section>
 
+      <section className="wrap section-sm" style={{ borderTop: "1px solid var(--border)" }}>
+        <div className="stack-4" style={{ marginBottom: 36 }}>
+          <Label>The loop</Label>
+          <h2 className="display-md" style={{ maxWidth: "22ch" }}>Work. Interview. Prove it. Keep it.</h2>
+        </div>
         <div className="grid-cards">
-          {[
-            { n: "01", t: "Receive", d: "The candidate forwards the recruiter email to prove@elestar.ai. Elestar receives it. Nothing is typed into a form." },
-            { n: "02", t: "Parse", d: "The mail is read for company, role, rounds and how far the loop got. Identifiers never leave the server." },
-            { n: "03", t: "Identify", d: "Company domain and role are extracted. The mailbox stays private." },
-            { n: "04", t: "Research", d: "Public catalog evidence for that domain is gathered. Not a live crawl unless later configured." },
-            { n: "05", t: "Cross-check", d: "Mail evidence, stated experience and public evidence have to agree." },
-            { n: "06", t: "Privacy audit", d: `Re-identification risk scored against a hard k=${K_FLOOR} cohort floor.` },
-            { n: "07", t: "Publish", d: "An anonymous record enters the pool — or does not, and stays private." },
-            { n: "08", t: "Search", d: "A hiring team describes a role and gets ranked, explainable matches." },
-            { n: "09", t: "Signals", d: "Verified loops aggregate into what companies are actually testing for." },
-            { n: "10", t: "Intro / brief", d: "The candidate approves. That is the only way identity moves." },
-          ].map((step) => (
-            <div key={step.n} className="card-flat stack-3 hoverable">
+          {LOOP.map((step) => (
+            <div key={step.n} className="card-flat stack-3">
               <div className="row" style={{ gap: 10 }}>
                 <span className="label" style={{ fontSize: 9 }}>{step.n}</span>
                 <span className="label-ink">{step.t}</span>
@@ -111,93 +107,88 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ---- what it is not ------------------------------------------------ */}
-      <section className="wrap section-sm">
-        <div className="split" style={{ gap: 56 }}>
-          <div className="stack-4">
-            <Label>What this is not</Label>
-            <ul className="stack-2" style={{ listStyle: "none" }}>
-              {[
-                "A job board",
-                "A resume database",
-                "A candidate marketplace",
-                "Inbox access, or a scrape of a recruiter's mail",
-                "An interview coach",
-                "A recruiting CRM",
-                "A dashboard of AI numbers that mean nothing",
-              ].map((item) => (
-                <li key={item} className="row" style={{ gap: 12 }}>
-                  <span style={{ color: "var(--muted)", fontFamily: "var(--font-mono)", fontSize: 11 }}>—</span>
-                  <span className="body-text" style={{ color: "var(--muted)" }}>{item}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="stack-4">
-            <Label>What it is</Label>
-            <p className="display-md" style={{ maxWidth: "26ch" }}>
-              A privacy-preserving intelligence network for interview processes.
-            </p>
-            <p className="body-text" style={{ maxWidth: "56ch" }}>
-              The asset is structured, verified interview evidence — what was tested, how deeply, what
-              happened, and how much of it is actually known. Identity is a separate thing, and it moves
-              only when a candidate says so.
-            </p>
-            <Link href="/system" className="link-quiet" style={{ textDecoration: "none" }}>
-              How the system works →
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ---- privacy ------------------------------------------------------- */}
       <section className="wrap section-sm" style={{ borderTop: "1px solid var(--border)" }}>
-        <div className="split-narrow" style={{ gap: 48 }}>
+        <div className="split-narrow" style={{ gap: 48, alignItems: "start" }}>
           <div className="stack-3">
-            <Label>Privacy</Label>
-            <h2 className="display-md">Enforced in Postgres, not in the interface</h2>
+            <Label>How Elestar verifies it</Label>
+            <h2 className="display-md" style={{ maxWidth: "16ch" }}>One interview email. Never the rest of your inbox.</h2>
           </div>
-
-          <div className="stack-6">
-            <p className="body-text" style={{ maxWidth: "68ch" }}>
-              A recruiter query must not be <em>able</em> to return an unreleased identity. So the raw
-              submission is owner-only at the row level, the browsable record is a whitelisted projection
-              with no identity column, and a database constraint makes an identity on an unapproved intro
-              request impossible — regardless of what application code tries to write.
+          <div className="stack-5">
+            <p className="body-text" style={{ maxWidth: "58ch" }}>
+              Forward the original recruiter or interview email to {PROVE_INBOX}. Elestar parses company,
+              role, and how far the loop got, checks public evidence, then publishes only an anonymous
+              signal — after privacy and a k={K_FLOOR} cohort floor both pass.
             </p>
-
-            <div className="cols-3">
-              {[
-                { t: "Redaction first", d: "Runs before any prompt is built. If it throws, the pipeline stops rather than falling back to raw text." },
-                { t: `k=${K_FLOOR} floor`, d: "A record with too few cohort peers is generalised or withheld. The floor overrides any judgement that says publish." },
-                { t: "Fails closed", d: "Every error path ends somewhere other than a live public record. An annoyed candidate beats a leaked one." },
-              ].map((item) => (
-                <div key={item.t} className="stack-2">
-                  <span className="label-ink">{item.t}</span>
-                  <p className="body-sm">{item.d}</p>
-                </div>
-              ))}
+            <div className="card-flat row-between stack-mobile" style={{ padding: "16px 18px", gap: 12 }}>
+              <div className="stack-2">
+                <Label>Forward to</Label>
+                <span className="mono-sm" style={{ fontSize: 16, color: "var(--ink)" }}>{PROVE_INBOX}</span>
+              </div>
+              <Link href="/list" className="btn-ghost btn-sm" style={{ textDecoration: "none" }}>
+                Watch the pipeline
+              </Link>
             </div>
+            <p className="body-sm" style={{ fontSize: 12, maxWidth: "62ch" }}>
+              Raw mail, recruiter names, and confidential project material stay private. Public output is
+              company type, role, stage, competencies, and verification status.
+            </p>
           </div>
         </div>
       </section>
 
-      {/* ---- cta ----------------------------------------------------------- */}
+      <section className="wrap section-sm">
+        <div className="split" style={{ gap: 24 }}>
+          <div className="card stack-4">
+            <Label>Today</Label>
+            <p className="display-sm">Apply → technical → panel → final → gone.</p>
+            <p className="body-sm">LinkedIn shows none of it. The next company starts from zero.</p>
+          </div>
+          <div className="card stack-4" style={{ borderColor: "rgba(45,90,39,0.35)" }}>
+            <Label>On Elestar</Label>
+            <p className="display-sm">Apply → technical → panel → final → kept.</p>
+            <p className="body-sm">If the email is real, how far you got stays on the record.</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="wrap section-sm" style={{ borderTop: "1px solid var(--border)" }}>
+        <div className="stack-4" style={{ marginBottom: 28 }}>
+          <Label>Why it compounds</Label>
+          <h2 className="display-md" style={{ maxWidth: "24ch" }}>Every verified interview makes the next hire cheaper to evaluate.</h2>
+        </div>
+        <div className="cols-4">
+          {[
+            { t: "More candidates", d: "More verified loops enter the pool." },
+            { t: "Better signals", d: "Signals shows what companies actually test." },
+            { t: "Better discovery", d: "Search ranks people on evaluated work." },
+            { t: "More employers", d: "Fewer redundant rounds, more reason to look here." },
+          ].map((item) => (
+            <div key={item.t} className="stack-2">
+              <span className="label-ink">{item.t}</span>
+              <p className="body-sm">{item.d}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
       <section className="dark">
         <div className="wrap section" style={{ textAlign: "center" }}>
           <div className="stack-6" style={{ alignItems: "center" }}>
             <Mark size={22} />
-            <h2 className="display-lg" style={{ maxWidth: "24ch", margin: "0 auto" }}>
-              Watch it structure a real interview process
+            <h2 className="display-lg" style={{ maxWidth: "18ch", margin: "0 auto" }}>
+              Bring one interview email.
             </h2>
-            <p className="lede" style={{ maxWidth: "52ch", margin: "0 auto" }}>
-              Paste a loop, or use one of the examples. One of them is built not to publish, because the
-              privacy audit is the part worth seeing.
+            <p className="lede" style={{ maxWidth: "48ch", margin: "0 auto" }}>
+              Candidates: it becomes verified history. Employers: you see it next to what was tested.
             </p>
-            <Link href="/list" className="btn-primary" style={{ textDecoration: "none" }}>
-              Run the pipeline
-            </Link>
+            <div className="row-wrap" style={{ gap: 12, justifyContent: "center" }}>
+              <Link href="/list" className="btn-primary" style={{ textDecoration: "none" }}>
+                I&rsquo;m a candidate
+              </Link>
+              <Link href="/search" className="btn-ghost" style={{ textDecoration: "none", color: "var(--dark-ink)", borderColor: "var(--dark-border)" }}>
+                I&rsquo;m hiring
+              </Link>
+            </div>
           </div>
         </div>
       </section>
@@ -206,13 +197,13 @@ export default function HomePage() {
         <div className="row-between stack-mobile" style={{ gap: 16 }}>
           <div className="row" style={{ gap: 10 }}>
             <Mark size={14} />
-            <Label>Elestar</Label>
+            <Label>Your interviews belong to you.</Label>
           </div>
           <div className="row-wrap" style={{ gap: 20 }}>
-            <Link href="/list" className="nav-link">List a process</Link>
+            <Link href="/list" className="nav-link">Verify</Link>
             <Link href="/circuit" className="nav-link">Circuit</Link>
             <Link href="/search" className="nav-link">Search</Link>
-            <Link href="/intros" className="nav-link">Intros</Link>
+            <Link href="/signals" className="nav-link">Signals</Link>
             <Link href="/system" className="nav-link">System</Link>
           </div>
         </div>

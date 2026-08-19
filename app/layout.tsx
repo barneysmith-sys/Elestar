@@ -3,9 +3,9 @@ import "./globals.css";
 import { Nav } from "../components/Nav";
 
 export const metadata: Metadata = {
-  title: "Elestar — an intelligence layer for hiring",
+  title: "Elestar — keep the interviews that didn't become a job",
   description:
-    "Interview processes contain valuable intelligence. Elestar captures it, verifies it, protects it, and makes it reusable.",
+    "Your interview history shouldn't disappear when you don't get the job. Forward the recruiter email to prove@elestar.ai.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -258,7 +258,8 @@ export function parseProcessDeterministic(args: {
   );
 
   // ---- clearance ----------------------------------------------------------
-  const answeredLastRound = answerText.length > 0 && ROUND_PATTERNS.some((p) => p.re.test(answerText));
+  const answeredLastRound =
+    (answerText.length > 0 && ROUND_PATTERNS.some((p) => p.re.test(answerText))) || statedReachedStage(text);
   const clearance = detectClearance(text, rounds.length, roundsTotal, outcome, answeredLastRound);
   rounds = rounds.map((r, i) => ({ ...r, index: i + 1, cleared: i < clearance.cleared }));
   const roundsCleared = Math.min(clearance.cleared, Math.max(roundsTotal ?? rounds.length, rounds.length));
@@ -396,6 +397,19 @@ function readExplicitRoundCount(text: string): number | null {
   if (!m || !m[1]) return null;
   const n = words[m[1]] ?? Number.parseInt(m[1], 10);
   return Number.isFinite(n) && n >= 0 && n <= 15 ? n : null;
+}
+
+/**
+ * Candidate-stated furthest stage. Distinct from the mail digest's
+ * "last round the mail sequence reached", which is verification evidence
+ * and must not be read as a clarifying-question trigger.
+ */
+function statedReachedStage(text: string): boolean {
+  return (
+    /\b(?:i |we )?(?:reached|made it to|got to|got through) (?:the )?(?:final|last|panel|onsite|system design|technical)(?: round| panel| interview| stage)?\b/i.test(
+      text,
+    ) || /\bthe last (?:round|stage) i (?:completed|did|reached|sat)\b/i.test(text)
+  );
 }
 
 function detectClearance(
