@@ -19,7 +19,7 @@
       "@/*": ["./*"]
     }
   },
-  "include": ["src", "prompts", "evals", "lib", "app", "web/src", "components", "png.d.ts", "next-env.d.ts", ".next/types/**/*.ts"],
+    "include": ["src", "prompts", "evals", "lib", "app", "web/src", "utils", "components", "png.d.ts", "next-env.d.ts", ".next/types/**/*.ts"],
   "exclude": [
     "node_modules",
     "web/src/main.tsx",

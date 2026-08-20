@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { supabaseServiceRoleKey, supabaseUrl } from "./supabaseEnv";
 
 /**
  * Service-role client. Import this ONLY from server-side code (Route
@@ -10,11 +11,15 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
  */
 let client: SupabaseClient | null = null;
 
+export function hasSupabaseAdmin(): boolean {
+  return Boolean(supabaseUrl() && supabaseServiceRoleKey());
+}
+
 export function getSupabaseAdmin(): SupabaseClient {
   if (client) return client;
 
-  const url = process.env.SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const url = supabaseUrl();
+  const serviceKey = supabaseServiceRoleKey();
   if (!url || !serviceKey) {
     throw new Error(
       "SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY are not set. Refusing to run the " +

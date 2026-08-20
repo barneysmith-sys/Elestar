@@ -1,6 +1,7 @@
 import "server-only";
-import { getSupabaseAdmin } from "./supabaseAdmin";
+import { getSupabaseAdmin, hasSupabaseAdmin } from "./supabaseAdmin";
 import { parseAccountRole, type AccountRole } from "./account";
+import { createSupabaseRequestClient } from "./supabaseServer";
 
 export async function provisionAccount(userId: string, role: AccountRole): Promise<void> {
   const admin = getSupabaseAdmin();
@@ -32,12 +33,48 @@ export async function readAccountRole(userId: string): Promise<AccountRole | nul
   return data?.role === "candidate" || data?.role === "employer" ? data.role : null;
 }
 
+export async function readOwnAccountRole(): Promise<AccountRole | null> {
+  const supabase = await createSupabaseRequestClient();
+  if (!supabase) return null;
+  const { data, error } = await supabase.from("profiles").select("role").maybeSingle();
+  if (error) return null;
+  return data?.role === "candidate" || data?.role === "employer" ? data.role : null;
+}
+
+/** After cookie sign-in, persist role without the service role key. */
+export async function persistOwnProfile(role: AccountRole): Promise<void> {
+  const supabase = await createSupabaseRequestClient();
+  if (!supabase) return;
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const existing = await readOwnAccountRole();
+  if (existing) return;
+
+  const { error: profileError } = await supabase.from("profiles").insert({ user_id: user.id, role });
+  if (profileError && !/duplicate|unique/i.test(profileError.message)) {
+    throw new Error(profileError.message);
+  }
+  if (role === "employer") {
+    const { error: recruiterError } = await supabase.from("recruiters").insert({ user_id: user.id });
+    if (recruiterError && !/duplicate|unique/i.test(recruiterError.message)) {
+      throw new Error(recruiterError.message);
+    }
+  }
+}
+
 /**
  * Repair a real Auth user that has no profile row yet (dashboard-created
  * accounts, or a signup that created the user then failed the write).
  * Role comes from app_metadata first — never user_metadata.
  */
 export async function ensureAccount(userId: string, fallback?: AccountRole | null): Promise<AccountRole | null> {
+  if (!hasSupabaseAdmin()) {
+    return (await readOwnAccountRole()) ?? fallback ?? null;
+  }
+
   const existing = await readAccountRole(userId);
   if (existing) return existing;
 

@@ -1,7 +1,7 @@
 import { getCapabilities } from "../../../../lib/capabilities";
 import { parseAccountRole, parseEmail, parsePassword } from "../../../../lib/account";
-import { provisionAccount } from "../../../../lib/accountStore";
-import { getSupabaseAdmin } from "../../../../lib/supabaseAdmin";
+import { persistOwnProfile, provisionAccount } from "../../../../lib/accountStore";
+import { getSupabaseAdmin, hasSupabaseAdmin } from "../../../../lib/supabaseAdmin";
 import { createSupabaseRequestClient } from "../../../../lib/supabaseServer";
 
 export const dynamic = "force-dynamic";
@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export async function POST(request: Request): Promise<Response> {
   if (!getCapabilities().accounts) {
     return Response.json(
-      { error: "Accounts are not configured. Set SUPABASE_URL, SUPABASE_ANON_KEY, and SUPABASE_SERVICE_ROLE_KEY." },
+      { error: "Accounts are not configured. Set SUPABASE_URL and the publishable (anon) key." },
       { status: 503 },
     );
   }
@@ -28,31 +28,46 @@ export async function POST(request: Request): Promise<Response> {
   if (!password) return Response.json({ error: "Password must be at least 8 characters." }, { status: 400 });
   if (!role) return Response.json({ error: "Choose candidate or hiring." }, { status: 400 });
 
-  const admin = getSupabaseAdmin();
-  const created = await admin.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
-    app_metadata: { role },
-  });
-  if (created.error || !created.data.user) {
-    const duplicate = /already been registered|already exists/i.test(created.error?.message ?? "");
-    return Response.json(
-      { error: duplicate ? "An account with that email already exists. Sign in instead." : "Could not create the account." },
-      { status: duplicate ? 409 : 400 },
-    );
-  }
-
-  try {
-    await provisionAccount(created.data.user.id, role);
-  } catch {
-    await admin.auth.admin.deleteUser(created.data.user.id);
-    return Response.json({ error: "Could not finish creating the account." }, { status: 500 });
-  }
-
   const supabase = await createSupabaseRequestClient();
   if (!supabase) {
     return Response.json({ error: "Auth client is not configured." }, { status: 503 });
+  }
+
+  if (hasSupabaseAdmin()) {
+    const admin = getSupabaseAdmin();
+    const created = await admin.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      app_metadata: { role },
+    });
+    if (created.error || !created.data.user) {
+      const duplicate = /already been registered|already exists/i.test(created.error?.message ?? "");
+      return Response.json(
+        { error: duplicate ? "An account with that email already exists. Sign in instead." : "Could not create the account." },
+        { status: duplicate ? 409 : 400 },
+      );
+    }
+
+    try {
+      await provisionAccount(created.data.user.id, role);
+    } catch {
+      await admin.auth.admin.deleteUser(created.data.user.id);
+      return Response.json({ error: "Could not finish creating the account." }, { status: 500 });
+    }
+  } else {
+    const signedUp = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { role } },
+    });
+    if (signedUp.error || !signedUp.data.user) {
+      const duplicate = /already been registered|already exists|already registered/i.test(signedUp.error?.message ?? "");
+      return Response.json(
+        { error: duplicate ? "An account with that email already exists. Sign in instead." : "Could not create the account." },
+        { status: duplicate ? 409 : 400 },
+      );
+    }
   }
 
   const signedIn = await supabase.auth.signInWithPassword({ email, password });
@@ -66,6 +81,12 @@ export async function POST(request: Request): Promise<Response> {
       },
       { status: 200 },
     );
+  }
+
+  try {
+    await persistOwnProfile(role);
+  } catch {
+    /* trigger may already have written the row */
   }
 
   return Response.json({

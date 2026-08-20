@@ -1,3 +1,5 @@
+import { supabasePublishableKey, supabaseServiceRoleKey, supabaseUrl } from "./supabaseEnv";
+
 /**
  * What this deployment is actually able to do right now.
  *
@@ -19,7 +21,7 @@ export interface Capabilities {
   model: boolean;
   /** Supabase is configured, so records persist and RLS applies. */
   persistence: boolean;
-  /** Auth signup/login is available (URL + anon + service role). */
+  /** Auth signup/login is available (project URL + publishable/anon key). */
   accounts: boolean;
   /** Signed inbound webhook for prove@elestar.ai is configured. */
   inboundWebhook: boolean;
@@ -40,12 +42,8 @@ function flag(name: string, defaultTrue = false): boolean {
 export function getCapabilities(): Capabilities {
   return {
     model: Boolean(process.env.ANTHROPIC_API_KEY),
-    persistence: Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY),
-    accounts: Boolean(
-      process.env.SUPABASE_URL &&
-        process.env.SUPABASE_ANON_KEY &&
-        process.env.SUPABASE_SERVICE_ROLE_KEY,
-    ),
+    persistence: Boolean(supabaseUrl() && supabaseServiceRoleKey()),
+    accounts: Boolean(supabaseUrl() && supabasePublishableKey()),
     inboundWebhook: Boolean(process.env.INBOUND_WEBHOOK_SECRET),
     liveResearch: flag("ELESTAR_LIVE_RESEARCH"),
     requirePersistence: flag("ELESTAR_REQUIRE_PERSISTENCE"),

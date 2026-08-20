@@ -1,6 +1,6 @@
 import { getCapabilities } from "../../../../lib/capabilities";
 import { parseAccountRole, parseEmail, parseLoginPassword, type AccountRole } from "../../../../lib/account";
-import { ensureAccount } from "../../../../lib/accountStore";
+import { ensureAccount, persistOwnProfile } from "../../../../lib/accountStore";
 import { createSupabaseRequestClient } from "../../../../lib/supabaseServer";
 
 export const dynamic = "force-dynamic";
@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export async function POST(request: Request): Promise<Response> {
   if (!getCapabilities().accounts) {
     return Response.json(
-      { error: "Accounts are not configured. Set SUPABASE_URL, SUPABASE_ANON_KEY, and SUPABASE_SERVICE_ROLE_KEY." },
+      { error: "Accounts are not configured. Set SUPABASE_URL and the publishable (anon) key." },
       { status: 503 },
     );
   }
@@ -41,6 +41,13 @@ export async function POST(request: Request): Promise<Response> {
     role = await ensureAccount(signedIn.data.user.id, parseAccountRole((body as { role?: unknown }).role));
   } catch {
     role = null;
+  }
+  if (role) {
+    try {
+      await persistOwnProfile(role);
+    } catch {
+      /* already present */
+    }
   }
 
   return Response.json({
