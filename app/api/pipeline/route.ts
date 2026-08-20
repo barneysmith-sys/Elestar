@@ -4,6 +4,7 @@ import { getSession, serializeDemoSessionCookie } from "../../../lib/session";
 import { getCapabilities, engineLabel, persistenceLabel, reasoningEngine } from "../../../lib/capabilities";
 import { collectEmails } from "../../../lib/verify/email";
 import { FIXTURE_IDS, INBOUND_FIXTURES, PROVE_INBOX, isFixtureId } from "../../../lib/ingest/inbound";
+import { logPipeline, newPipelineId } from "../../../lib/observe";
 
 export const dynamic = "force-dynamic";
 
@@ -48,8 +49,23 @@ export async function POST(req: Request): Promise<Response> {
   const leakNet = collectEmails(description, forwardedEmails, recruiterEmail, fixtureRaw);
 
   const capabilities = getCapabilities();
-  const encoder = new TextEncoder();
+  if (capabilities.requirePersistence && !capabilities.persistence) {
+    return Response.json(
+      { error: "This deployment requires Supabase persistence. Nothing was processed." },
+      { status: 503 },
+    );
+  }
   const isSimulation = Boolean(simulation || fixture);
+  if (isSimulation && !capabilities.allowSimulation) {
+    return Response.json(
+      { error: "Simulation is disabled on this deployment. Forward a real recruiter email to prove@elestar.ai." },
+      { status: 403 },
+    );
+  }
+
+  const encoder = new TextEncoder();
+  const pipelineId = newPipelineId();
+  logPipeline({ event: "pipeline_http", pipelineId, simulation: isSimulation });
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
@@ -72,6 +88,7 @@ export async function POST(req: Request): Promise<Response> {
         authenticated: session.authenticated,
         simulation: isSimulation,
         inbox: PROVE_INBOX,
+        pipelineId,
       });
 
       try {
@@ -85,6 +102,8 @@ export async function POST(req: Request): Promise<Response> {
           role: fixture ? INBOUND_FIXTURES[fixture].role : role,
           fixture,
           simulation: isSimulation,
+          pipelineId,
+          signal: req.signal,
         })) {
           send(message);
         }

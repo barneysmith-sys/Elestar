@@ -78,6 +78,11 @@ function RecordModal({
               </p>
             </div>
           )}
+          {record.audit && (
+            <p className="font-mono text-[10px] uppercase tracking-[0.14em]" style={{ color: "var(--ink-3)" }}>
+              Privacy · {record.audit.decision} · k={record.audit.kAnonymity}
+            </p>
+          )}
           <button
             type="button"
             onClick={onIntro}

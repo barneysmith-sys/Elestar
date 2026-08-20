@@ -166,8 +166,8 @@ async function main() {
 
     check("emits a meta frame before the work", Boolean(meta), meta);
     check(
-      "runs receive, parse_mail, identify, research, match, audit, publish",
-      ["receive", "parse_mail", "identify", "research", "match", "audit", "publish"].every((s) =>
+      "runs receive, parse_mail, identify, plan, research, match, audit, publish",
+      ["receive", "parse_mail", "identify", "plan", "research", "match", "audit", "publish"].every((s) =>
         steps.some((m) => m.step === s),
       ),
       steps.map((s) => s.step),
@@ -179,6 +179,9 @@ async function main() {
     const receive = settled(run.messages, "receive");
     check("receive is at prove@elestar.ai", receive?.data?.arrival?.to === "prove@elestar.ai", receive?.data);
     check("canonical run is labelled a simulation", receive?.data?.arrival?.simulation === true, receive?.data);
+    const plan = settled(run.messages, "plan");
+    check("plan selects catalog tools for the known domain", plan?.data?.action === "catalog_lookup", plan?.data);
+    check("plan does not invent a live crawl", Array.isArray(plan?.data?.tools) && plan.data.tools.includes("resolveCompany"), plan?.data);
     check("ingest last round reached is the final", /final/i.test(receive?.data?.arrival?.lastReachedLabel ?? ""), receive?.data);
 
     const parsed = settled(run.messages, "identify")?.data?.parsed;
@@ -354,6 +357,11 @@ async function main() {
     check("circuit responds", status === 200, status);
     check("has records to show", (json.records?.length ?? 0) > 0, json.records?.length);
     check("the record we just published is on the wall", json.records?.some((r: any) => r.id === publishedId), publishedId);
+    check(
+      "a simulated publish is labelled demo",
+      json.records?.find((r: any) => r.id === publishedId)?.demo === true,
+      json.records?.find((r: any) => r.id === publishedId)?.demo,
+    );
 
     const record = json.records[0];
     check("every record has an anonymous handle", json.records.every((r: any) => /^[A-Z]-\d+$/.test(r.id)));
@@ -568,6 +576,18 @@ async function main() {
 
     const byRole = await api("/api/signals?role=engineering");
     check("role family filter returns a real subset", (byRole.json.report?.pool ?? 0) > 0 && (byRole.json.report?.pool ?? 0) <= (json.report?.pool ?? 0), byRole.json.report);
+  }
+
+  section("inbound: unsigned mail is refused");
+  {
+    const unsigned = await fetch(`${BASE}/api/inbound`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ from: "talent@ledgerpay.example", text: "hi" }),
+    });
+    check("unconfigured webhook is 503", unsigned.status === 503, unsigned.status);
+    const body = await unsigned.json().catch(() => ({}));
+    check("the refusal says inbound is not configured", body.configured === false, body);
   }
 
   section("pages: every route renders");

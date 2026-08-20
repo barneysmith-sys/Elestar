@@ -5,13 +5,13 @@ import AppNav from "../components/AppNav";
 import { decideIntro, fetchBrief, fetchIntros } from "../elestar-api";
 import type { IntroRequest } from "../../../lib/records";
 import { useRouter } from "../router";
-import type { InterviewBrief } from "../../../src/types";
+import type { AnnotatedBrief } from "../../../lib/reasoners/brief";
 
 export default function Intros() {
   const { showToast } = useRouter();
   const [intros, setIntros] = useState<IntroRequest[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [brief, setBrief] = useState<InterviewBrief | null>(null);
+  const [brief, setBrief] = useState<AnnotatedBrief | null>(null);
 
   const load = useCallback(() => {
     void fetchIntros()
@@ -86,7 +86,7 @@ export default function Intros() {
                   style={{ borderColor: "var(--navy)", color: "var(--navy)" }}
                   onClick={() => {
                     void fetchBrief(intro.dossierId, intro.roleDescription, intro.id)
-                      .then((body) => setBrief(body.brief))
+                      .then((body) => setBrief(body.brief as AnnotatedBrief))
                       .catch((err: unknown) => showToast(err instanceof Error ? err.message : "Brief refused."));
                   }}
                 >
@@ -99,7 +99,23 @@ export default function Intros() {
         {brief && (
           <div className="mt-10 border p-6" style={{ borderColor: "var(--navy)" }}>
             <p className="font-mono text-[10px] uppercase tracking-[0.16em] mb-4" style={{ color: "var(--navy)" }}>Interview brief</p>
+            <p className="font-mono text-[11px] mb-4" style={{ color: "var(--ink-3)" }}>
+              Confidence {Math.round(brief.confidence * 100)}% · {brief.confidenceBasis}
+            </p>
             <p className="text-[15px] mb-3">{brief.outcomeContext}</p>
+            {brief.facts.length > 0 && (
+              <>
+                <p className="font-mono text-[10px] uppercase tracking-[0.16em] mb-2">Provenance</p>
+                <ul className="mb-4 space-y-1.5">
+                  {brief.facts.map((f) => (
+                    <li key={`${f.provenance}-${f.claim}`} className="text-[14px]">
+                      <span className="font-mono text-[10px] uppercase tracking-wide mr-2" style={{ color: "var(--ink-3)" }}>{f.provenance}</span>
+                      {f.claim}
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
             <p className="font-mono text-[10px] uppercase tracking-[0.16em] mb-2">Already assessed</p>
             <ul className="mb-4">{brief.alreadyAssessed.map((a) => <li key={a.competency}>{a.competency} · {a.depth}</li>)}</ul>
             <p className="font-mono text-[10px] uppercase tracking-[0.16em] mb-2">Never skip</p>

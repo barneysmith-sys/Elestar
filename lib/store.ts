@@ -102,8 +102,11 @@ export async function insertDossier(args: {
   userId: string;
   parsed: ParsedProcess;
   audit: RedactionAudit;
+  /** True for fixture/simulated inbound. Labelled on the wall; never implied live. */
+  demo?: boolean;
 }): Promise<DossierRecord> {
   const { processId, userId, parsed, audit } = args;
+  const demo = Boolean(args.demo);
 
   // The recruiter-browsable projection. Deliberately a whitelist rather than
   // a blacklist: a field has to be named here to ever reach a recruiter.
@@ -137,7 +140,7 @@ export async function insertDossier(args: {
         tier: parsed.proposedTier,
         evidence: parsed.evidence,
         redaction_decision: audit.decision,
-        public_record: { ...publicRecord, audit },
+        public_record: { ...publicRecord, audit, demo },
       })
       .select("id, created_at")
       .single();
@@ -153,7 +156,7 @@ export async function insertDossier(args: {
       parsed: publicRecord,
       audit,
       createdAt: (data.created_at as string) ?? new Date().toISOString(),
-      demo: false,
+      demo,
     };
   }
 
@@ -170,7 +173,7 @@ export async function insertDossier(args: {
     parsed: publicRecord,
     audit,
     createdAt: new Date().toISOString(),
-    demo: false,
+    demo,
   };
   db.dossiers.unshift(record);
   return record;
@@ -395,8 +398,8 @@ function demoRevealedIdentity(): RevealedIdentity {
 // ---------------------------------------------------------------------------
 
 function rowToRecord(r: Record<string, unknown>): DossierRecord {
-  const publicRecord = (r.public_record ?? {}) as ParsedProcess & { audit?: RedactionAudit };
-  const { audit, ...parsed } = publicRecord;
+  const publicRecord = (r.public_record ?? {}) as ParsedProcess & { audit?: RedactionAudit; demo?: boolean };
+  const { audit, demo, ...parsed } = publicRecord;
   return {
     id: recordLabel(r.id as string),
     rowId: r.id as string,
@@ -408,7 +411,7 @@ function rowToRecord(r: Record<string, unknown>): DossierRecord {
     parsed: parsed as ParsedProcess,
     audit: audit ?? null,
     createdAt: r.created_at as string,
-    demo: false,
+    demo: Boolean(demo),
   };
 }
 

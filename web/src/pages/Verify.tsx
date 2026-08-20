@@ -1,15 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AppNav from "../components/AppNav";
-import { PROVE_INBOX } from "../elestar-api";
+import { fetchStatus, PROVE_INBOX } from "../elestar-api";
 import { usePipeline, OUTCOME_HEADLINE } from "../usePipeline";
-import { STEP_ACTIVITY, STEP_ORDER, STEP_TITLE, type IdentifyStepData, type PublishStepData } from "../../../lib/pipelineWire";
+import { STEP_ACTIVITY, STEP_ORDER, STEP_TITLE, type AuditStepData, type IdentifyStepData, type MatchStepData, type PublishStepData, type ResearchStepData } from "../../../lib/pipelineWire";
 import { describeEmployer, furthestRoundLabel } from "../../../lib/records";
 import { FIXTURE_CATALOG, FIXTURE_IDS, type FixtureId } from "../../../lib/ingest/fixtureCatalog";
+import { PipelineEvidence } from "../components/PipelineEvidence";
 
 export default function Verify() {
   const { running, meta, stages, active, questions, done, error, run, answer } = usePipeline();
+  const [liveInbound, setLiveInbound] = useState<boolean | null>(null);
   const [fixture, setFixture] = useState<FixtureId>("canonical");
   const [notes, setNotes] = useState(FIXTURE_CATALOG.canonical.notes);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -18,6 +20,15 @@ export default function Verify() {
 
   const parsed = (stages.identify?.message.data as IdentifyStepData | undefined)?.parsed ?? null;
   const published = (stages.publish?.message.data as PublishStepData | undefined)?.record;
+  const research = stages.research?.message.data as ResearchStepData | undefined;
+  const match = stages.match?.message.data as MatchStepData | undefined;
+  const audit = stages.audit?.message.data as AuditStepData | undefined;
+
+  useEffect(() => {
+    void fetchStatus()
+      .then((status) => setLiveInbound(status.inboundWebhook))
+      .catch(() => setLiveInbound(false));
+  }, []);
 
   const startFile = async (file: File) => {
     const forwardedEmails = await file.text();
@@ -77,10 +88,12 @@ export default function Verify() {
 
           <div className="border p-5" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
             <p className="font-mono text-[10px] uppercase tracking-[0.16em] mb-3" style={{ color: "var(--ink-3)" }}>
-              Demo inbox · this deployment cannot receive live mail
+              {liveInbound ? "Live inbound configured · fixtures remain labelled" : "Demo inbox · live mail is not configured"}
             </p>
             <p className="text-[14px] mb-4" style={{ color: "var(--muted-foreground)" }}>
-              Simulate an inbound fixture. The pipeline that then runs is the real one.
+              {liveInbound
+                ? "Forward original recruiter mail to the address above. Fixtures below are simulations and cannot mix with live records."
+                : "This host does not accept prove@elestar.ai until INBOUND_WEBHOOK_SECRET is set. Simulate a fixture; the pipeline that then runs is the real one."}
             </p>
             <select
               value={fixture}
@@ -132,6 +145,12 @@ export default function Verify() {
               </div>
             );
           })}
+          <PipelineEvidence
+            identify={stages.identify?.message.data as IdentifyStepData | undefined}
+            research={research}
+            match={match}
+            audit={audit}
+          />
           {error && <p className="text-[14px] mt-4">{error}</p>}
           {questions && !done && (
             <div className="mt-6 space-y-3">

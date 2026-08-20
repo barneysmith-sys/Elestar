@@ -19,6 +19,13 @@ const nextConfig = {
           { key: "X-Accel-Buffering", value: "no" },
         ],
       },
+      {
+        source: "/api/inbound",
+        headers: [
+          { key: "Cache-Control", value: "no-cache, no-transform" },
+          { key: "X-Accel-Buffering", value: "no" },
+        ],
+      },
     ];
   },
 };

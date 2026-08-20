@@ -14,8 +14,9 @@ import {
 } from "./ingest/inbound";
 import { cohortCount, insertDossier, insertProcess } from "./store";
 import { assertNoRecruiterEmail, maskEmail, parseRecruiterSignal } from "./verify/email";
-import { collectPublicEvidence, resolveCompany } from "./verify/resolve";
+import { collectPublicEvidence, planResearch, resolveCompany } from "./verify/resolve";
 import { verificationChecks } from "./verify/types";
+import { logPipeline, newPipelineId } from "./observe";
 import type {
   AuditStepData,
   DoneMessage,
@@ -25,6 +26,7 @@ import type {
   PipelineMessage,
   PipelineStatus,
   PipelineStep,
+  PlanStepData,
   PublishStepData,
   ReceiveStepData,
   ResearchStepData,
@@ -44,17 +46,23 @@ export interface RunPipelineArgs {
   /** Demo: process a canned inbound as if it arrived at prove@elestar.ai. */
   fixture?: FixtureId;
   simulation?: boolean;
+  pipelineId?: string;
+  signal?: AbortSignal;
 }
 
 /**
  * Orchestrates the verification pipeline:
- *   receive → parse_mail → identify → research → match → audit → publish
+ *   receive → parse_mail → identify → plan → research → match → audit → publish
  *
  * Production trigger is an email arriving at prove@elestar.ai. The demo
  * calls the same function with a fixture id and `simulation: true`.
  */
 export async function* runPipeline(args: RunPipelineArgs): AsyncGenerator<PipelineMessage> {
   const simulation = Boolean(args.simulation || args.fixture);
+  const pipelineId = args.pipelineId ?? newPipelineId();
+  const started = Date.now();
+  const aborted = () => Boolean(args.signal?.aborted);
+  logPipeline({ event: "pipeline_start", pipelineId, simulation });
   const inbound = args.fixture && isFixtureId(args.fixture)
     ? receiveFixture(args.fixture, true)
     : receiveInbound({
@@ -107,8 +115,20 @@ export async function* runPipeline(args: RunPipelineArgs): AsyncGenerator<Pipeli
   ): DoneMessage => {
     const msg = done(outcome, dossierId, recordId, tier, reason);
     leakCheck(msg);
+    logPipeline({
+      event: "pipeline_end",
+      pipelineId,
+      outcome,
+      simulation,
+      durationMs: Date.now() - started,
+    });
     return msg;
   };
+
+  if (aborted()) {
+    yield finish("withheld", undefined, undefined, undefined, "The request was cancelled. Nothing was published.");
+    return;
+  }
 
   // ---- 1. receive --------------------------------------------------------
   yield emit("receive", "running", `Inbound at ${PROVE_INBOX}…`);
@@ -249,6 +269,7 @@ export async function* runPipeline(args: RunPipelineArgs): AsyncGenerator<Pipeli
       processId,
       userId,
       parsed,
+      demo: simulation,
       audit: {
         riskScore: 0,
         quasiIdentifiers: [],
@@ -262,17 +283,53 @@ export async function* runPipeline(args: RunPipelineArgs): AsyncGenerator<Pipeli
     return;
   }
 
-  // ---- 4. research public evidence ---------------------------------------
-  yield emit("research", "running", "Checking public company and role evidence…");
+  // ---- 4. plan: decide which research tools are justified -----------------
   const signal = parseRecruiterSignal(recruiterEmail);
-  const company = signal.domain ? resolveCompany(signal.domain) : resolveCompany("");
-  const publicEvidence = collectPublicEvidence(company).map((e) => ({
-    id: e.id,
-    kind: e.kind,
-    source: e.source,
-    claim: e.claim,
-    about: e.about,
-  }));
+  const plan = planResearch(mail.primarySignal.domain || signal.domain);
+  yield emit("plan", "running", "Deciding what still needs evidence…");
+  yield emit(
+    "plan",
+    "ok",
+    plan.action === "catalog_lookup"
+      ? `Catalog lookup for ${plan.domain}. Tools: ${plan.tools.join(", ")}.`
+      : plan.action === "skip_no_domain"
+        ? "No recruiter domain — skipping company research rather than inventing one."
+        : `No catalog evidence for ${plan.domain}. Holding that gap rather than crawling a guess.`,
+    {
+      engine: "deterministic",
+      trace: [
+        `Plan: ${plan.action}.`,
+        plan.tools.length ? `Tools: ${plan.tools.join(", ")}.` : "No research tools selected.",
+        plan.missing.length ? `Missing: ${plan.missing.join(", ")}.` : "No required fields missing for a catalog check.",
+      ],
+      data: {
+        action: plan.action,
+        tools: plan.tools,
+        missing: plan.missing,
+        domain: plan.domain,
+      } satisfies PlanStepData,
+    },
+  );
+
+  if (aborted()) {
+    yield finish("withheld", undefined, undefined, undefined, "The request was cancelled. Nothing was published.");
+    return;
+  }
+
+  // ---- 5. research public evidence ---------------------------------------
+  yield emit("research", "running", "Checking public company and role evidence…");
+  const company = plan.tools.includes("resolveCompany")
+    ? resolveCompany(plan.domain || signal.domain)
+    : resolveCompany("");
+  const publicEvidence = plan.tools.includes("collectPublicEvidence")
+    ? collectPublicEvidence(company).map((e) => ({
+        id: e.id,
+        kind: e.kind,
+        source: e.source,
+        claim: e.claim,
+        about: e.about,
+      }))
+    : [];
   const researchData: ResearchStepData = {
     domain: signal.domain,
     companyLabel: company.found ? company.displayName : signal.domain || "(none)",
@@ -281,6 +338,7 @@ export async function* runPipeline(args: RunPipelineArgs): AsyncGenerator<Pipeli
     sector: company.sector,
     stage: company.stage,
     evidence: publicEvidence,
+    plan: { action: plan.action, tools: plan.tools, missing: plan.missing },
   };
   yield emit(
     "research",
@@ -375,6 +433,7 @@ export async function* runPipeline(args: RunPipelineArgs): AsyncGenerator<Pipeli
       processId,
       userId,
       parsed,
+      demo: simulation,
       audit: {
         riskScore: 0,
         quasiIdentifiers: [],
@@ -400,6 +459,7 @@ export async function* runPipeline(args: RunPipelineArgs): AsyncGenerator<Pipeli
       processId,
       userId,
       parsed,
+      demo: simulation,
       audit: {
         riskScore: 0,
         quasiIdentifiers: [],
@@ -451,7 +511,7 @@ export async function* runPipeline(args: RunPipelineArgs): AsyncGenerator<Pipeli
 
   // ---- 7. publication decision -------------------------------------------
   const processId = await insertProcess({ userId, rawDescription: sourceText, parsed, recruiterEmail });
-  const record = await insertDossier({ processId, userId, parsed, audit });
+  const record = await insertDossier({ processId, userId, parsed, audit, demo: simulation });
   assertNoRecruiterEmail(record, recruiterEmails);
 
   if (audit.decision !== "publish") {

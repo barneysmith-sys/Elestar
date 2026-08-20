@@ -5,7 +5,8 @@
 
 import type { DossierRecord, IntroRequest } from "../../lib/records";
 import type { SignalsReport } from "../../lib/signals";
-import type { InterviewBrief, MatchResult } from "../../src/types";
+import type { MatchResult } from "../../src/types";
+import type { AnnotatedBrief } from "../../lib/reasoners/brief";
 import type { FixtureId } from "../../lib/ingest/fixtureCatalog";
 import { PROVE_INBOX } from "../../lib/ingest/types";
 import type { PipelineMessage } from "../../lib/pipelineWire";
@@ -83,7 +84,7 @@ export async function fetchBrief(
   recordId: string,
   roleDescription: string,
   introId?: string,
-): Promise<{ brief: InterviewBrief; record: DossierRecord }> {
+): Promise<{ brief: AnnotatedBrief; record: DossierRecord }> {
   const res = await fetch("/api/brief", {
     method: "POST",
     credentials: "same-origin",
@@ -92,7 +93,7 @@ export async function fetchBrief(
   });
   const body = await res.json();
   if (!res.ok) throw new Error((body as { error?: string }).error ?? "Brief refused.");
-  return body as { brief: InterviewBrief; record: DossierRecord };
+  return body as { brief: AnnotatedBrief; record: DossierRecord };
 }
 
 export type PipelineBody = {
@@ -103,6 +104,27 @@ export type PipelineBody = {
   priorAnswers?: Record<string, string>;
   role?: string;
 };
+
+export type StatusPayload = {
+  engine: string;
+  engineLabel: string;
+  persistence: boolean;
+  persistenceLabel: string;
+  inboundWebhook: boolean;
+  liveResearch: boolean;
+  allowSimulation: boolean;
+  requirePersistence: boolean;
+  kFloor: number;
+  poolSize: number;
+  alwaysReal: string[];
+  degradesToDeterministic: string[];
+};
+
+export async function fetchStatus(): Promise<StatusPayload> {
+  const res = await fetch("/api/status", { cache: "no-store", credentials: "same-origin" });
+  if (!res.ok) throw new Error("Status could not be loaded.");
+  return res.json();
+}
 
 export async function startPipeline(body: PipelineBody): Promise<ReadableStream<Uint8Array>> {
   const res = await fetch("/api/pipeline", {

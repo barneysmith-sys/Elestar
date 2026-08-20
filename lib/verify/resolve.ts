@@ -119,8 +119,52 @@ const CATALOG: CatalogEntry[] = [
 
 const byDomain = new Map(CATALOG.map((c) => [c.domain, c]));
 
+/**
+ * Resolve a recruiter domain to a catalog profile.
+ *
+ * Exact match first. Then a parent-domain match (mail.ledgerpay.example →
+ * ledgerpay.example) so a recruiting subdomain is the same company. Never
+ * fuzzy-match lookalikes — a near-miss is unknown, not a hit.
+ */
+export function catalogDomain(domain: string): string | null {
+  const normalized = domain.trim().toLowerCase().replace(/^www\./, "");
+  if (!normalized) return null;
+  if (byDomain.has(normalized)) return normalized;
+  const parts = normalized.split(".");
+  for (let i = 1; i < parts.length - 1; i++) {
+    const parent = parts.slice(i).join(".");
+    if (byDomain.has(parent)) return parent;
+  }
+  return null;
+}
+
+export type ResearchPlan = {
+  action: "catalog_lookup" | "skip_no_domain" | "hold_unknown_domain";
+  tools: ("resolveCompany" | "collectPublicEvidence")[];
+  missing: string[];
+  domain: string;
+};
+
+export function planResearch(domain: string): ResearchPlan {
+  const trimmed = domain.trim();
+  if (!trimmed) {
+    return { action: "skip_no_domain", tools: [], missing: ["recruiter_domain"], domain: "" };
+  }
+  const key = catalogDomain(trimmed);
+  if (key) {
+    return { action: "catalog_lookup", tools: ["resolveCompany", "collectPublicEvidence"], missing: [], domain: key };
+  }
+  return {
+    action: "hold_unknown_domain",
+    tools: ["resolveCompany"],
+    missing: ["public_company_evidence"],
+    domain: trimmed.toLowerCase(),
+  };
+}
+
 export function resolveCompany(domain: string): ResolvedCompany {
-  const entry = byDomain.get(domain.toLowerCase());
+  const key = catalogDomain(domain);
+  const entry = key ? byDomain.get(key) : undefined;
   if (!entry) {
     return {
       domain,

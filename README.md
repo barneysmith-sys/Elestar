@@ -37,6 +37,32 @@ identity on an unapproved intro request impossible.
 `GET /api/status` reports which of these is live, so the deployment always
 describes itself rather than being taken on trust.
 
+## Vercel
+
+Import `barneysmith-sys/Elestar` as a Next.js project. Root directory is the
+repo root. Framework: Next.js. Node 20+. Build: `npm run build`. Install:
+`npm install`.
+
+Set production env vars in the Vercel project (never `NEXT_PUBLIC_`):
+
+| Variable | Required in production | Purpose |
+|---|---|---|
+| `ANTHROPIC_API_KEY` | yes, for live judgement | Model-backed parse/audit/match/brief |
+| `SUPABASE_URL` | yes | Postgres persistence |
+| `SUPABASE_ANON_KEY` | yes, with Auth | Browser/session auth |
+| `SUPABASE_SERVICE_ROLE_KEY` | yes | Server writes; never ship to the client |
+| `INBOUND_WEBHOOK_SECRET` | yes, for live mail | Signed `POST /api/inbound` |
+| `ELESTAR_ALLOW_SIMULATION` | set `false` | Refuse fixture/demo inbound |
+| `ELESTAR_REQUIRE_PERSISTENCE` | set `true` | Refuse writes without Supabase |
+
+Point prove@elestar.ai at `https://elestar.ai/api/inbound` (Resend/Postmark/SES
+inbound webhook). Authenticate with `x-elestar-webhook-secret` or
+`Authorization: Bearer`. Live mail is **not** operational until that secret is
+set; the endpoint returns 503 otherwise.
+
+Domain: `elestar.ai` should be attached to this Vercel project. `/api/*` stays
+same-origin for cookies and SSE.
+
 ## Deploying
 
 The app needs a Node server. It cannot be a static export or a GitHub Pages
@@ -71,6 +97,7 @@ deterministic. They are real in both modes.
 | `/intros` | The candidate's inbox: approve or decline an intro. |
 | `/brief` | Alias of intros: the interview brief, gated on an approved intro. |
 | `/system` | Which stages are rules and which are judgement |
+| `/api/inbound` | Signed live mail at prove@elestar.ai. 503 until `INBOUND_WEBHOOK_SECRET` is set. |
 | `/api/*` | Barney's agent backend. Same-origin cookies and SSE. |
 
 ### Tests

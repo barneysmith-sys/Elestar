@@ -19,12 +19,30 @@ export interface Capabilities {
   model: boolean;
   /** Supabase is configured, so records persist and RLS applies. */
   persistence: boolean;
+  /** Signed inbound webhook for prove@elestar.ai is configured. */
+  inboundWebhook: boolean;
+  /** Optional live public fetch is enabled. Off by default; catalog is the v1 source. */
+  liveResearch: boolean;
+  /** When true, writes refuse to run on the in-memory store. */
+  requirePersistence: boolean;
+  /** When false, fixture/simulation requests are refused. */
+  allowSimulation: boolean;
+}
+
+function flag(name: string, defaultTrue = false): boolean {
+  const raw = process.env[name]?.trim().toLowerCase();
+  if (!raw) return defaultTrue;
+  return raw === "1" || raw === "true" || raw === "yes";
 }
 
 export function getCapabilities(): Capabilities {
   return {
     model: Boolean(process.env.ANTHROPIC_API_KEY),
     persistence: Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY),
+    inboundWebhook: Boolean(process.env.INBOUND_WEBHOOK_SECRET),
+    liveResearch: flag("ELESTAR_LIVE_RESEARCH"),
+    requirePersistence: flag("ELESTAR_REQUIRE_PERSISTENCE"),
+    allowSimulation: flag("ELESTAR_ALLOW_SIMULATION", true),
   };
 }
 

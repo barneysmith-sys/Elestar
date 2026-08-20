@@ -18,6 +18,8 @@ import { verifyProcessDeterministic } from "../lib/reasoners/verify";
 import { assertNoRecruiterEmail, parseRecruiterSignal } from "../lib/verify/email";
 import { parseForwardedMail } from "../lib/verify/forwardedMail";
 import { aggregateSignals, filterSignalRecords } from "../lib/signals";
+import { catalogDomain, planResearch, resolveCompany } from "../lib/verify/resolve";
+import { parseInboundPayload } from "../lib/ingest/webhook";
 import type { DossierRecord } from "../lib/records";
 import {
   CANONICAL_FORWARDS,
@@ -468,6 +470,38 @@ section("signals: only published records, filters are real");
   check("role family is counted from published records", all.roles.some((r) => r.name === "engineering"), all.roles);
   const byRole = aggregateSignals([published, withheld, other], { role: "engineering" });
   check("role filter is a real subset", byRole.pool > 0 && byRole.pool <= all.pool, byRole);
+}
+
+section("entity resolution: exact and parent domain, never lookalikes");
+{
+  check("exact catalog domain resolves", catalogDomain("ledgerpay.example") === "ledgerpay.example");
+  check("recruiting subdomain resolves to the company", catalogDomain("mail.ledgerpay.example") === "ledgerpay.example");
+  check("www is stripped", catalogDomain("www.ledgerpay.example") === "ledgerpay.example");
+  check("a lookalike is not a match", catalogDomain("ledgerpay-corp.example") === null);
+  check("unknown stays unknown", catalogDomain("unknown-corp.example") === null);
+  check("subdomain company is found", resolveCompany("talent.ledgerpay.example").found === true);
+  check("lookalike is not found", resolveCompany("ledgerpay-corp.example").found === false);
+
+  const hit = planResearch("mail.ledgerpay.example");
+  check("plan selects catalog tools for a known domain", hit.action === "catalog_lookup" && hit.tools.includes("collectPublicEvidence"), hit);
+  const skip = planResearch("");
+  check("plan skips research with no domain", skip.action === "skip_no_domain" && skip.tools.length === 0, skip);
+  const hold = planResearch("unknown-corp.example");
+  check("plan holds an unknown domain rather than inventing", hold.action === "hold_unknown_domain", hold);
+}
+
+section("inbound webhook: fixtures cannot sneak in");
+{
+  check("a fixture id is refused", parseInboundPayload({ fixture: "canonical" }) === null);
+  check("empty body is refused", parseInboundPayload(null) === null);
+  const reconstructed = parseInboundPayload({
+    from: "talent@ledgerpay.example",
+    to: "prove@elestar.ai",
+    subject: "Interview",
+    text: "Recruiter screen then a technical.",
+  });
+  check("provider fields reconstruct a thread", Boolean(reconstructed?.raw.includes("From: talent@ledgerpay.example")), reconstructed);
+  check("reconstructed thread is not a fixture", reconstructed !== null && !("fixture" in reconstructed));
 }
 
 function stubRecord(args: {

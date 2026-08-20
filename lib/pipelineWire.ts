@@ -21,6 +21,7 @@ export type PipelineStep =
   | "receive"
   | "parse_mail"
   | "identify"
+  | "plan"
   | "research"
   | "match"
   | "audit"
@@ -32,6 +33,7 @@ export const STEP_ORDER: PipelineStep[] = [
   "receive",
   "parse_mail",
   "identify",
+  "plan",
   "research",
   "match",
   "audit",
@@ -42,6 +44,7 @@ export const STEP_TITLE: Record<PipelineStep, string> = {
   receive: "Email received",
   parse_mail: "Parsing interview signals",
   identify: "Identifying company + role",
+  plan: "Deciding what to check",
   research: "Checking public evidence",
   match: "Verifying interview stage",
   audit: "Running privacy audit",
@@ -52,6 +55,7 @@ export const STEP_ACTIVITY: Record<PipelineStep, string> = {
   receive: "Inbound at prove@elestar.ai…",
   parse_mail: "Reading the forwarded mail for rounds, dates and instructions…",
   identify: "Extracting company domain, role and how far the loop got…",
+  plan: "Choosing tools from what is still missing…",
   research: "Gathering public company and role evidence…",
   match: "Comparing the mail, the stated experience and the public record…",
   audit: "Measuring re-identification risk and cohort size…",
@@ -92,6 +96,7 @@ export interface MetaMessage {
   authenticated: boolean;
   simulation: boolean;
   inbox: string;
+  pipelineId?: string;
 }
 
 export type PipelineMessage = MetaMessage | StepMessage | QuestionsMessage | DoneMessage;
@@ -135,6 +140,18 @@ export interface ResearchStepData {
   sector: string | null;
   stage: string | null;
   evidence: VerificationResult["evidence"];
+  plan?: {
+    action: "catalog_lookup" | "skip_no_domain" | "hold_unknown_domain";
+    tools: string[];
+    missing: string[];
+  };
+}
+
+export interface PlanStepData {
+  action: "catalog_lookup" | "skip_no_domain" | "hold_unknown_domain";
+  tools: string[];
+  missing: string[];
+  domain: string;
 }
 
 export interface MatchStepData {

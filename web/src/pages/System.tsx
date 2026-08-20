@@ -8,6 +8,10 @@ type StatusPayload = {
   engineLabel: string;
   persistence: boolean;
   persistenceLabel: string;
+  inboundWebhook?: boolean;
+  liveResearch?: boolean;
+  allowSimulation?: boolean;
+  requirePersistence?: boolean;
   kFloor: number;
   poolSize: number;
   alwaysReal: string[];
@@ -41,6 +45,8 @@ export default function System() {
           <>
             <p className="font-mono text-[11px] mb-8" style={{ color: "var(--ink-3)" }}>
               {status.engineLabel} · {status.persistenceLabel} · k={status.kFloor} · pool {status.poolSize}
+              {status.inboundWebhook ? " · inbound webhook configured" : " · inbound webhook off"}
+              {status.allowSimulation === false ? " · simulation disabled" : " · simulation allowed"}
             </p>
             <p className="font-mono text-[10px] uppercase tracking-[0.16em] mb-3" style={{ color: "var(--navy)" }}>Always real</p>
             <ul className="mb-10 space-y-2">

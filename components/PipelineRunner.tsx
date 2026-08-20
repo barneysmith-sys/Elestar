@@ -41,6 +41,7 @@ const DWELL_MS: Record<PipelineStep, number> = {
   receive: 1400,
   parse_mail: 1800,
   identify: 2000,
+  plan: 900,
   research: 1900,
   match: 2200,
   audit: 1900,
