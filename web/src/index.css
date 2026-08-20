@@ -337,19 +337,19 @@ html.dark .eye-field img {
   mix-blend-mode: multiply;
 }
 .land-eye {
-  top: -12%;
+  top: -8%;
   left: 50%;
-  width: min(74vw, 880px);
+  width: min(92vw, 1080px);
   transform: translate3d(-50%, 0, 0);
   opacity: 0;
   animation: eye-in 1.6s cubic-bezier(0.16, 1, 0.3, 1) 0.02s forwards;
-  --eye-end: 0.28;
-  filter: contrast(1.22);
+  --eye-end: 0.58;
+  filter: contrast(1.42) brightness(0.68) saturate(0.8);
   transition: opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1), transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .land-eye-scan {
-  --eye-end: 0.08;
-  filter: contrast(1.22);
+  --eye-end: 0.16;
+  filter: contrast(1.42) brightness(0.68) saturate(0.8);
   animation:
     eye-in 2.8s cubic-bezier(0.16, 1, 0.3, 1) 0.28s forwards,
     eye-strip 14s ease-in-out 2.2s infinite;
@@ -376,21 +376,25 @@ html.dark .eye-field img {
   transform: translate3d(-50%, -14px, 0) scale(0.96);
   will-change: auto;
 }
+.land-field[data-stage="hero"] .land-face {
+  opacity: 0;
+}
 .land-face {
-  top: 50%;
+  top: 48%;
   left: 50%;
-  width: min(94vw, 1040px);
+  width: min(110vw, 1280px);
   transform: translate3d(-50%, -46%, 0) scale(1.045);
   opacity: 0;
+  filter: contrast(1.18) brightness(0.88);
   transition: opacity 1.35s cubic-bezier(0.16, 1, 0.3, 1), transform 1.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .land-field[data-stage="page"] .land-face {
-  opacity: 0.1;
+  opacity: 0.34;
   transform: translate3d(-50%, -46%, 0) scale(1);
 }
 .land-field[data-stage="page"] .land-face.eye-lit {
-  --eye-end: 0.06;
-  opacity: 0.06;
+  --eye-end: 0.12;
+  opacity: 0.12;
   mask-image: repeating-linear-gradient(
     90deg,
     #000 0 14%,
@@ -502,6 +506,10 @@ html.dark .land-field img {
 @keyframes card-in {
   from { transform: scale(0.92) translateY(20px); opacity: 0; }
   to   { transform: scale(1) translateY(0); opacity: 1; }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 @keyframes fade-up {
   from { opacity: 0; transform: translateY(16px); }
@@ -671,6 +679,11 @@ html.dark .land-field img {
   isolation: isolate;
   overflow: visible;
 }
+.hero-actions {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 .hero-type-pull::before {
   content: "";
   position: absolute;
@@ -735,11 +748,18 @@ html.dark .land-field img {
   .eye-field img { opacity: var(--eye-end, 0.16); }
   .eye-field-hero .eye-lit,
   .land-field .eye-lit { opacity: 0 !important; visibility: hidden; will-change: auto; }
-  .land-eye { opacity: 0.28; transform: translate3d(-50%, 0, 0); }
+  .land-eye { opacity: 0.58; transform: translate3d(-50%, 0, 0); }
   .land-eye-scan { opacity: 0 !important; visibility: hidden; will-change: auto; }
   .land-field[data-stage="page"] .land-eye { opacity: 0; }
-  .land-field[data-stage="page"] .land-face { opacity: 0.1; transform: translate3d(-50%, -46%, 0) scale(1); }
+  .land-field[data-stage="page"] .land-face { opacity: 0.34; transform: translate3d(-50%, -46%, 0) scale(1); }
   .marquee-track { transform: none; will-change: auto; }
   .stamp { opacity: 1; transform: none; }
   .seal-in { opacity: 1; transform: rotate(-6deg); }
+  .hero-actions { opacity: 1; pointer-events: auto; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .fade-in {
+    animation: fade-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
 }

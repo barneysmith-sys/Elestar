@@ -9,7 +9,7 @@ export default function Logo({
   size?: "sm" | "md" | "lg"
   invert?: boolean
 }) {
-  const h = size === "lg" ? 44 : size === "sm" ? 24 : 30
+  const h = size === "lg" ? 48 : size === "sm" ? 26 : 38
 
   return (
     <span className="inline-flex items-center">

@@ -120,9 +120,12 @@ export async function* runPipeline(args: RunPipelineArgs): AsyncGenerator<Pipeli
     logPipeline({
       event: "pipeline_end",
       pipelineId,
+      stage: "done",
       outcome,
       simulation,
       durationMs: Date.now() - started,
+      decision: outcome,
+      holdReason: outcome === "published" ? undefined : reason.slice(0, 160),
     });
     return msg;
   };
@@ -314,6 +317,18 @@ export async function* runPipeline(args: RunPipelineArgs): AsyncGenerator<Pipeli
           : plan.tools.length
             ? `Catalog lookup for ${plan.domain}. Tools: ${plan.tools.join(", ")}.`
             : `Need more evidence for ${plan.domain}.`;
+    logPipeline({
+      event: "plan",
+      pipelineId,
+      stage: "plan",
+      attempt,
+      simulation,
+      durationMs: Date.now() - planStarted,
+      tool: plan.tools.join(",") || undefined,
+      decision: plan.decision,
+      holdReason: plan.decision === "hold" ? (plan.lookalikeOf ? `lookalike:${plan.lookalikeOf}` : plan.missing[0]) : undefined,
+      replan: attempt > 1,
+    });
     yield emit("plan", "ok", planLine, {
         engine: "deterministic",
         durationMs: Date.now() - planStarted,
@@ -342,10 +357,11 @@ export async function* runPipeline(args: RunPipelineArgs): AsyncGenerator<Pipeli
 
     const researchStarted = Date.now();
     yield emit("research", "running", "Checking public company and role evidence…");
-    if (plan.tools.includes("resolveCompany")) {
-      company = resolveCompany(plan.domain || researchDomain);
+    const targetDomain = plan.domain || researchDomain;
+    if (plan.tools.includes("resolveCompany") && !(company.found && company.domain === targetDomain)) {
+      company = resolveCompany(targetDomain);
     }
-    if (plan.tools.includes("collectPublicEvidence")) {
+    if (plan.tools.includes("collectPublicEvidence") && publicEvidence.length === 0) {
       publicEvidence = collectPublicEvidence(company).map((e) => ({
         id: e.id,
         kind: e.kind,
@@ -403,6 +419,19 @@ export async function* runPipeline(args: RunPipelineArgs): AsyncGenerator<Pipeli
       attempt,
       plan: { action: plan.action, decision: plan.decision, tools: plan.tools, missing: plan.missing },
     };
+    logPipeline({
+      event: "research",
+      pipelineId,
+      stage: "research",
+      attempt,
+      simulation,
+      durationMs: Date.now() - researchStarted,
+      tool: plan.tools.join(",") || undefined,
+      sourceCount: summarised.independentSources,
+      evidenceCount: publicEvidence.length,
+      decision: plan.decision,
+      replan: attempt > 1,
+    });
     yield emit(
       "research",
       "ok",

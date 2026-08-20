@@ -271,13 +271,14 @@ function oneEdit(a: string, b: string): boolean {
   return edits === 1;
 }
 
+const resolveMemo = new Map<string, ResolvedCompany>();
+
 export function resolveCompany(domain: string): ResolvedCompany {
-  const key = catalogDomain(domain);
-  const entry = key ? byDomain.get(key) : undefined;
-  if (!entry) {
+  const trimmed = domain.trim();
+  if (!trimmed) {
     return {
-      domain,
-      displayName: domain,
+      domain: "",
+      displayName: "",
       sector: null,
       stage: null,
       sizeBand: null,
@@ -289,19 +290,46 @@ export function resolveCompany(domain: string): ResolvedCompany {
       sourceKind: "catalog",
     };
   }
-  return {
-    domain: entry.domain,
-    displayName: entry.displayName,
-    sector: entry.sector,
-    stage: entry.stage,
-    sizeBand: entry.sizeBand,
-    region: entry.region,
-    knownRounds: entry.knownRounds,
-    knownRoles: entry.knownRoles,
-    evidence: entry.evidence.map((e) => ({ ...e, kind: "catalog" as const })),
-    found: true,
-    sourceKind: "catalog",
-  };
+  const memoKey = trimmed.toLowerCase().replace(/^www\./, "");
+  const canonical = catalogDomain(trimmed) ?? memoKey;
+  const cached = resolveMemo.get(canonical) ?? resolveMemo.get(memoKey);
+  if (cached) {
+    resolveMemo.set(canonical, cached);
+    resolveMemo.set(memoKey, cached);
+    return cached;
+  }
+  const key = catalogDomain(trimmed);
+  const entry = key ? byDomain.get(key) : undefined;
+  const resolved: ResolvedCompany = entry
+    ? {
+        domain: entry.domain,
+        displayName: entry.displayName,
+        sector: entry.sector,
+        stage: entry.stage,
+        sizeBand: entry.sizeBand,
+        region: entry.region,
+        knownRounds: entry.knownRounds,
+        knownRoles: entry.knownRoles,
+        evidence: entry.evidence.map((e) => ({ ...e, kind: "catalog" as const })),
+        found: true,
+        sourceKind: "catalog",
+      }
+    : {
+        domain: trimmed,
+        displayName: trimmed,
+        sector: null,
+        stage: null,
+        sizeBand: null,
+        region: null,
+        knownRounds: [],
+        knownRoles: [],
+        evidence: [],
+        found: false,
+        sourceKind: "catalog",
+      };
+  resolveMemo.set(memoKey, resolved);
+  resolveMemo.set(canonical, resolved);
+  return resolved;
 }
 
 export function collectPublicEvidence(company: ResolvedCompany): PublicEvidence[] {

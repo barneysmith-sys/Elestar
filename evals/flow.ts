@@ -153,6 +153,7 @@ async function main() {
     );
     check("publishes the k floor", json.kFloor === 8, json.kFloor);
     check("lists the logic that is real either way", Array.isArray(json.alwaysReal) && json.alwaysReal.length > 0);
+    check("exposes the simulation policy", typeof json.allowSimulation === "boolean", json);
   }
 
   section("list a process: the pipeline publishes an anonymous record");
@@ -633,6 +634,8 @@ async function main() {
   section("pages: every route renders");
   {
     const { json: status } = await api("/api/status");
+    check("status reports simulation policy", typeof status.allowSimulation === "boolean", status);
+    check("eval host allows simulation so Agent Lab fixtures can run", status.allowSimulation === true, status);
     for (const path of ["/", "/list", "/verify", "/circuit", "/wall", "/desk", "/search", "/signals", "/intros", "/system", "/agent-lab", "/brief"]) {
       const res = await fetch(BASE + path, { headers: cookieHeader() });
       const html = await res.text();
@@ -646,6 +649,8 @@ async function main() {
       if (path === "/") {
         check("/ states the product in first paint", /interview history|prove@elestar\.ai/i.test(html));
         check("/ names the prove inbox", html.includes("prove@elestar.ai"));
+        check("/ candidate CTA reaches verify", /I(?:'|’|&apos;|&#x27;|&#39;)m a candidate/i.test(html));
+        check("/ nav uses Request access", /Request access/i.test(html));
       }
       if (["/circuit", "/wall", "/search", "/desk", "/intros", "/signals", "/verify", "/list", "/system", "/agent-lab"].includes(path)) {
         check(`${path} labels the engine in first paint`, html.includes(status.engineLabel), status.engineLabel);

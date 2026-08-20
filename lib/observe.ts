@@ -22,7 +22,12 @@ export function logPipeline(fields: {
   ok?: boolean;
   tool?: string;
   sourceCount?: number;
+  evidenceCount?: number;
   attempt?: number;
+  decision?: string;
+  holdReason?: string;
+  replan?: boolean;
+  confidence?: number;
   error?: string;
 }): void {
   const safe: Record<string, unknown> = { ts: new Date().toISOString() };

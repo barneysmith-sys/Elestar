@@ -19,6 +19,7 @@ import { assertNoRecruiterEmail, parseRecruiterSignal } from "../lib/verify/emai
 import { parseForwardedMail } from "../lib/verify/forwardedMail";
 import { aggregateSignals, filterSignalRecords } from "../lib/signals";
 import { catalogDomain, catalogNearMiss, planResearch, resolveCompany } from "../lib/verify/resolve";
+import { getCapabilities } from "../lib/capabilities";
 import { buildClaims, weakestImportant } from "../lib/verify/claims";
 import { buildCircuitGraph } from "../lib/circuitGraph";
 import { parseInboundPayload, inboundReplayOk, rememberInbound, inboundContentKey } from "../lib/ingest/webhook";
@@ -664,6 +665,23 @@ function stubRecord(args: {
     createdAt: new Date().toISOString(),
     demo: args.demo,
   };
+}
+
+section("production capability flags");
+{
+  const prevSim = process.env.ELESTAR_ALLOW_SIMULATION;
+  const prevPers = process.env.ELESTAR_REQUIRE_PERSISTENCE;
+  delete process.env.ELESTAR_ALLOW_SIMULATION;
+  delete process.env.ELESTAR_REQUIRE_PERSISTENCE;
+  check("simulation is allowed by default so local evals can run", getCapabilities().allowSimulation === true);
+  process.env.ELESTAR_ALLOW_SIMULATION = "false";
+  check("ELESTAR_ALLOW_SIMULATION=false refuses fixtures", getCapabilities().allowSimulation === false);
+  process.env.ELESTAR_REQUIRE_PERSISTENCE = "true";
+  check("ELESTAR_REQUIRE_PERSISTENCE=true is honoured", getCapabilities().requirePersistence === true);
+  if (prevSim === undefined) delete process.env.ELESTAR_ALLOW_SIMULATION;
+  else process.env.ELESTAR_ALLOW_SIMULATION = prevSim;
+  if (prevPers === undefined) delete process.env.ELESTAR_REQUIRE_PERSISTENCE;
+  else process.env.ELESTAR_REQUIRE_PERSISTENCE = prevPers;
 }
 
 // ---------------------------------------------------------------------------
