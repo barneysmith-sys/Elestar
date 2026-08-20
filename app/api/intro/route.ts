@@ -6,7 +6,7 @@ import {
   getIntroRequest,
   listIntroRequests,
 } from "../../../lib/store";
-import { canDecideIntro, demoSessionCookie, getSession } from "../../../lib/session";
+import { canDecideIntro, getSession, serializeDemoSessionCookie } from "../../../lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -90,11 +90,7 @@ export async function POST(req: Request): Promise<Response> {
 
 function withSession(response: Response, session: { authenticated: boolean; userId: string }): Response {
   if (!session.authenticated) {
-    const cookie = demoSessionCookie(session.userId);
-    response.headers.append(
-      "Set-Cookie",
-      `${cookie.name}=${cookie.value}; Path=${cookie.options.path}; Max-Age=${cookie.options.maxAge}; HttpOnly; SameSite=Lax`,
-    );
+    response.headers.append("Set-Cookie", serializeDemoSessionCookie(session.userId));
   }
   return response;
 }

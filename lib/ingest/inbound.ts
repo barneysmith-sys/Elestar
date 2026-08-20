@@ -20,107 +20,26 @@ import {
 } from "../verify/mailFixtures";
 import { parseForwardedMail, type ForwardedMailEvidence } from "../verify/forwardedMail";
 import { maskEmail } from "../verify/email";
+import { FIXTURE_CATALOG, type FixtureId, type FixtureMeta } from "./fixtureCatalog";
+import { PROVE_INBOX, type InboxArrival } from "./types";
 
-export const PROVE_INBOX = "prove@elestar.ai";
+export { FIXTURE_IDS, FIXTURE_CATALOG, isFixtureId, type FixtureId, type FixtureMeta } from "./fixtureCatalog";
+export { PROVE_INBOX, type InboxArrival } from "./types";
 
-export const FIXTURE_IDS = ["canonical", "healthtech", "crypto", "pii", "mismatch", "gmail", "contradiction", "nda"] as const;
-export type FixtureId = (typeof FIXTURE_IDS)[number];
-
-export interface InboundFixture {
-  id: FixtureId;
-  label: string;
-  note: string;
-  role: string;
-  notes: string;
+export interface InboundFixture extends FixtureMeta {
   raw: string;
 }
 
 export const INBOUND_FIXTURES: Record<FixtureId, InboundFixture> = {
-  canonical: {
-    id: "canonical",
-    label: "Full loop, rejected at the final",
-    note: "Publishes. Four messages, three rounds cleared, outcome never stated.",
-    role: "Senior Backend Engineer",
-    notes: "Senior Backend Engineer at a Series B fintech.",
-    raw: CANONICAL_FORWARDS,
-  },
-  healthtech: {
-    id: "healthtech",
-    label: "Ambiguous round count",
-    note: "Stops and asks. The parser will not guess a round count.",
-    role: "Backend Engineer",
-    notes: "Series A healthtech company, maybe 40 people. Recruiter screen then a few technical interviews. Never heard back.",
-    raw: HEALTHTECH_FORWARDS,
-  },
-  crypto: {
-    id: "crypto",
-    label: "Too identifiable to publish",
-    note: "Blocked by the privacy audit. Small company, long specific loop.",
-    role: "Head of Engineering",
-    notes:
-      "Recruiter screen, take-home, technical interview, system design, panel, and a final round at a 30 person seed stage crypto company in London over 8 weeks. They went with another candidate.",
-    raw: CRYPTO_FORWARDS,
-  },
-  pii: {
-    id: "pii",
-    label: "Contains contact details",
-    note: "Shows identifiers being stripped before anything is structured.",
-    role: "Senior Backend Engineer",
-    notes:
-      "Reach me at ada@example.com or +1 (415) 555-0199 — portfolio at https://ada.example.com, handle @adalovelace.\nSenior Backend Engineer at a Series B fintech.",
-    raw: CANONICAL_FORWARDS,
-  },
-  mismatch: {
-    id: "mismatch",
-    label: "Company mismatch",
-    note: "Verification fails. Fintech loop against a healthcare recruiter domain.",
-    role: "Senior Backend Engineer",
-    notes: "Senior Backend Engineer at a Series B fintech.",
-    raw: MISMATCH_FORWARDS,
-  },
-  gmail: {
-    id: "gmail",
-    label: "Personal mailbox",
-    note: "Verification fails. A gmail address is not a company signal.",
-    role: "Senior Backend Engineer",
-    notes: "Senior Backend Engineer at a Series B fintech.",
-    raw: GMAIL_FORWARDS,
-  },
-  contradiction: {
-    id: "contradiction",
-    label: "Claim vs mail clash",
-    note: "Holds for review. Notes claim a final; the mail only supports a screen.",
-    role: "Senior Backend Engineer",
-    notes:
-      "I reached the final round. Recruiter screen, technical interview, system design, and a final panel at a Series B fintech.",
-    raw: SCREEN_ONLY_FORWARDS,
-  },
-  nda: {
-    id: "nda",
-    label: "Contains NDA material",
-    note: "Confidential sentences are stripped. The loop can still verify.",
-    role: "Senior Backend Engineer",
-    notes:
-      "Project Nightingale is under NDA. Do not share the internal architecture. Senior Backend Engineer at a Series B fintech.",
-    raw: CANONICAL_FORWARDS,
-  },
+  canonical: { ...FIXTURE_CATALOG.canonical, raw: CANONICAL_FORWARDS },
+  healthtech: { ...FIXTURE_CATALOG.healthtech, raw: HEALTHTECH_FORWARDS },
+  crypto: { ...FIXTURE_CATALOG.crypto, raw: CRYPTO_FORWARDS },
+  pii: { ...FIXTURE_CATALOG.pii, raw: CANONICAL_FORWARDS },
+  mismatch: { ...FIXTURE_CATALOG.mismatch, raw: MISMATCH_FORWARDS },
+  gmail: { ...FIXTURE_CATALOG.gmail, raw: GMAIL_FORWARDS },
+  contradiction: { ...FIXTURE_CATALOG.contradiction, raw: SCREEN_ONLY_FORWARDS },
+  nda: { ...FIXTURE_CATALOG.nda, raw: CANONICAL_FORWARDS },
 };
-
-export function isFixtureId(value: string | undefined | null): value is FixtureId {
-  return Boolean(value && (FIXTURE_IDS as readonly string[]).includes(value));
-}
-
-/** What the candidate-facing inbox is allowed to show. No raw mailbox. */
-export interface InboxArrival {
-  to: typeof PROVE_INBOX;
-  simulation: boolean;
-  fromMasked: string;
-  fromDomain: string;
-  subject: string;
-  messageCount: number;
-  receivedAt: string;
-  lastReachedLabel: string | null;
-}
 
 export interface ReceivedInbound {
   arrival: InboxArrival;

@@ -1,14 +1,13 @@
-import { CircuitClient } from "../../components/CircuitClient";
-import { engineLabel, reasoningEngine } from "../../lib/capabilities";
+import Board from "../../web/src/pages/Board";
+import { EngineMark } from "../EngineMark";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "Circuit — Elestar",
-  description: "The intelligence network: anonymous, verified interview records.",
-};
-
 export default function CircuitPage() {
-  const engine = reasoningEngine();
-  return <CircuitClient initialEngine={engine} initialEngineLabel={engineLabel(engine)} />;
+  return (
+    <>
+      <EngineMark />
+      <Board />
+    </>
+  );
 }

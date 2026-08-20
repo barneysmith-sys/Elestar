@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import "./globals.css";
-import { Nav } from "../components/Nav";
+import "../web/src/index.css";
+import { ProductShell } from "../web/src/shell";
 
 export const metadata: Metadata = {
   title: "Elestar — keep the interviews that didn't become a job",
@@ -12,11 +12,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body>
-        {/* Grain and vignette sit above everything and take no pointer events. */}
-        <div className="grain" aria-hidden="true" />
-        <div className="vignette" aria-hidden="true" />
-        <Nav />
-        <main className="page">{children}</main>
+        <ProductShell>{children}</ProductShell>
       </body>
     </html>
   );

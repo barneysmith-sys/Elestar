@@ -51,13 +51,25 @@ export async function getSession(): Promise<Session> {
 export function demoSessionCookie(userId: string): {
   name: string;
   value: string;
-  options: { httpOnly: true; sameSite: "lax"; path: string; maxAge: number };
+  options: { httpOnly: true; sameSite: "lax"; path: string; maxAge: number; secure: boolean };
 } {
   return {
     name: DEMO_COOKIE,
     value: userId,
-    options: { httpOnly: true, sameSite: "lax", path: "/", maxAge: 60 * 60 * 24 * 7 },
+    options: {
+      httpOnly: true,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7,
+      secure: process.env.NODE_ENV === "production",
+    },
   };
+}
+
+export function serializeDemoSessionCookie(userId: string): string {
+  const cookie = demoSessionCookie(userId);
+  const secure = cookie.options.secure ? "; Secure" : "";
+  return `${cookie.name}=${cookie.value}; Path=${cookie.options.path}; Max-Age=${cookie.options.maxAge}; HttpOnly; SameSite=Lax${secure}`;
 }
 
 function newDemoId(): string {

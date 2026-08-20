@@ -1,7 +1,10 @@
 node_modules/
+web/node_modules/
+web/dist/
 package-lock.json
 .env
 .env.local
+.env*.local
 .next/
 *.tsbuildinfo
 .DS_Store

@@ -60,14 +60,18 @@ deterministic. They are real in both modes.
 
 | Route | What it is |
 |---|---|
-| `/` | What the product does, and the pipeline in order |
-| `/list` | Verify: forward to prove@elestar.ai, or simulate inbound |
-| `/circuit` | The published pool, anonymous, filterable |
-| `/search` | Rank the pool against a role, with explicit gaps |
-| `/signals` | Aggregate intelligence over published loops |
-| `/intros` | The candidate's inbox: approve or decline an intro |
-| `/brief` | The interview brief, gated on an approved intro |
+| `/` | Josh's landing. Visual identity intact. Prove inbox is prove@elestar.ai. |
+| `/verify` | Verify: forward a recruiter email, or simulate inbound. Streams the real pipeline. |
+| `/list` | Alias of `/verify` |
+| `/wall` | The published pool, anonymous. Josh's wall, Barney's Circuit records. |
+| `/circuit` | Alias of `/wall` |
+| `/desk` | Hiring desk (rank a req) and candidate desk (run the pipeline). |
+| `/search` | Rank the pool against a role, with explicit gaps. |
+| `/signals` | Aggregate intelligence over published loops. |
+| `/intros` | The candidate's inbox: approve or decline an intro. |
+| `/brief` | Alias of intros: the interview brief, gated on an approved intro. |
 | `/system` | Which stages are rules and which are judgement |
+| `/api/*` | Barney's agent backend. Same-origin cookies and SSE. |
 
 ### Tests
 

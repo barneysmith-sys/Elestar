@@ -13,7 +13,7 @@
 import type { RedactionSpan } from "../src/redact";
 import type { ParsedProcess, RedactionAudit, Tier } from "../src/types";
 import type { Engine } from "./capabilities";
-import type { InboxArrival } from "./ingest/inbound";
+import type { InboxArrival } from "./ingest/types";
 import type { DossierRecord } from "./records";
 import type { VerificationResult } from "./verify/types";
 
@@ -164,7 +164,7 @@ export interface PublishStepData {
 }
 
 export const OUTCOME_HEADLINE: Record<DoneMessage["outcome"], string> = {
-  published: "Published to the Circuit",
+  published: "Published to the wall",
   pending_review: "Held for human review",
   withheld: "Held private",
   needs_clarification: "Needs clarification",

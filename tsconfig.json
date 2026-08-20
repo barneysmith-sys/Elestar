@@ -19,6 +19,21 @@
       "@/*": ["./*"]
     }
   },
-  "include": ["src", "prompts", "evals", "lib", "app", "next-env.d.ts", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": ["src", "prompts", "evals", "lib", "app", "web/src", "components", "png.d.ts", "next-env.d.ts", ".next/types/**/*.ts"],
+  "exclude": [
+    "node_modules",
+    "web/src/main.tsx",
+    "web/src/App.tsx",
+    "web/src/vite-env.d.ts",
+    "web/vite.config.ts",
+    "web/src/next-shim",
+    "web/src/pages/Signup.tsx",
+    "web/src/pages/Onboard.tsx",
+    "web/src/pages/Profile.tsx",
+    "web/src/pages/Listings.tsx",
+    "web/src/data.ts",
+    "web/src/deskData.ts",
+    "web/src/listings.ts",
+    "web/src/specimen.ts"
+  ]
 }
