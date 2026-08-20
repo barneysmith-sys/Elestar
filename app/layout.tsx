@@ -3,26 +3,29 @@ import "../web/src/index.css";
 import { ProductShell } from "../web/src/shell";
 
 const SITE_TITLE = "Elestar - Agents make the hiring experience, what it deserves.";
-
-export const dynamic = "force-dynamic";
+const SITE_DESCRIPTION =
+  "Your interview history shouldn't disappear when you don't get the job. Forward the recruiter email to prove@elestar.ai.";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://elestar.ai"),
   title: SITE_TITLE,
   applicationName: "Elestar",
-  description:
-    "Your interview history shouldn't disappear when you don't get the job. Forward the recruiter email to prove@elestar.ai.",
+  description: SITE_DESCRIPTION,
   icons: {
     icon: [{ url: "/favicon.png", type: "image/png" }],
-    apple: [{ url: "/apple-icon.png", type: "image/png" }],
+    apple: [{ url: "/apple-touch-icon.png", type: "image/png" }],
   },
   openGraph: {
     title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
     siteName: "Elestar",
     type: "website",
+    url: "/",
   },
   twitter: {
     card: "summary",
     title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
   },
 };
 
