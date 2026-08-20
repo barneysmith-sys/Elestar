@@ -165,7 +165,7 @@ export default function Access() {
 
           {accounts === false ? (
             <p className="type-caption mb-3">
-              Accounts are not live on this host yet. Demo mode still lets you walk the product. Supabase keys still need to be set to persist.
+              Accounts are not live on this host yet. Demo mode still lets you walk the product. Set the Supabase URL and publishable key to persist sign-in. The service role key is not required to create an account.
             </p>
           ) : null}
 
