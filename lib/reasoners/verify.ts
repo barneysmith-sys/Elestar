@@ -59,6 +59,9 @@ export function verifyProcessDeterministic(args: {
   role?: string;
   /** Furthest round the forwarded mail actually reached. */
   mailLastReached?: RoundType | null;
+  /** When the pipeline already resolved evidence, reuse it — do not re-guess. */
+  company?: ResolvedCompany;
+  publicEvidence?: ResolvedCompany["evidence"];
 }): DeterministicVerifyResult {
   const { signal, parsed } = args;
   const role = (args.role ?? "").toLowerCase();
@@ -79,9 +82,13 @@ export function verifyProcessDeterministic(args: {
     );
   }
 
-  trace.push(`Resolving public profile for ${signal.domain}.`);
-  const company = resolveCompany(signal.domain);
-  const evidence = collectPublicEvidence(company);
+  const company = args.company ?? resolveCompany(signal.domain);
+  const evidence = args.publicEvidence ?? collectPublicEvidence(company);
+  trace.push(
+    args.company
+      ? `Using research-stage evidence for ${company.domain} (${evidence.length} signal(s)).`
+      : `Resolving public profile for ${signal.domain}.`,
+  );
 
   if (!company.found || evidence.length === 0) {
     trace.push(`No public catalog evidence for ${signal.domain} — holding for review rather than inventing a company.`);

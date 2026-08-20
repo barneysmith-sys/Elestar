@@ -51,6 +51,17 @@ export const STEP_TITLE: Record<PipelineStep, string> = {
   publish: "Verification complete",
 };
 
+export const STEP_EVENT: Record<PipelineStep, { running: string; settled: string }> = {
+  receive: { running: "received", settled: "received" },
+  parse_mail: { running: "parsed", settled: "parsed" },
+  identify: { running: "identified", settled: "identified" },
+  plan: { running: "planned", settled: "planned" },
+  research: { running: "researching", settled: "evidence_found" },
+  match: { running: "matching", settled: "verified" },
+  audit: { running: "privacy_checked", settled: "privacy_checked" },
+  publish: { running: "publishing", settled: "published" },
+};
+
 export const STEP_ACTIVITY: Record<PipelineStep, string> = {
   receive: "Inbound at prove@elestar.ai…",
   parse_mail: "Reading the forwarded mail for rounds, dates and instructions…",
@@ -67,6 +78,9 @@ export interface StepMessage {
   step: PipelineStep;
   status: PipelineStatus;
   message: string;
+  /** Product-level event name. Never chain-of-thought. */
+  event?: string;
+  durationMs?: number;
   engine?: Engine;
   trace?: string[];
   data?: unknown;
@@ -140,6 +154,10 @@ export interface ResearchStepData {
   sector: string | null;
   stage: string | null;
   evidence: VerificationResult["evidence"];
+  independentSources?: number;
+  overall?: "verified" | "probable" | "uncertain" | "contradicted" | "insufficient";
+  conflicts?: string[];
+  attempt?: number;
   plan?: {
     action: "catalog_lookup" | "skip_no_domain" | "hold_unknown_domain";
     tools: string[];
@@ -152,6 +170,7 @@ export interface PlanStepData {
   tools: string[];
   missing: string[];
   domain: string;
+  attempt?: number;
 }
 
 export interface MatchStepData {

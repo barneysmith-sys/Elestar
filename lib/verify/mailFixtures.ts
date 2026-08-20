@@ -82,3 +82,35 @@ Subject: Recruiter screen
 
 Confirming the recruiter screen, then technical interview, system design, and a final panel. Candidate was rejected after the final round.
 `;
+
+export const UNKNOWN_FORWARDS = `From: Recruiter <talent@unknown-corp.example>
+Date: Mon, 2 Mar 2026 10:00:00 -0500
+Subject: Recruiter screen — Senior Backend Engineer
+
+Confirming the recruiter screen for Senior Backend Engineer.
+
+----------
+From: Recruiter <talent@unknown-corp.example>
+Date: Fri, 13 Mar 2026 17:00:00 -0400
+Subject: Final panel
+
+Technical interview and system design are done. You're through to the final panel. Candidate was rejected after the final round.
+`;
+
+export const LOOKALIKE_FORWARDS = `From: Recruiter <talent@ledgerpayy.example>
+Date: Mon, 2 Mar 2026 10:00:00 -0500
+Subject: Recruiter screen — Senior Backend Engineer
+
+Confirming the recruiter screen at a Series B fintech.
+
+----------
+From: Recruiter <talent@ledgerpayy.example>
+Date: Fri, 13 Mar 2026 17:00:00 -0400
+Subject: Final panel
+
+System design is done. Final panel next. Candidate was rejected after the final round.
+`;
+
+export const MALFORMED_FORWARDS = `this is not an email
+no headers
+just noise`;

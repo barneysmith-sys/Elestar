@@ -148,6 +148,8 @@ export async function reasonVerify(args: {
   parsed: ParsedProcess;
   role?: string;
   mailLastReached?: import("../src/types").RoundType | null;
+  company?: import("./verify/resolve").ResolvedCompany;
+  publicEvidence?: import("./verify/types").VerificationEvidenceItem[];
 }): Promise<Reasoned<VerificationResult>> {
   const signal: RecruiterSignal = { ...args.signal, email: "" };
   const { verification, trace } = verifyProcessDeterministic({
@@ -155,6 +157,8 @@ export async function reasonVerify(args: {
     parsed: args.parsed,
     role: args.role,
     mailLastReached: args.mailLastReached,
+    company: args.company,
+    publicEvidence: args.publicEvidence,
   });
   return { value: verification, engine: "deterministic", trace };
 }

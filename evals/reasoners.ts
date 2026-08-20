@@ -19,7 +19,8 @@ import { assertNoRecruiterEmail, parseRecruiterSignal } from "../lib/verify/emai
 import { parseForwardedMail } from "../lib/verify/forwardedMail";
 import { aggregateSignals, filterSignalRecords } from "../lib/signals";
 import { catalogDomain, planResearch, resolveCompany } from "../lib/verify/resolve";
-import { parseInboundPayload } from "../lib/ingest/webhook";
+import { parseInboundPayload, inboundReplayOk, rememberInbound, inboundContentKey } from "../lib/ingest/webhook";
+import { addEvidence, claimStatusFromVerification, emptyLedger, summarise } from "../lib/evidence";
 import type { DossierRecord } from "../lib/records";
 import {
   CANONICAL_FORWARDS,
@@ -488,6 +489,42 @@ section("entity resolution: exact and parent domain, never lookalikes");
   check("plan skips research with no domain", skip.action === "skip_no_domain" && skip.tools.length === 0, skip);
   const hold = planResearch("unknown-corp.example");
   check("plan holds an unknown domain rather than inventing", hold.action === "hold_unknown_domain", hold);
+  const lookalikePlan = planResearch("ledgerpayy.example");
+  check("lookalike domain is planned as unknown, not catalog", lookalikePlan.action === "hold_unknown_domain", lookalikePlan);
+  const enough = planResearch("ledgerpay.example", { attempt: 2, companyFound: true, evidenceCount: 3 });
+  check("second plan skips tools when evidence already exists", enough.tools.length === 0, enough);
+  const conflicted = planResearch("ledgerpay.example", { attempt: 2, companyFound: true, evidenceCount: 3, conflicts: ["sector clash"] });
+  check("conflicts stop further catalog fetches", conflicted.tools.length === 0 && conflicted.missing.includes("conflict_resolution"), conflicted);
+}
+
+section("evidence ledger: conflicts are preserved, not overwritten");
+{
+  let ledger = emptyLedger();
+  ledger = addEvidence(ledger, {
+    id: "mail",
+    claim: "Recruiter domain ledgerpay.example",
+    source: "forwarded-mail",
+    sourceType: "mail",
+    confidence: 0.9,
+    status: "probable",
+    about: "recruiting",
+    contradictions: [],
+  });
+  ledger = addEvidence(ledger, {
+    id: "catalog",
+    claim: "Series B payments company",
+    source: "catalog://ledgerpay.example/about",
+    sourceType: "catalog",
+    confidence: 0.8,
+    status: "probable",
+    about: "company",
+    contradictions: [],
+  });
+  check("independent mail + catalog counts as two sources", summarise(ledger.items).independentSources >= 2, summarise(ledger.items));
+  const clash = summarise(ledger.items, ["Submission sector (fintech) vs catalog (healthtech)."]);
+  check("a conflict is contradicted, not silently verified", clash.overall === "contradicted", clash);
+  check("failed verification maps to contradicted", claimStatusFromVerification({ status: "failed", inconsistencies: ["clash"], evidenceCount: 2 }) === "contradicted");
+  check("empty evidence is insufficient", claimStatusFromVerification({ status: "needs_review", inconsistencies: [], evidenceCount: 0 }) === "insufficient");
 }
 
 section("inbound webhook: fixtures cannot sneak in");
@@ -502,6 +539,11 @@ section("inbound webhook: fixtures cannot sneak in");
   });
   check("provider fields reconstruct a thread", Boolean(reconstructed?.raw.includes("From: talent@ledgerpay.example")), reconstructed);
   check("reconstructed thread is not a fixture", reconstructed !== null && !("fixture" in reconstructed));
+  check("stale inbound timestamps are refused", inboundReplayOk(Date.now() - 20 * 60 * 1000) === false);
+  check("missing inbound timestamps are allowed", inboundReplayOk(null) === true);
+  const dupKey = inboundContentKey("From: a@b.example\n\nhello", "msg-eval-1");
+  check("first inbound key is remembered", rememberInbound(dupKey) === true);
+  check("duplicate inbound key is refused", rememberInbound(dupKey) === false);
 }
 
 function stubRecord(args: {

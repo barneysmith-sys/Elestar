@@ -621,6 +621,85 @@ html.dark .land-field img {
 .card-in     { animation: card-in     0.3s  ease-out forwards; }
 .fade-up     { animation: fade-up     0.85s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.hero-type {
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+}
+.hero-type-lead {
+  display: block;
+  width: 100%;
+  height: 1.08em;
+  overflow: visible;
+  font-size: clamp(2.9rem, 11.8vw, 7.75rem);
+}
+.hero-type-lead text {
+  letter-spacing: -0.05em;
+}
+.hero-type-sub {
+  display: block;
+  margin-top: 0.1em;
+  max-width: 26ch;
+  text-align: center;
+  font-family: "PP Editorial New", "Fraunces", serif;
+  font-weight: 400;
+  font-synthesis: none;
+  letter-spacing: -0.042em;
+  line-height: 1.04;
+  font-size: clamp(1.35rem, 3.6vw, 2.4rem);
+}
+.hero-type-caret {
+  animation: caret 1s steps(1) infinite;
+}
+.hero-type-pull {
+  position: relative;
+  isolation: isolate;
+  overflow: visible;
+}
+.hero-type-pull::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 48%;
+  width: min(96vw, 920px);
+  height: 78%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(
+    ellipse at center,
+    var(--background) 0%,
+    color-mix(in srgb, var(--background) 78%, transparent) 38%,
+    color-mix(in srgb, var(--background) 28%, transparent) 64%,
+    transparent 82%
+  );
+  pointer-events: none;
+  z-index: -1;
+}
+
+.type-on {
+  position: relative;
+  display: block;
+}
+.type-on-ghost { visibility: hidden; }
+.type-on-live {
+  position: absolute;
+  inset: 0;
+}
+
 .wall-card {
   opacity: 0;
   transform: translateY(14px);

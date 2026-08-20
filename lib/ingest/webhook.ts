@@ -6,7 +6,7 @@
  * Fixtures are not accepted — simulated mail never enters through this door.
  */
 
-import { timingSafeEqual } from "node:crypto";
+import { createHash, timingSafeEqual } from "node:crypto";
 
 export function inboundWebhookConfigured(): boolean {
   return Boolean(process.env.INBOUND_WEBHOOK_SECRET?.trim());
@@ -27,6 +27,61 @@ export function secretFromHeaders(headers: Headers): string | null {
   const auth = headers.get("authorization");
   if (auth?.toLowerCase().startsWith("bearer ")) return auth.slice(7).trim();
   return null;
+}
+
+const REPLAY_WINDOW_MS = 15 * 60 * 1000;
+const seenInbound = new Map<string, number>();
+const rateBuckets = new Map<string, number[]>();
+
+export function inboundTimestamp(headers: Headers, body: unknown): number | null {
+  const header = headers.get("x-elestar-timestamp") ?? headers.get("x-webhook-timestamp");
+  if (header && /^\d+$/.test(header.trim())) {
+    const n = Number(header.trim());
+    return n < 1e12 ? n * 1000 : n;
+  }
+  if (body && typeof body === "object") {
+    const rec = body as Record<string, unknown>;
+    const raw = rec.timestamp ?? rec.Date ?? rec.date;
+    if (typeof raw === "number") return raw < 1e12 ? raw * 1000 : raw;
+    if (typeof raw === "string") {
+      const parsed = Date.parse(raw);
+      if (!Number.isNaN(parsed)) return parsed;
+    }
+  }
+  return null;
+}
+
+/** Missing timestamps are allowed (providers vary). Stale ones are not. */
+export function inboundReplayOk(timestampMs: number | null, now = Date.now()): boolean {
+  if (timestampMs == null) return true;
+  return Math.abs(now - timestampMs) <= REPLAY_WINDOW_MS;
+}
+
+export function inboundContentKey(raw: string, messageId?: string | null): string {
+  const basis = messageId?.trim() || raw;
+  return createHash("sha256").update(basis).digest("hex");
+}
+
+/** Returns false if this inbound was already accepted recently. */
+export function rememberInbound(key: string, now = Date.now()): boolean {
+  for (const [existing, at] of seenInbound) {
+    if (now - at > REPLAY_WINDOW_MS) seenInbound.delete(existing);
+  }
+  if (seenInbound.has(key)) return false;
+  seenInbound.set(key, now);
+  return true;
+}
+
+export function inboundRateOk(bucket: string, now = Date.now(), limit = 30, windowMs = 60_000): boolean {
+  const cutoff = now - windowMs;
+  const prior = (rateBuckets.get(bucket) ?? []).filter((t) => t > cutoff);
+  if (prior.length >= limit) {
+    rateBuckets.set(bucket, prior);
+    return false;
+  }
+  prior.push(now);
+  rateBuckets.set(bucket, prior);
+  return true;
 }
 
 export interface InboundPayload {

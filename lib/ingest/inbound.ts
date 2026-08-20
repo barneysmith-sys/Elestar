@@ -15,8 +15,11 @@ import {
   CRYPTO_FORWARDS,
   GMAIL_FORWARDS,
   HEALTHTECH_FORWARDS,
+  LOOKALIKE_FORWARDS,
+  MALFORMED_FORWARDS,
   MISMATCH_FORWARDS,
   SCREEN_ONLY_FORWARDS,
+  UNKNOWN_FORWARDS,
 } from "../verify/mailFixtures";
 import { parseForwardedMail, type ForwardedMailEvidence } from "../verify/forwardedMail";
 import { maskEmail } from "../verify/email";
@@ -39,6 +42,9 @@ export const INBOUND_FIXTURES: Record<FixtureId, InboundFixture> = {
   gmail: { ...FIXTURE_CATALOG.gmail, raw: GMAIL_FORWARDS },
   contradiction: { ...FIXTURE_CATALOG.contradiction, raw: SCREEN_ONLY_FORWARDS },
   nda: { ...FIXTURE_CATALOG.nda, raw: CANONICAL_FORWARDS },
+  unknown: { ...FIXTURE_CATALOG.unknown, raw: UNKNOWN_FORWARDS },
+  lookalike: { ...FIXTURE_CATALOG.lookalike, raw: LOOKALIKE_FORWARDS },
+  malformed: { ...FIXTURE_CATALOG.malformed, raw: MALFORMED_FORWARDS },
 };
 
 export interface ReceivedInbound {

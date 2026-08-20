@@ -12,6 +12,7 @@ const LINKS = [
   { href: "/search", label: "Search" },
   { href: "/signals", label: "Signals" },
   { href: "/intros", label: "Intros" },
+  { href: "/system", label: "Lab" },
 ] as const;
 
 export default function AppNav() {
@@ -30,7 +31,7 @@ export default function AppNav() {
 
         <nav className="flex items-stretch h-full gap-1 ml-2 overflow-x-auto" aria-label="Product">
           {LINKS.map((t) => {
-            const active = pathname === t.href || pathname.startsWith(`${t.href}/`) || (t.href === "/wall" && pathname.startsWith("/circuit"));
+            const active = pathname === t.href || pathname.startsWith(`${t.href}/`) || (t.href === "/wall" && pathname.startsWith("/circuit")) || (t.href === "/system" && pathname.startsWith("/agent-lab"));
             return (
               <Link
                 key={t.href}

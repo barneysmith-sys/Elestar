@@ -14,6 +14,9 @@ export const FIXTURE_IDS = [
   "gmail",
   "contradiction",
   "nda",
+  "unknown",
+  "lookalike",
+  "malformed",
 ] as const;
 
 export type FixtureId = (typeof FIXTURE_IDS)[number];
@@ -86,6 +89,27 @@ export const FIXTURE_CATALOG: Record<FixtureId, FixtureMeta> = {
     role: "Senior Backend Engineer",
     notes:
       "Project Nightingale is under NDA. Do not share the internal architecture. Senior Backend Engineer at a Series B fintech.",
+  },
+  unknown: {
+    id: "unknown",
+    label: "Unknown company domain",
+    note: "Holds. No catalog hit, so the agent does not invent a company.",
+    role: "Senior Backend Engineer",
+    notes: "Senior Backend Engineer at a Series B fintech.",
+  },
+  lookalike: {
+    id: "lookalike",
+    label: "Lookalike domain",
+    note: "Holds. ledgerpayy.example is not ledgerpay.example.",
+    role: "Senior Backend Engineer",
+    notes: "Senior Backend Engineer at a Series B fintech.",
+  },
+  malformed: {
+    id: "malformed",
+    label: "Malformed email",
+    note: "Garbage input. Asks rather than inventing rounds.",
+    role: "",
+    notes: "",
   },
 };
 

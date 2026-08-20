@@ -1,7 +1,7 @@
 import { runPipeline } from "../../../lib/pipeline";
 import { getCapabilities } from "../../../lib/capabilities";
 import { logPipeline, newPipelineId } from "../../../lib/observe";
-import { parseInboundPayload, secretFromHeaders, verifyInboundSecret } from "../../../lib/ingest/webhook";
+import { parseInboundPayload, secretFromHeaders, verifyInboundSecret, inboundTimestamp, inboundReplayOk, inboundContentKey, rememberInbound, inboundRateOk } from "../../../lib/ingest/webhook";
 import { PROVE_INBOX } from "../../../lib/ingest/types";
 
 export const dynamic = "force-dynamic";
@@ -30,10 +30,22 @@ export async function POST(req: Request): Promise<Response> {
     return Response.json({ error: "Unauthorized inbound." }, { status: 401 });
   }
 
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  if (!inboundRateOk(`ip:${ip}`)) {
+    return Response.json({ error: "Inbound rate limit." }, { status: 429 });
+  }
+
   const body = await req.json().catch(() => null);
   const inbound = parseInboundPayload(body);
   if (!inbound) {
     return Response.json({ error: "Inbound payload was not mail." }, { status: 400 });
+  }
+  if (!inboundReplayOk(inboundTimestamp(req.headers, body))) {
+    return Response.json({ error: "Inbound timestamp is outside the replay window." }, { status: 408 });
+  }
+  const key = inboundContentKey(inbound.raw, inbound.messageId);
+  if (!rememberInbound(key)) {
+    return Response.json({ error: "Duplicate inbound." }, { status: 409 });
   }
 
   const pipelineId = newPipelineId();

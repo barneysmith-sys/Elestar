@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react"
 import { useRouter } from "../router"
 import Logo from "../brand"
+import HeroType from "../components/HeroType"
 import poster from "../assets/elestarr-line-poster.png"
 import wallMockup from "../assets/elestarr-wall-mockup.png"
 import forwardEmail from "../assets/elestarr-forward-email.png"
@@ -622,6 +623,7 @@ function Bridge() {
 export default function Landing() {
   const { navigate, setWallView, setIntent, dark, toggleDark } = useRouter()
   const [solidNav, setSolidNav] = useState(false)
+  const [pull, setPull] = useState(0)
 
   useEffect(() => {
     const hero = document.getElementById("enter")
@@ -629,6 +631,27 @@ export default function Landing() {
     const io = new IntersectionObserver((entries) => setSolidNav(!entries[0]?.isIntersecting), { threshold: 0.45 })
     io.observe(hero)
     return () => io.disconnect()
+  }, [])
+  useEffect(() => {
+    if (prefersReduce()) return
+    const hero = document.getElementById("enter")
+    if (!hero) return
+    let raf = 0
+    const measure = () => {
+      const r = hero.getBoundingClientRect()
+      const p = Math.min(1, Math.max(0, -r.top / Math.max(1, r.height * 0.62)))
+      setPull(p)
+    }
+    const onScroll = () => {
+      window.cancelAnimationFrame(raf)
+      raf = window.requestAnimationFrame(measure)
+    }
+    measure()
+    window.addEventListener("scroll", onScroll, { passive: true })
+    return () => {
+      window.removeEventListener("scroll", onScroll)
+      window.cancelAnimationFrame(raf)
+    }
   }, [])
   const goHire = () => {
     setIntent("firm")
@@ -690,20 +713,18 @@ export default function Landing() {
         </div>
       </nav>
 
-      <section id="enter" className="min-h-[calc(100dvh-4rem)] flex flex-col justify-center max-w-[1440px] mx-auto px-5 md:px-8 py-8 md:py-10 text-center">
-        <div className="hero-center">
-        <h1
-          className="fade-up text-balance mx-auto max-w-[14ch] md:max-w-[16ch]"
-          style={{ color: "var(--navy)", animationDelay: "0.18s" }}
-        >
-          <span className="edn-xl block">Show the work.</span>
-          <span className="edn-lg block mt-4 md:mt-5">Keep the interviews that didn't become a job.</span>
-        </h1>
+      <section id="enter" className="min-h-[calc(100dvh-4rem)] flex flex-col justify-center py-8 md:py-10 text-center">
         <div
-          className="rule-draw mx-auto mt-7 h-px w-16"
-          style={{ background: "var(--navy)" }}
-          aria-hidden="true"
-        />
+          className="hero-type-pull px-4 md:px-6"
+          style={{
+            opacity: 1 - pull * 0.72,
+            transform: `translate3d(0, ${pull * -42}px, 0)`,
+            clipPath: pull > 0.02 ? `inset(0 0 ${pull * 68}% 0)` : undefined,
+          } as CSSProperties}
+        >
+          <HeroType />
+        </div>
+        <div className="hero-center max-w-[1440px] mx-auto px-5 md:px-8">
         <div
           className="fade-up mt-8 md:mt-10 mx-auto grid md:grid-cols-2 gap-6 md:gap-x-16 max-w-[40rem] text-left"
           style={{ animationDelay: "0.48s" }}

@@ -17,10 +17,16 @@ export function PipelineEvidence({
 
   return (
     <div className="mt-6 space-y-5">
-      {research?.plan && (
+      {research && (
         <p className="font-mono text-[10px] uppercase tracking-[0.14em]" style={{ color: "var(--ink-3)" }}>
-          Plan · {research.plan.action.replace(/_/g, " ")}
-          {research.plan.tools.length ? ` · ${research.plan.tools.join(" · ")}` : " · no research tools"}
+          {research.overall ? `${research.overall} · ` : ""}
+          {research.independentSources != null ? `${research.independentSources} independent · ` : ""}
+          {research.evidence.length} source{research.evidence.length === 1 ? "" : "s"}
+        </p>
+      )}
+      {research?.conflicts && research.conflicts.length > 0 && (
+        <p className="text-[13px]" style={{ color: "var(--muted-foreground)" }}>
+          Conflict preserved: {research.conflicts.join(" ")}
         </p>
       )}
       {research && research.evidence.length > 0 && (

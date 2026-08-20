@@ -145,21 +145,42 @@ export type ResearchPlan = {
   domain: string;
 };
 
-export function planResearch(domain: string): ResearchPlan {
+export interface ResearchState {
+  attempt?: number;
+  companyFound?: boolean;
+  evidenceCount?: number;
+  conflicts?: string[];
+}
+
+/**
+ * Choose tools from what is still missing.
+ *
+ * Unknown domains never get a crawl or a guess. A second attempt never
+ * repeats a tool that already returned. Conflicts stop further catalog
+ * fetches so the verifier sees both claims instead of overwriting one.
+ */
+export function planResearch(domain: string, state: ResearchState = {}): ResearchPlan {
   const trimmed = domain.trim();
+  const attempt = state.attempt ?? 1;
   if (!trimmed) {
     return { action: "skip_no_domain", tools: [], missing: ["recruiter_domain"], domain: "" };
   }
   const key = catalogDomain(trimmed);
-  if (key) {
-    return { action: "catalog_lookup", tools: ["resolveCompany", "collectPublicEvidence"], missing: [], domain: key };
+  if (!key) {
+    return {
+      action: "hold_unknown_domain",
+      tools: attempt === 1 ? ["resolveCompany"] : [],
+      missing: ["public_company_evidence"],
+      domain: trimmed.toLowerCase(),
+    };
   }
-  return {
-    action: "hold_unknown_domain",
-    tools: ["resolveCompany"],
-    missing: ["public_company_evidence"],
-    domain: trimmed.toLowerCase(),
-  };
+  if (state.conflicts && state.conflicts.length > 0) {
+    return { action: "catalog_lookup", tools: [], missing: ["conflict_resolution"], domain: key };
+  }
+  if (state.companyFound && (state.evidenceCount ?? 0) > 0) {
+    return { action: "catalog_lookup", tools: [], missing: [], domain: key };
+  }
+  return { action: "catalog_lookup", tools: ["resolveCompany", "collectPublicEvidence"], missing: [], domain: key };
 }
 
 export function resolveCompany(domain: string): ResolvedCompany {

@@ -14,7 +14,8 @@ import {
 } from "./ingest/inbound";
 import { cohortCount, insertDossier, insertProcess } from "./store";
 import { assertNoRecruiterEmail, maskEmail, parseRecruiterSignal } from "./verify/email";
-import { collectPublicEvidence, planResearch, resolveCompany } from "./verify/resolve";
+import { addEvidence, emptyLedger, summarise, type EvidenceLedger } from "./evidence";
+import { collectPublicEvidence, planResearch, resolveCompany, type ResolvedCompany } from "./verify/resolve";
 import { verificationChecks } from "./verify/types";
 import { logPipeline, newPipelineId } from "./observe";
 import type {
@@ -32,6 +33,7 @@ import type {
   ResearchStepData,
   StepMessage,
 } from "./pipelineWire";
+import { STEP_EVENT } from "./pipelineWire";
 
 export type * from "./pipelineWire";
 
@@ -98,7 +100,7 @@ export async function* runPipeline(args: RunPipelineArgs): AsyncGenerator<Pipeli
     name: PipelineStep,
     status: PipelineStatus,
     message: string,
-    extra: { engine?: Engine; trace?: string[]; data?: unknown } = {},
+    extra: { engine?: Engine; trace?: string[]; data?: unknown; durationMs?: number } = {},
   ): StepMessage => {
     if (extra.data !== undefined) leakCheck(extra.data);
     const msg = step(name, status, message, extra);
@@ -283,81 +285,145 @@ export async function* runPipeline(args: RunPipelineArgs): AsyncGenerator<Pipeli
     return;
   }
 
-  // ---- 4. plan: decide which research tools are justified -----------------
+  // ---- 4-5. plan, research, replan from what was found --------------------
   const signal = parseRecruiterSignal(recruiterEmail);
-  const plan = planResearch(mail.primarySignal.domain || signal.domain);
-  yield emit("plan", "running", "Deciding what still needs evidence…");
-  yield emit(
-    "plan",
-    "ok",
-    plan.action === "catalog_lookup"
-      ? `Catalog lookup for ${plan.domain}. Tools: ${plan.tools.join(", ")}.`
-      : plan.action === "skip_no_domain"
-        ? "No recruiter domain — skipping company research rather than inventing one."
-        : `No catalog evidence for ${plan.domain}. Holding that gap rather than crawling a guess.`,
-    {
-      engine: "deterministic",
-      trace: [
-        `Plan: ${plan.action}.`,
-        plan.tools.length ? `Tools: ${plan.tools.join(", ")}.` : "No research tools selected.",
-        plan.missing.length ? `Missing: ${plan.missing.join(", ")}.` : "No required fields missing for a catalog check.",
-      ],
-      data: {
-        action: plan.action,
-        tools: plan.tools,
-        missing: plan.missing,
-        domain: plan.domain,
-      } satisfies PlanStepData,
-    },
-  );
+  const researchDomain = mail.primarySignal.domain || signal.domain;
+  let company: ResolvedCompany = resolveCompany("");
+  let publicEvidence: ResearchStepData["evidence"] = [];
+  let ledger = emptyLedger();
+  let attempt = 1;
+  let plan = planResearch(researchDomain, { attempt });
 
-  if (aborted()) {
-    yield finish("withheld", undefined, undefined, undefined, "The request was cancelled. Nothing was published.");
-    return;
-  }
+  while (attempt <= 2) {
+    const planStarted = Date.now();
+    yield emit("plan", "running", attempt === 1 ? "Deciding what still needs evidence…" : "Updating the plan from the evidence so far…");
+    yield emit(
+      "plan",
+      "ok",
+      plan.action === "catalog_lookup"
+        ? plan.tools.length
+          ? `Catalog lookup for ${plan.domain}. Tools: ${plan.tools.join(", ")}.`
+          : `Enough catalog evidence for ${plan.domain}. Skipping further research.`
+        : plan.action === "skip_no_domain"
+          ? "No recruiter domain — skipping company research rather than inventing one."
+          : `No catalog evidence for ${plan.domain}. Holding that gap rather than crawling a guess.`,
+      {
+        engine: "deterministic",
+        durationMs: Date.now() - planStarted,
+        trace: [
+          `Plan attempt ${attempt}: ${plan.action}.`,
+          plan.tools.length ? `Tools: ${plan.tools.join(", ")}.` : "No research tools selected.",
+          plan.missing.length ? `Missing: ${plan.missing.join(", ")}.` : "No required fields missing for a catalog check.",
+        ],
+        data: {
+          action: plan.action,
+          tools: plan.tools,
+          missing: plan.missing,
+          domain: plan.domain,
+          attempt,
+        } satisfies PlanStepData,
+      },
+    );
 
-  // ---- 5. research public evidence ---------------------------------------
-  yield emit("research", "running", "Checking public company and role evidence…");
-  const company = plan.tools.includes("resolveCompany")
-    ? resolveCompany(plan.domain || signal.domain)
-    : resolveCompany("");
-  const publicEvidence = plan.tools.includes("collectPublicEvidence")
-    ? collectPublicEvidence(company).map((e) => ({
+    if (aborted()) {
+      yield finish("withheld", undefined, undefined, undefined, "The request was cancelled. Nothing was published.");
+      return;
+    }
+
+    const researchStarted = Date.now();
+    yield emit("research", "running", "Checking public company and role evidence…");
+    if (plan.tools.includes("resolveCompany")) {
+      company = resolveCompany(plan.domain || researchDomain);
+    }
+    if (plan.tools.includes("collectPublicEvidence")) {
+      publicEvidence = collectPublicEvidence(company).map((e) => ({
         id: e.id,
         kind: e.kind,
         source: e.source,
         claim: e.claim,
         about: e.about,
-      }))
-    : [];
-  const researchData: ResearchStepData = {
-    domain: signal.domain,
-    companyLabel: company.found ? company.displayName : signal.domain || "(none)",
-    found: company.found,
-    evidenceKind: company.found ? "catalog" : "none",
-    sector: company.sector,
-    stage: company.stage,
-    evidence: publicEvidence,
-    plan: { action: plan.action, tools: plan.tools, missing: plan.missing },
-  };
-  yield emit(
-    "research",
-    company.found ? "ok" : "ok",
-    company.found
-      ? `Catalog evidence for ${company.displayName} (${publicEvidence.length} public signal(s)). Not a live crawl.`
-      : signal.domain
-        ? `No public catalog evidence for ${signal.domain}. Holding rather than inventing a company.`
-        : "No company domain to research.",
-    {
-      engine: "deterministic",
-      trace: [
-        company.found
-          ? `Resolved ${signal.domain} to a catalog profile. Evidence kind: catalog.`
-          : `Unknown or empty domain — no public profile.`,
-      ],
-      data: researchData,
-    },
-  );
+      }));
+    }
+
+    const conflicts: string[] = [];
+    if (company.found && parsed.employerProfile.sector && company.sector && parsed.employerProfile.sector !== company.sector) {
+      conflicts.push(`Submission sector (${parsed.employerProfile.sector}) vs catalog (${company.sector}).`);
+    }
+    if (mail.lastReached && parsed.rounds.some((round) => round.type === "final") && mail.lastReached === "screen") {
+      conflicts.push("Forwarded mail only supports a screen; the notes claim a later stage.");
+    }
+
+    if (mail.primarySignal.domain) {
+      ledger = addEvidence(ledger, {
+        id: "mail-domain",
+        claim: `Recruiter domain ${mail.primarySignal.domain}`,
+        source: "forwarded-mail",
+        sourceType: "mail",
+        confidence: 0.9,
+        status: "probable",
+        about: "recruiting",
+        contradictions: [],
+      });
+    }
+    for (const item of publicEvidence) {
+      ledger = addEvidence(ledger, {
+        id: item.id,
+        claim: item.claim,
+        source: item.source,
+        sourceType: "catalog",
+        confidence: 0.8,
+        status: conflicts.length ? "contradicted" : "probable",
+        about: item.about,
+        contradictions: conflicts,
+      });
+    }
+    const summarised: EvidenceLedger = summarise(ledger.items, conflicts);
+
+    const researchData: ResearchStepData = {
+      domain: signal.domain,
+      companyLabel: company.found ? company.displayName : signal.domain || "(none)",
+      found: company.found,
+      evidenceKind: company.found ? "catalog" : "none",
+      sector: company.sector,
+      stage: company.stage,
+      evidence: publicEvidence,
+      independentSources: summarised.independentSources,
+      overall: summarised.overall,
+      conflicts,
+      attempt,
+      plan: { action: plan.action, tools: plan.tools, missing: plan.missing },
+    };
+    yield emit(
+      "research",
+      "ok",
+      company.found
+        ? `Catalog evidence for ${company.displayName} (${publicEvidence.length} public signal(s), ${summarised.independentSources} independent). Not a live crawl.`
+        : signal.domain
+          ? `No public catalog evidence for ${signal.domain}. Holding rather than inventing a company.`
+          : "No company domain to research.",
+      {
+        engine: "deterministic",
+        durationMs: Date.now() - researchStarted,
+        trace: [
+          company.found
+            ? `Resolved ${signal.domain} to a catalog profile. Evidence kind: catalog.`
+            : "Unknown or empty domain — no public profile.",
+          conflicts.length ? `Conflicts preserved: ${conflicts.join(" ")}` : "No source conflicts.",
+        ],
+        data: researchData,
+      },
+    );
+
+    const next = planResearch(plan.domain || researchDomain, {
+      attempt: attempt + 1,
+      companyFound: company.found,
+      evidenceCount: publicEvidence.length,
+      conflicts,
+    });
+    if (next.tools.length === 0) break;
+    plan = next;
+    attempt += 1;
+  }
 
   // ---- 5. cross-check / verification agent -------------------------------
   yield emit("match", "running", "Cross-checking the mail against the stated experience and public evidence…");
@@ -409,6 +475,8 @@ export async function* runPipeline(args: RunPipelineArgs): AsyncGenerator<Pipeli
       parsed,
       role,
       mailLastReached: mail.lastReached,
+      company,
+      publicEvidence,
     });
     verification = result.value;
     verifyTrace = result.trace;
@@ -577,12 +645,20 @@ function matchPayload(
 }
 
 function step(
-  step: PipelineStep,
+  stepName: PipelineStep,
   status: PipelineStatus,
   message: string,
-  extra: { engine?: Engine; trace?: string[]; data?: unknown } = {},
+  extra: { engine?: Engine; trace?: string[]; data?: unknown; durationMs?: number } = {},
 ): StepMessage {
-  return { kind: "step", step, status, message, ...extra };
+  const event =
+    status === "running"
+      ? STEP_EVENT[stepName].running
+      : status === "error" || status === "blocked"
+        ? stepName === "publish" || stepName === "match" || stepName === "audit"
+          ? "failed"
+          : STEP_EVENT[stepName].settled
+        : STEP_EVENT[stepName].settled;
+  return { kind: "step", step: stepName, status, message, event, ...extra };
 }
 
 function done(

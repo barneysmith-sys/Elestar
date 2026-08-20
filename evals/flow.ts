@@ -593,7 +593,7 @@ async function main() {
   section("pages: every route renders");
   {
     const { json: status } = await api("/api/status");
-    for (const path of ["/", "/list", "/verify", "/circuit", "/wall", "/desk", "/search", "/signals", "/intros", "/system", "/brief"]) {
+    for (const path of ["/", "/list", "/verify", "/circuit", "/wall", "/desk", "/search", "/signals", "/intros", "/system", "/agent-lab", "/brief"]) {
       const res = await fetch(BASE + path, { headers: cookieHeader() });
       const html = await res.text();
       check(`${path} responds 200`, res.status === 200, res.status);
@@ -607,7 +607,7 @@ async function main() {
         check("/ states the product in first paint", /interview history|prove@elestar\.ai/i.test(html));
         check("/ names the prove inbox", html.includes("prove@elestar.ai"));
       }
-      if (["/circuit", "/wall", "/search", "/desk", "/intros", "/signals", "/verify", "/list"].includes(path)) {
+      if (["/circuit", "/wall", "/search", "/desk", "/intros", "/signals", "/verify", "/list", "/system", "/agent-lab"].includes(path)) {
         check(`${path} labels the engine in first paint`, html.includes(status.engineLabel), status.engineLabel);
       }
     }
