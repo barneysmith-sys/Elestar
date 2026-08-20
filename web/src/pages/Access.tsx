@@ -4,11 +4,12 @@ import { FormEvent, useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { useRouter, type Role } from "../router"
 import Logo from "../brand"
-import poster from "../assets/elestarr-poster.png"
+import ResolveCanvas from "../components/ResolveCanvas"
+import ResolveRecord from "../components/ResolveRecord"
 import { createAccount, fetchAuth, signInAccount } from "../elestar-api"
 
 export default function Access() {
-  const { intent, setIntent, applySession } = useRouter()
+  const { intent, setIntent, applySession, navigate } = useRouter()
   const search = useSearchParams()
   const [mode, setMode] = useState<"create" | "signin">("create")
   const [role, setRole] = useState<Role>(intent)
@@ -61,36 +62,35 @@ export default function Access() {
   }
 
   return (
-    <div className="min-h-[100dvh] grid lg:grid-cols-[1.05fr_0.95fr]" style={{ background: "transparent", color: "var(--foreground)" }}>
+    <div className="min-h-[100dvh] grid lg:grid-cols-[1.05fr_0.95fr]" style={{ background: "var(--stock)", color: "var(--ink)" }}>
       <div
         className="relative hidden lg:flex items-center justify-center p-8 xl:p-10 border-r"
-        style={{ borderColor: "var(--border)", background: "var(--background)" }}
+        style={{ borderColor: "var(--rule)", background: "var(--stock)" }}
       >
-        <img
-          src={poster}
-          alt="Elestar editorial poster with halftone eye illustration and brand tagline about work and what you look at"
-          className="max-h-full max-w-full w-auto h-auto object-contain"
-        />
+        <div className="panel w-full max-w-[440px]">
+          <ResolveCanvas />
+          <ResolveRecord />
+        </div>
       </div>
 
       <div className="flex items-center justify-center p-8 md:p-10">
         <form className="w-full max-w-[360px]" onSubmit={onSubmit}>
-          <div className="lg:hidden mb-8">
+          <button type="button" className="mb-8" onClick={() => navigate("landing")} aria-label="Elestar home">
             <Logo />
-          </div>
-          <h1 className="edn-lg" style={{ color: "var(--navy)" }}>
-            {mode === "create"
-              ? role === "creative" ? "Create a candidate account" : "Create a hiring account"
-              : "Sign in"}
+          </button>
+          <h1 className="type-section">
+            {mode === "create" ? "Create an account" : "Sign in"}
           </h1>
-          <p className="text-[16px] mt-3" style={{ color: "var(--muted-foreground)" }}>
-            {role === "creative"
-              ? "Show your work. Prove one interview with the original email. Not the inbox."
-              : "Look at the work first. Then see how far they already got."}
+          <p className="type-lede">
+            {mode === "signin"
+              ? "Come back to the work and the proved round. The result stays off the profile."
+              : role === "creative"
+                ? "Show the work. Prove how far you got with one original email. The result stays private."
+                : "Look at the work. Then the company and how far they already got. You do not see the outcome."}
           </p>
 
           {mode === "create" ? (
-            <div className="flex p-[3px] rounded-[10px] border mt-[22px] mb-[18px]" style={{ background: "var(--secondary)", borderColor: "var(--border)" }}>
+            <div className="flex p-[3px] border mt-[22px] mb-3" style={{ background: "var(--stock)", borderColor: "var(--rule)" }}>
               {([
                 { id: "creative" as const, label: "I'm a candidate" },
                 { id: "firm" as const, label: "I'm hiring" },
@@ -102,22 +102,39 @@ export default function Access() {
                     setRole(r.id)
                     setIntent(r.id)
                   }}
-                  className="flex-1 font-mono text-xs py-[9px] rounded-lg transition-colors"
+                  className="flex-1 type-cta py-[9px] transition-colors"
                   style={{
-                    background: role === r.id ? "var(--foreground)" : "transparent",
-                    color: role === r.id ? "var(--background)" : "var(--muted-foreground)",
+                    background: role === r.id ? "var(--ink)" : "transparent",
+                    color: role === r.id ? "var(--stock)" : "var(--ink-mid)",
                   }}
                 >
                   {r.label}
                 </button>
               ))}
             </div>
-          ) : (
-            <div className="mt-[22px] mb-[18px]" />
-          )}
+          ) : null}
+
+          <div className={`flex gap-4 mb-[18px] ${mode === "signin" ? "mt-[22px]" : ""}`}>
+            <button
+              type="button"
+              className="type-nav"
+              onClick={() => { setMode("create"); setError(null) }}
+              style={{ opacity: mode === "create" ? 1 : 0.45 }}
+            >
+              Create account
+            </button>
+            <button
+              type="button"
+              className="type-nav"
+              onClick={() => { setMode("signin"); setError(null) }}
+              style={{ opacity: mode === "signin" ? 1 : 0.45 }}
+            >
+              Sign in
+            </button>
+          </div>
 
           <div className="mb-[13px]">
-            <label className="block font-mono text-[10.5px] uppercase tracking-[0.06em] mb-1.5" style={{ color: "var(--muted-foreground)" }}>Work email</label>
+            <label className="block type-label mb-1.5">Work email</label>
             <input
               type="email"
               autoComplete="email"
@@ -125,12 +142,11 @@ export default function Access() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@studio.com"
-              className="w-full border rounded-[10px] px-[13px] py-3 text-sm outline-none"
-              style={{ borderColor: "var(--border-2)", background: "var(--card)", color: "var(--foreground)" }}
+              className="field field-mono"
             />
           </div>
           <div className="mb-[13px]">
-            <label className="block font-mono text-[10.5px] uppercase tracking-[0.06em] mb-1.5" style={{ color: "var(--muted-foreground)" }}>Password</label>
+            <label className="block type-label mb-1.5">Password</label>
             <input
               type="password"
               autoComplete={mode === "create" ? "new-password" : "current-password"}
@@ -139,40 +155,30 @@ export default function Access() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="At least 8 characters"
-              className="w-full border rounded-[10px] px-[13px] py-3 text-sm outline-none"
-              style={{ borderColor: "var(--border-2)", background: "var(--card)", color: "var(--foreground)" }}
+              className="field field-mono"
             />
           </div>
 
           {error ? (
-            <p className="text-[14px] mb-3" style={{ color: "var(--navy)" }}>{error}</p>
+            <p className="type-caption mb-3" style={{ color: "var(--ink)" }}>{error}</p>
           ) : null}
 
           {accounts === false ? (
-            <p className="text-[14px] mb-3" style={{ color: "var(--muted-foreground)" }}>
-              Accounts are not live on this host yet. Supabase keys still need to be set.
+            <p className="type-caption mb-3">
+              Accounts are not live on this host yet. Demo mode still lets you walk the product. Supabase keys still need to be set to persist.
             </p>
           ) : null}
 
           <button
             type="submit"
-            disabled={busy || accounts !== true}
-            className="w-full mt-2 py-3.5 font-mono text-[13.5px] text-[var(--primary-foreground)] active:translate-y-px active:scale-[0.99] disabled:opacity-50"
-            style={{ background: "var(--navy)" }}
+            disabled={busy}
+            className="btn btn-fill w-full mt-2 disabled:opacity-60"
           >
-            {busy ? "Working…" : mode === "create" ? "Create account" : "Sign in"}
+            {busy ? "Saving..." : mode === "create" ? "Create account" : "Sign in"}
           </button>
-          <button
-            type="button"
-            onClick={() => {
-              setMode(mode === "create" ? "signin" : "create")
-              setError(null)
-            }}
-            className="w-full font-mono text-[10px] text-center mt-3.5"
-            style={{ color: "var(--ink-3)" }}
-          >
-            {mode === "create" ? "Already have an account? Sign in" : "Need an account? Create one"}
-          </button>
+          <p className="type-caption text-center mt-3.5">
+            Employers see company and farthest round. Not the result. Not the assignment.
+          </p>
         </form>
       </div>
     </div>

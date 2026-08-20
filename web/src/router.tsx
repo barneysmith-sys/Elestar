@@ -3,8 +3,9 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { usePathname, useRouter as useNextRouter } from "next/navigation";
 import { fetchAuth, signOutAccount, type AuthSession } from "./elestar-api";
+import { hrefFor, pageFromPathname, type SitePage } from "./site-paths";
 
-export type Page = "landing" | "signup" | "board" | "profile" | "onboard";
+export type Page = SitePage;
 export type Role = "firm" | "creative";
 export type Mode = Role;
 export type WallView = "wall" | "pipeline" | "desk" | "listings";
@@ -49,9 +50,7 @@ export function useRouter(): RouterCtx {
 }
 
 function pageFromPath(pathname: string): Page {
-  if (pathname === "/") return "landing";
-  if (pathname.startsWith("/signup")) return "signup";
-  return "board";
+  return pageFromPathname(pathname);
 }
 
 function wallFromPath(pathname: string): WallView {
@@ -100,9 +99,7 @@ export function RouterProvider({ children }: { children: ReactNode }) {
 
   const navigate = useCallback(
     (p: Page) => {
-      const href =
-        p === "landing" ? "/" : p === "signup" || p === "onboard" ? "/signup" : "/wall";
-      nextRouter.push(href);
+      nextRouter.push(hrefFor(p));
     },
     [nextRouter],
   );

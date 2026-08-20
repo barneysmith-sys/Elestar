@@ -1,0 +1,118 @@
+/* Elestar tokens. Warm paper, midnight navy. Ported from the product UI system. */
+
+:root {
+  --stock: #f5f0e6;
+  --ink: #152238;
+  --ink-mid: #4e4a42;
+  --rule: rgba(21, 34, 56, 0.14);
+  --verify: #0b5a46;
+
+  --bg: var(--stock);
+  --background: var(--stock);
+  --foreground: var(--ink);
+  --card: #faf6ee;
+  --card-alt: #e4ddd0;
+  --card-foreground: var(--ink);
+  --primary: var(--ink);
+  --primary-hover: #1e2f4d;
+  --primary-foreground: var(--stock);
+  --secondary: #ebe4d6;
+  --secondary-foreground: var(--ink);
+  --muted: #ebe4d6;
+  --muted-foreground: var(--ink-mid);
+  --accent: var(--ink);
+  --accent-ink: #243556;
+  --accent-foreground: var(--stock);
+  --border: var(--rule);
+  --border-2: rgba(21, 34, 56, 0.4);
+  --ring: var(--ink);
+  --navy: #152238;
+  --navy-light: rgba(21, 34, 56, 0.08);
+  --ink-3: #5c574e;
+  --wall: var(--stock);
+  --radius: 2px;
+  --paper-shadow: 0 24px 60px -28px rgba(21, 34, 56, 0.35);
+
+  --ok: #2d5a27;
+  --ok-soft: rgba(45, 90, 39, 0.1);
+  --warn: #8a6a1f;
+  --warn-soft: rgba(138, 106, 31, 0.1);
+  --stop: #6b3030;
+  --stop-soft: rgba(107, 48, 48, 0.1);
+
+  --dark-bg: #0c1220;
+  --dark-ink: #f5f0e6;
+  --dark-muted: #7a8899;
+  --dark-border: rgba(245, 240, 230, 0.12);
+
+  --measure: 62ch;
+  --gutter: 20px;
+  --nav-h: 56px;
+  --section-y: 48px;
+
+  --t-display-0: clamp(2.35rem, 7vw, 5.5rem);
+  --t-display-1: clamp(1.85rem, 4.4vw, 4.25rem);
+  --t-display-2: clamp(1.35rem, 3.1vw, 2.05rem);
+  --t-display-3: clamp(1.02rem, 1.7vw, 1.22rem);
+  --t-mono-1: 0.8125rem;
+  --t-mono-2: 0.875rem;
+  --t-mono-3: 0.6875rem;
+
+  --font-serif: "PP Editorial New", "Fraunces", "Iowan Old Style", "Palatino Linotype", Palatino, serif;
+  --font-display: var(--font-serif);
+  --font-body: "Newsreader", "Fraunces", Georgia, serif;
+  --font-mono: "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --gutter: 28px;
+    --section-y: 64px;
+    --nav-h: 60px;
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --gutter: 40px;
+    --section-y: 96px;
+  }
+}
+
+html.dark {
+  --stock: #0c1220;
+  --ink: #f5f0e6;
+  --ink-mid: #d4ccbc;
+  --rule: rgba(243, 238, 228, 0.16);
+  --verify: #7dba9a;
+  --bg: var(--stock);
+  --background: var(--stock);
+  --foreground: var(--ink);
+  --card: #141b2c;
+  --card-alt: #1a2234;
+  --card-foreground: var(--ink);
+  --primary: var(--ink);
+  --primary-hover: #ffffff;
+  --primary-foreground: #0c1220;
+  --secondary: #1a2234;
+  --secondary-foreground: var(--ink);
+  --muted: #1a2234;
+  --muted-foreground: var(--ink-mid);
+  --accent: #c9b896;
+  --accent-ink: #e4d7bc;
+  --accent-foreground: #0c1220;
+  --border: var(--rule);
+  --border-2: rgba(243, 238, 228, 0.32);
+  --ring: #c9b896;
+  --navy: #c9b896;
+  --navy-light: rgba(201, 184, 150, 0.1);
+  --ink-3: #c4bbae;
+  --wall: var(--stock);
+  --paper-shadow: 0 24px 60px -28px rgba(0, 0, 0, 0.55);
+  --ok: #7dba9a;
+  --ok-soft: rgba(125, 186, 154, 0.12);
+  --warn: #c9b896;
+  --warn-soft: rgba(201, 184, 150, 0.12);
+  --stop: #d4a0a0;
+  --stop-soft: rgba(107, 48, 48, 0.22);
+}

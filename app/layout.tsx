@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "../web/src/index.css";
 import { ProductShell } from "../web/src/shell";
 
-const SITE_TITLE = "Elestar - Agents make the hiring experience, what it deserves.";
+const SITE_TITLE = "Elestar — The round happened. Prove it once.";
 const SITE_DESCRIPTION =
   "Your interview history shouldn't disappear when you don't get the job. Forward the recruiter email to prove@elestar.ai.";
 

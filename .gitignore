@@ -25,7 +25,6 @@ web/.gitignore
 web/public/
 web/src/App.tsx
 web/src/main.tsx
-web/src/data.ts
 web/src/deskData.ts
 web/src/listings.ts
 web/src/specimen.ts

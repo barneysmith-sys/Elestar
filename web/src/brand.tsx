@@ -1,6 +1,6 @@
 "use client"
 
-import wordmark from "./assets/elestarr-wordmark.png"
+const HEIGHT = { sm: 28, md: 32, lg: 40 } as const
 
 export default function Logo({
   size = "md",
@@ -9,15 +9,14 @@ export default function Logo({
   size?: "sm" | "md" | "lg"
   invert?: boolean
 }) {
-  const h = size === "lg" ? 48 : size === "sm" ? 26 : 38
-
+  const h = HEIGHT[size]
   return (
-    <span className="inline-flex items-center">
+    <span className={`logo logo-${size}`} style={{ height: h }}>
       <img
-        src={wordmark}
+        src="/elestar-logo.svg"
         alt="Elestar"
-        className={`logo-mark flex-none ${invert ? "logo-mark-on-dark" : ""}`}
-        style={{ height: h, width: "auto" }}
+        className={`logo-mark${invert ? " logo-mark-on-dark" : ""}`}
+        height={h}
       />
     </span>
   )
