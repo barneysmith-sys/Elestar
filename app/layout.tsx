@@ -4,6 +4,8 @@ import { ProductShell } from "../web/src/shell";
 
 const SITE_TITLE = "Elestar - Agents make the hiring experience, what it deserves.";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: SITE_TITLE,
   applicationName: "Elestar",
