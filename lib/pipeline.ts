@@ -297,8 +297,35 @@ export async function* runPipeline(args: RunPipelineArgs): AsyncGenerator<Pipeli
   let company: ResolvedCompany = resolveCompany("");
   let publicEvidence: ResearchStepData["evidence"] = [];
   let ledger = emptyLedger();
+  if (mail.primarySignal.domain) {
+    ledger = addEvidence(ledger, {
+      id: "mail-domain",
+      claim: `Recruiter domain ${mail.primarySignal.domain}`,
+      source: "forwarded-mail",
+      sourceType: "mail",
+      confidence: 0.9,
+      status: "probable",
+      about: "recruiting",
+      contradictions: [],
+    });
+  }
+  if (mail.lastReachedLabel) {
+    ledger = addEvidence(ledger, {
+      id: "mail-stage",
+      claim: `Forwarded mail reached ${mail.lastReachedLabel}`,
+      source: "forwarded-mail",
+      sourceType: "mail",
+      confidence: 0.85,
+      status: "probable",
+      about: "process",
+      contradictions: [],
+    });
+  }
   let attempt = 1;
-  let plan = planResearch(researchDomain, { attempt });
+  let plan = planResearch(researchDomain, {
+    attempt,
+    evidenceCount: ledger.items.length,
+  });
 
   while (attempt <= MAX_RESEARCH_ATTEMPTS) {
     const planStarted = Date.now();
@@ -353,6 +380,13 @@ export async function* runPipeline(args: RunPipelineArgs): AsyncGenerator<Pipeli
     if (aborted()) {
       yield finish("withheld", undefined, undefined, undefined, "The request was cancelled. Nothing was published.");
       return;
+    }
+
+    if (plan.tools.length === 0) {
+      if (plan.decision !== "research_again") break;
+      attempt += 1;
+      plan = planResearch(plan.domain || researchDomain, { attempt, companyFound: company.found, evidenceCount: publicEvidence.length });
+      continue;
     }
 
     const researchStarted = Date.now();

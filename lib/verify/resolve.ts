@@ -224,16 +224,23 @@ export function planResearch(domain: string, state: ResearchState = {}): Researc
   };
 }
 
+function compactLabel(label: string): string {
+  return label.replace(/[^a-z0-9]/g, "");
+}
+
 /**
  * Spoof / near-miss detector. Never used to resolve a company — only to hold.
  */
 export function catalogNearMiss(domain: string): string | null {
   if (catalogDomain(domain)) return null;
   const label = registrableLabel(domain);
-  if (label.length < 5) return null;
+  const compact = compactLabel(label);
+  if (label.length < 5 && compact.length < 5) return null;
   for (const entry of CATALOG) {
     const other = registrableLabel(entry.domain);
+    const otherCompact = compactLabel(other);
     if (oneEdit(label, other)) return entry.domain;
+    if (compact.length >= 6 && compact === otherCompact && label !== other) return entry.domain;
     if (label.length >= 6 && other.length >= 6 && (label.includes(other) || other.includes(label))) {
       return entry.domain;
     }

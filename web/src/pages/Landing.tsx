@@ -679,7 +679,7 @@ function Bridge() {
 }
 
 export default function Landing() {
-  const { navigate, setWallView, setIntent, dark, toggleDark } = useRouter()
+  const { signIn, setWallView, setIntent, dark, toggleDark } = useRouter()
   const [solidNav, setSolidNav] = useState(false)
   const [pull, setPull] = useState(0)
 
@@ -711,14 +711,8 @@ export default function Landing() {
       window.cancelAnimationFrame(raf)
     }
   }, [])
-  const goHire = () => {
-    setIntent("firm")
-    navigate("board")
-  }
-  const goList = () => {
-    setIntent("creative")
-    navigate("signup")
-  }
+  const goHire = () => signIn("firm")
+  const goList = () => signIn("creative")
   const goDesk = () => {
     setIntent("firm")
     setWallView("desk")

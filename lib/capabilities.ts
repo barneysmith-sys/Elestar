@@ -19,6 +19,8 @@ export interface Capabilities {
   model: boolean;
   /** Supabase is configured, so records persist and RLS applies. */
   persistence: boolean;
+  /** Auth signup/login is available (URL + anon + service role). */
+  accounts: boolean;
   /** Signed inbound webhook for prove@elestar.ai is configured. */
   inboundWebhook: boolean;
   /** Optional live public fetch is enabled. Off by default; catalog is the v1 source. */
@@ -39,6 +41,11 @@ export function getCapabilities(): Capabilities {
   return {
     model: Boolean(process.env.ANTHROPIC_API_KEY),
     persistence: Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY),
+    accounts: Boolean(
+      process.env.SUPABASE_URL &&
+        process.env.SUPABASE_ANON_KEY &&
+        process.env.SUPABASE_SERVICE_ROLE_KEY,
+    ),
     inboundWebhook: Boolean(process.env.INBOUND_WEBHOOK_SECRET),
     liveResearch: flag("ELESTAR_LIVE_RESEARCH"),
     requirePersistence: flag("ELESTAR_REQUIRE_PERSISTENCE"),

@@ -110,6 +110,7 @@ export type StatusPayload = {
   engineLabel: string;
   persistence: boolean;
   persistenceLabel: string;
+  accounts: boolean;
   inboundWebhook: boolean;
   liveResearch: boolean;
   allowSimulation: boolean;
@@ -124,6 +125,46 @@ export async function fetchStatus(): Promise<StatusPayload> {
   const res = await fetch("/api/status", { cache: "no-store", credentials: "same-origin" });
   if (!res.ok) throw new Error("Status could not be loaded.");
   return res.json();
+}
+
+export type AccountRole = "candidate" | "employer";
+
+export type AuthSession = {
+  authenticated: boolean;
+  accounts?: boolean;
+  created?: boolean;
+  userId?: string;
+  email?: string | null;
+  role?: AccountRole | null;
+};
+
+async function authRequest(path: string, body?: unknown): Promise<AuthSession> {
+  const res = await fetch(path, {
+    method: body === undefined ? "GET" : "POST",
+    credentials: "same-origin",
+    headers: body === undefined ? undefined : { "content-type": "application/json" },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  const json = (await res.json().catch(() => ({}))) as AuthSession & { error?: string };
+  if (!res.ok) throw new Error(json.error ?? "Could not continue.");
+  if (json.error && !json.authenticated) throw new Error(json.error);
+  return json;
+}
+
+export function fetchAuth(): Promise<AuthSession> {
+  return authRequest("/api/auth/me");
+}
+
+export function createAccount(input: { email: string; password: string; role: "creative" | "firm" }): Promise<AuthSession> {
+  return authRequest("/api/auth/signup", input);
+}
+
+export function signInAccount(input: { email: string; password: string }): Promise<AuthSession> {
+  return authRequest("/api/auth/login", input);
+}
+
+export function signOutAccount(): Promise<AuthSession> {
+  return authRequest("/api/auth/logout", {});
 }
 
 export async function startPipeline(body: PipelineBody): Promise<ReadableStream<Uint8Array>> {

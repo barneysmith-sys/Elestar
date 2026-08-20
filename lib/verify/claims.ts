@@ -10,7 +10,7 @@
 export type ClaimStatus = "verified" | "probable" | "uncertain" | "contradicted" | "insufficient";
 
 export interface VerificationClaim {
-  id: "company" | "interview" | "role" | "stage" | "date";
+  id: "company" | "interview" | "role" | "stage" | "date" | "identity";
   label: string;
   status: ClaimStatus;
   confidence: number;
@@ -130,6 +130,14 @@ export function buildClaims(args: {
       confidence: dateStatus === "probable" ? 0.6 : 0.3,
       important: false,
       evidence: args.hasDate ? ["forwarded-mail"] : [],
+    },
+    {
+      id: "identity",
+      label: "Candidate identity",
+      status: "insufficient",
+      confidence: 0,
+      important: false,
+      evidence: [],
     },
   ];
 

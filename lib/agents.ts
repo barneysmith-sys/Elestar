@@ -25,7 +25,7 @@ import { getCapabilities, type Engine } from "./capabilities";
 import { auditRedactionDeterministic } from "./reasoners/audit";
 import { buildInterviewBriefDeterministic, type AnnotatedBrief } from "./reasoners/brief";
 import { matchRecordsDeterministic } from "./reasoners/match";
-import { parseProcessDeterministic } from "./reasoners/parse";
+import { parseProcessDeterministic, modelParseIsWorthIt } from "./reasoners/parse";
 import { verifyProcessDeterministic } from "./reasoners/verify";
 import type { RecruiterSignal } from "./verify/email";
 import type { VerificationResult } from "./verify/types";
@@ -40,27 +40,31 @@ export interface Reasoned<T> {
 /**
  * Structure a description into a ParsedProcess.
  *
- * The model path is preferred when available, but it is not trusted to
- * succeed: a thrown error or a schema failure falls through to the
- * deterministic parser rather than taking down the submission, and the
- * resulting record is honestly tagged as deterministic.
+ * The model path is preferred when the deterministic parse is still missing
+ * something. A complete, high-confidence mail digest is not worth a second
+ * guess from the model — extra tokens do not make a named loop more true.
  */
 export async function reasonParse(args: {
   description: string;
   knownNames?: string[];
   priorAnswers?: Record<string, string>;
 }): Promise<Reasoned<ParsedProcess>> {
-  if (getCapabilities().model) {
-    try {
-      const value = await parseProcess(args);
-      return { value, engine: "model", trace: [] };
-    } catch {
-      // Fall through. The caller still gets a record, and the pipeline's own
-      // low-confidence and needs-review gates still apply to it.
-    }
-  }
   const { parsed, trace } = parseProcessDeterministic(args);
-  return { value: parsed, engine: "deterministic", trace };
+  if (!modelParseIsWorthIt(parsed) || !getCapabilities().model) {
+    return {
+      value: parsed,
+      engine: "deterministic",
+      trace: modelParseIsWorthIt(parsed)
+        ? trace
+        : [...trace, "Skipped model — the mail already named a complete loop."],
+    };
+  }
+  try {
+    const value = await parseProcess(args);
+    return { value, engine: "model", trace: [] };
+  } catch {
+    return { value: parsed, engine: "deterministic", trace };
+  }
 }
 
 /**

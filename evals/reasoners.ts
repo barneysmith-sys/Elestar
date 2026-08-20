@@ -10,7 +10,7 @@
  * Run with: npm run eval:reasoners
  */
 
-import { parseProcessDeterministic } from "../lib/reasoners/parse";
+import { parseProcessDeterministic, modelParseIsWorthIt } from "../lib/reasoners/parse";
 import { auditRedactionDeterministic } from "../lib/reasoners/audit";
 import { matchRecordsDeterministic } from "../lib/reasoners/match";
 import { buildInterviewBriefDeterministic } from "../lib/reasoners/brief";
@@ -19,6 +19,7 @@ import { assertNoRecruiterEmail, parseRecruiterSignal } from "../lib/verify/emai
 import { parseForwardedMail } from "../lib/verify/forwardedMail";
 import { aggregateSignals, filterSignalRecords } from "../lib/signals";
 import { catalogDomain, catalogNearMiss, planResearch, resolveCompany } from "../lib/verify/resolve";
+import { parseAccountRole, parseEmail, parseLoginPassword, parsePassword } from "../lib/account";
 import { getCapabilities } from "../lib/capabilities";
 import { buildClaims, weakestImportant } from "../lib/verify/claims";
 import { buildCircuitGraph } from "../lib/circuitGraph";
@@ -80,6 +81,7 @@ section("parse: the canonical demo input");
     needsReview: parsed.needsReview,
   });
   check("asks no clarifying questions for a well-formed input", parsed.questions.length === 0, parsed.questions);
+  check("a complete loop is not worth a second model guess", modelParseIsWorthIt(parsed) === false, { confidence: parsed.roundsConfidence, needsReview: parsed.needsReview });
   check("emits a rule trace", trace.length > 0);
   check("competencies derived, 3..8 of them", parsed.competencies.length >= 3 && parsed.competencies.length <= 8, parsed.competencies);
   check("is deterministic across runs", JSON.stringify(parseProcessDeterministic({ description: CANONICAL }).parsed) === JSON.stringify(parsed));
@@ -507,6 +509,7 @@ section("entity resolution: exact and parent domain, never lookalikes");
   const lookalikePlan = planResearch("ledgerpayy.example");
   check("lookalike domain is planned as unknown, not catalog", lookalikePlan.action === "hold_unknown_domain", lookalikePlan);
   check("lookalike is flagged as a near-miss, not resolved", catalogNearMiss("ledgerpayy.example") === "ledgerpay.example");
+  check("hyphenated spoof is also a near-miss, not a match", catalogNearMiss("ledger-pay.example") === "ledgerpay.example");
   check("lookalike plan holds after the first lookup", lookalikePlan.missing.includes("lookalike_identity"), lookalikePlan);
   const enough = planResearch("ledgerpay.example", { attempt: 2, companyFound: true, evidenceCount: 3 });
   check("second plan skips tools when evidence already exists", enough.tools.length === 0 && enough.decision === "stop", enough);
@@ -561,6 +564,7 @@ section("claims: weakest important claim is the ceiling");
   });
   check("verified loop has an important company claim", verified.claims.some((c) => c.id === "company" && c.important && c.status === "verified"), verified.claims);
   check("date can stay uncertain without sinking publish", verified.claims.find((c) => c.id === "date")?.important === false, verified.claims);
+  check("identity is never verified from the mail", verified.claims.find((c) => c.id === "identity")?.status === "insufficient", verified.claims);
   const clashClaims = buildClaims({
     found: true,
     companyMatch: false,
@@ -682,6 +686,18 @@ section("production capability flags");
   else process.env.ELESTAR_ALLOW_SIMULATION = prevSim;
   if (prevPers === undefined) delete process.env.ELESTAR_REQUIRE_PERSISTENCE;
   else process.env.ELESTAR_REQUIRE_PERSISTENCE = prevPers;
+}
+
+section("accounts");
+{
+  check("creative maps to candidate", parseAccountRole("creative") === "candidate");
+  check("firm maps to employer", parseAccountRole("firm") === "employer");
+  check("user_metadata-style junk is not a role", parseAccountRole("admin") === null);
+  check("email is normalised", parseEmail("  You@Studio.com ") === "you@studio.com");
+  check("short passwords are refused", parsePassword("short") === null);
+  check("login does not re-apply the signup length rule to empty input", parseLoginPassword("") === null);
+  check("login accepts a stored password", Boolean(parseLoginPassword("password123")));
+  check("accounts stay off without supabase keys", getCapabilities().accounts === false);
 }
 
 // ---------------------------------------------------------------------------

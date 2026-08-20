@@ -8,22 +8,38 @@ import { cookies } from "next/headers";
  * authenticated client; it is never used to write processes/dossiers
  * (that's lib/supabaseAdmin.ts, deliberately a separate module).
  */
-export async function getAuthenticatedUserId(): Promise<string | null> {
-  const url = process.env.SUPABASE_URL;
-  const anonKey = process.env.SUPABASE_ANON_KEY;
+
+export function supabaseAuthConfig(): { url: string; anonKey: string } | null {
+  const url = process.env.SUPABASE_URL?.trim();
+  const anonKey = process.env.SUPABASE_ANON_KEY?.trim();
   if (!url || !anonKey) return null;
+  return { url, anonKey };
+}
+
+export async function createSupabaseRequestClient() {
+  const config = supabaseAuthConfig();
+  if (!config) return null;
 
   const cookieStore = await cookies();
-  const supabase = createServerClient(url, anonKey, {
+  return createServerClient(config.url, config.anonKey, {
     cookies: {
       getAll: () => cookieStore.getAll(),
-      setAll: () => {
-        // Route Handler responses set cookies via the Response itself;
-        // refreshing the session isn't needed for a single POST, so this
-        // is intentionally a no-op rather than a half-implemented one.
+      setAll: (cookiesToSet: Array<{ name: string; value: string; options?: object }>) => {
+        try {
+          for (const { name, value, options } of cookiesToSet) {
+            cookieStore.set(name, value, options);
+          }
+        } catch {
+          // Server Components cannot set cookies. Middleware refreshes the session.
+        }
       },
     },
   });
+}
+
+export async function getAuthenticatedUserId(): Promise<string | null> {
+  const supabase = await createSupabaseRequestClient();
+  if (!supabase) return null;
 
   const {
     data: { user },

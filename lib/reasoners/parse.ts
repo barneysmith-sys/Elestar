@@ -595,3 +595,8 @@ function describeProfile(p: ParsedProcess["employerProfile"]): string {
   const parts = [p.stage, p.sector, p.sizeBand, p.region].filter(Boolean);
   return parts.length > 0 ? parts.join(" / ") : "an unspecified employer";
 }
+
+/** A complete, high-confidence loop is not worth a second model guess. */
+export function modelParseIsWorthIt(parsed: ParsedProcess): boolean {
+  return parsed.needsReview || parsed.questions.length > 0 || parsed.roundsConfidence < 0.75;
+}

@@ -30,9 +30,24 @@ export SUPABASE_SERVICE_ROLE_KEY=...   # server-only, never NEXT_PUBLIC_
 ```
 
 Persistence switches on when `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are
-both present. Apply `supabase/migrations/00000000000001_phase1_schema.sql` first:
-it creates the tables, the RLS policies, and the CHECK constraint that makes an
-identity on an unapproved intro request impossible.
+both present. Apply the SQL in `supabase/migrations/` (`phase1_schema`,
+`recruiter_signal`, then `accounts`). That creates the tables, RLS, the CHECK
+constraint that makes an identity on an unapproved intro impossible, and the
+`profiles` row used for candidate vs hiring accounts.
+
+Account create/login is `/signup` → `POST /api/auth/signup` and
+`POST /api/auth/login`. Sessions are httpOnly cookies. The anon key stays
+server-side (`SUPABASE_ANON_KEY`, never `NEXT_PUBLIC_`). Role is stored in
+`profiles` and `app_metadata`, not in user-editable `user_metadata`.
+
+```bash
+npx supabase login
+npx supabase link --project-ref cgrpbnzxcucekxuvnpjn
+npx supabase db push
+```
+
+Then put the project's URL, anon key, and service role key in `.env.local` and
+in the Vercel project env.
 
 `GET /api/status` reports which of these is live, so the deployment always
 describes itself rather than being taken on trust.
@@ -49,7 +64,7 @@ Set production env vars in the Vercel project (never `NEXT_PUBLIC_`):
 |---|---|---|
 | `ANTHROPIC_API_KEY` | yes, for live judgement | Model-backed parse/audit/match/brief |
 | `SUPABASE_URL` | yes | Postgres persistence |
-| `SUPABASE_ANON_KEY` | yes, with Auth | Browser/session auth |
+| `SUPABASE_ANON_KEY` | yes, with Auth | Server-side session auth; never `NEXT_PUBLIC_` |
 | `SUPABASE_SERVICE_ROLE_KEY` | yes | Server writes; never ship to the client |
 | `INBOUND_WEBHOOK_SECRET` | yes, for live mail | Signed `POST /api/inbound` |
 | `ELESTAR_ALLOW_SIMULATION` | set `false` | Refuse fixture/demo inbound |

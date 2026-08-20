@@ -18,7 +18,7 @@ const LINKS = [
 
 export default function AppNav() {
   const pathname = usePathname() ?? "/";
-  const { dark, toggleDark, mode, setMode, signOut } = useRouter();
+  const { dark, toggleDark, mode, setMode, signedIn, signOut } = useRouter();
 
   return (
     <header
@@ -99,14 +99,24 @@ export default function AppNav() {
           )}
         </button>
 
-        <Link
-          href="/"
-          onClick={() => signOut()}
-          className="font-mono text-[11px] uppercase tracking-[0.12em] px-3 py-2 border"
-          style={{ color: "var(--navy)", borderColor: "var(--navy)" }}
-        >
-          Home
-        </Link>
+        {signedIn ? (
+          <button
+            type="button"
+            onClick={() => signOut()}
+            className="font-mono text-[11px] uppercase tracking-[0.12em] px-3 py-2 border"
+            style={{ color: "var(--navy)", borderColor: "var(--navy)" }}
+          >
+            Sign out
+          </button>
+        ) : (
+          <Link
+            href="/signup"
+            className="font-mono text-[11px] uppercase tracking-[0.12em] px-3 py-2 border"
+            style={{ color: "var(--navy)", borderColor: "var(--navy)" }}
+          >
+            Sign in
+          </Link>
+        )}
       </div>
     </header>
   );

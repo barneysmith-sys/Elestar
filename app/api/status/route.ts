@@ -27,6 +27,7 @@ export async function GET(): Promise<Response> {
     engineLabel: engineLabel(engine),
     persistence: capabilities.persistence,
     persistenceLabel: persistenceLabel(capabilities.persistence),
+    accounts: capabilities.accounts,
     inboundWebhook: capabilities.inboundWebhook,
     liveResearch: capabilities.liveResearch,
     allowSimulation: capabilities.allowSimulation,

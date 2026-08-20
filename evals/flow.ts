@@ -658,6 +658,13 @@ async function main() {
     }
     const redirect = await fetch(`${BASE}/candidate/list`, { headers: cookieHeader(), redirect: "manual" });
     check("the original /candidate/list entry point still works", [200, 307, 308].includes(redirect.status), redirect.status);
+    const signup = await fetch(`${BASE}/signup`, { headers: cookieHeader() });
+    check("/signup responds 200", signup.status === 200, signup.status);
+    check("/signup has no error overlay", !/Application error|Unhandled Runtime Error/i.test(await signup.text()));
+    const me = await api("/api/auth/me");
+    check("/api/auth/me reports account capability", typeof me.json.accounts === "boolean", me.json);
+    const badSignup = await api("/api/auth/signup", { email: "not-an-email", password: "x", role: "creative" });
+    check("signup refuses a bad email before talking to Auth", [400, 503].includes(badSignup.status), badSignup);
   }
 
   console.log(`\n${passed}/${passed + failed} checks passed.`);

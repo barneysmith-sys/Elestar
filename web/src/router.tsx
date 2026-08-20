@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { usePathname, useRouter as useNextRouter } from "next/navigation";
+import { fetchAuth, signOutAccount, type AuthSession } from "./elestar-api";
 
 export type Page = "landing" | "signup" | "board" | "profile" | "onboard";
 export type Role = "firm" | "creative";
@@ -29,6 +30,8 @@ type RouterCtx = {
   toast: string | null;
   showToast: (html: string) => void;
   signedIn: boolean;
+  email: string | null;
+  applySession: (session: AuthSession) => void;
   signIn: (role: Role) => void;
   signOut: () => void;
   intent: Role;
@@ -47,7 +50,7 @@ export function useRouter(): RouterCtx {
 
 function pageFromPath(pathname: string): Page {
   if (pathname === "/") return "landing";
-  if (pathname.startsWith("/verify")) return "signup";
+  if (pathname.startsWith("/signup")) return "signup";
   return "board";
 }
 
@@ -64,10 +67,26 @@ export function RouterProvider({ children }: { children: ReactNode }) {
   const [toast, setToast] = useState<string | null>(null);
   const [mode, setMode] = useState<Mode>("firm");
   const [intent, setIntent] = useState<Role>("firm");
+  const [signedIn, setSignedIn] = useState(false);
+  const [email, setEmail] = useState<string | null>(null);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark);
   }, [dark]);
+
+  useEffect(() => {
+    fetchAuth()
+      .then((session) => {
+        setSignedIn(Boolean(session.authenticated));
+        setEmail(session.email ?? null);
+        if (session.role === "candidate") setMode("creative");
+        if (session.role === "employer") setMode("firm");
+      })
+      .catch(() => {
+        setSignedIn(false);
+        setEmail(null);
+      });
+  }, []);
 
   const showToast = useCallback((html: string) => {
     setToast(html);
@@ -82,7 +101,7 @@ export function RouterProvider({ children }: { children: ReactNode }) {
   const navigate = useCallback(
     (p: Page) => {
       const href =
-        p === "landing" ? "/" : p === "signup" || p === "onboard" ? "/verify" : "/wall";
+        p === "landing" ? "/" : p === "signup" || p === "onboard" ? "/signup" : "/wall";
       nextRouter.push(href);
     },
     [nextRouter],
@@ -112,12 +131,29 @@ export function RouterProvider({ children }: { children: ReactNode }) {
     setStage: () => undefined,
     toast,
     showToast,
-    signedIn: true,
+    signedIn,
+    email,
+    applySession: (session) => {
+      setSignedIn(Boolean(session.authenticated));
+      setEmail(session.email ?? null);
+      if (!session.authenticated) return;
+      const nextRole: Role =
+        session.role === "candidate" ? "creative" : session.role === "employer" ? "firm" : intent;
+      setMode(nextRole);
+      nextRouter.push(nextRole === "creative" ? "/verify" : "/search");
+    },
     signIn: (role) => {
       setMode(role);
-      nextRouter.push(role === "firm" ? "/search" : "/verify");
+      setIntent(role);
+      nextRouter.push(`/signup?intent=${role}`);
     },
-    signOut: () => nextRouter.push("/"),
+    signOut: () => {
+      void signOutAccount().finally(() => {
+        setSignedIn(false);
+        setEmail(null);
+        nextRouter.push("/");
+      });
+    },
     intent,
     setIntent,
     onboarded: true,
