@@ -130,13 +130,16 @@ export function matchRecordsDeterministic(args: {
     // --- recency -----------------------------------------------------------
     const recency = recencyMultiplier(monthsAgo);
 
-    const fitScore = Math.round(
+    let fitScore = Math.round(
       100 *
         (competencyOverlap * WEIGHTS.competencyOverlap +
           processSimilarity * WEIGHTS.processSimilarity +
           seniorityAlignment * WEIGHTS.seniorityAlignment +
           recency * WEIGHTS.recency),
     );
+    if (record.evidence === "corroborated" || record.evidence === "confirmed") {
+      fitScore = Math.min(100, fitScore + 4);
+    }
 
     // --- gaps: what this record does NOT tell you -------------------------
     // The schema requires at least one, deliberately: a rationale with no gap

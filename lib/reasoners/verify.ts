@@ -23,6 +23,7 @@
 import type { ParsedProcess, RoundType } from "../../src/types";
 import type { RecruiterSignal } from "../verify/email";
 import { collectPublicEvidence, resolveCompany, type ResolvedCompany } from "../verify/resolve";
+import { buildClaims, emptyFactors } from "../verify/claims";
 import { verificationChecks, type VerificationResult, type VerificationStatus } from "../verify/types";
 
 export interface DeterministicVerifyResult {
@@ -116,6 +117,8 @@ export function verifyProcessDeterministic(args: {
         domain: signal.domain,
         companyLabel: signal.domain,
         evidenceKind: "none",
+        claims: [],
+        factors: emptyFactors(0.2),
       },
       company,
       trace,
@@ -247,10 +250,25 @@ export function verifyProcessDeterministic(args: {
     status,
   });
 
+  const { claims, factors } = buildClaims({
+    found: true,
+    companyMatch,
+    roleMatch,
+    processMatch,
+    stageSupported,
+    stageClash,
+    evidenceCount: evidence.length,
+    independentSources: (args.mailLastReached ? 1 : 0) + (evidence.length > 0 ? 1 : 0),
+    hasMail: Boolean(args.mailLastReached) || submittedTypes.length > 0,
+    hasDate: Boolean(parsed.loopLengthWeeks),
+    inconsistencies,
+  });
+  const claimConfidence = status === "verified" ? factors.overall : confidence;
+
   return wrap(
     {
       status,
-      confidence: Number(confidence.toFixed(2)),
+      confidence: Number(claimConfidence.toFixed(2)),
       companyMatch,
       roleMatch,
       processMatch,
@@ -268,6 +286,8 @@ export function verifyProcessDeterministic(args: {
       domain: signal.domain,
       companyLabel: company.displayName,
       evidenceKind: "catalog",
+      claims,
+      factors,
     },
     company,
     trace,
@@ -312,6 +332,20 @@ function failed(
   _trace: string[],
   extra: Partial<Pick<VerificationResult, "inconsistencies">> = {},
 ): VerificationResult {
+  const inconsistencies = extra.inconsistencies ?? [reasoning];
+  const { claims, factors } = buildClaims({
+    found: false,
+    companyMatch: false,
+    roleMatch: false,
+    processMatch: false,
+    stageSupported: false,
+    stageClash: false,
+    evidenceCount: 0,
+    independentSources: 0,
+    hasMail: false,
+    hasDate: false,
+    inconsistencies,
+  });
   return {
     status: "failed",
     confidence: 0,
@@ -319,14 +353,14 @@ function failed(
     roleMatch: false,
     processMatch: false,
     evidence: [],
-    inconsistencies: extra.inconsistencies ?? [reasoning],
+    inconsistencies,
     checks: verificationChecks({
       companyMatch: false,
       roleMatch: false,
       processMatch: false,
       found: false,
       stageSupported: false,
-      contradictions: extra.inconsistencies ?? [reasoning],
+      contradictions: inconsistencies,
       status: "failed",
     }),
     reasoning,
@@ -334,5 +368,7 @@ function failed(
     domain: signal.domain,
     companyLabel: signal.domain || "(none)",
     evidenceKind: "none",
+    claims,
+    factors: { ...factors, overall: 0 },
   };
 }

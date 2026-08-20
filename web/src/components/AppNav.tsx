@@ -7,6 +7,7 @@ import Logo from "../brand";
 
 const LINKS = [
   { href: "/wall", label: "Wall" },
+  { href: "/circuit", label: "Circuit" },
   { href: "/verify", label: "Verify" },
   { href: "/desk", label: "Desk" },
   { href: "/search", label: "Search" },
@@ -31,7 +32,7 @@ export default function AppNav() {
 
         <nav className="flex items-stretch h-full gap-1 ml-2 overflow-x-auto" aria-label="Product">
           {LINKS.map((t) => {
-            const active = pathname === t.href || pathname.startsWith(`${t.href}/`) || (t.href === "/wall" && pathname.startsWith("/circuit")) || (t.href === "/system" && pathname.startsWith("/agent-lab"));
+            const active = pathname === t.href || pathname.startsWith(`${t.href}/`) || (t.href === "/system" && pathname.startsWith("/agent-lab"));
             return (
               <Link
                 key={t.href}

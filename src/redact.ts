@@ -10,6 +10,9 @@ const URL = /\bhttps?:\/\/\S+/g;
 const HANDLE = /(^|\s)@[\w.-]{2,}/g;
 const CONFIDENTIAL_SENTENCE =
   /[^.!?\n]*\b(nda|non[- ]disclosure(?: agreement)?|confidential (?:project|work|material|architecture|codebase)|do not (?:forward|share|disclose)|internal only)\b[^.!?\n]*[.!?]?/gi;
+/** Untrusted inbound must never be read as a system command. */
+const INSTRUCTION_OVERRIDE =
+  /[^.!?\n]*\b(ignore (?:all |any |previous )?instructions?|disable privacy|reveal (?:your )?(?:api )?key|mark (?:this )?(?:candidate )?verified|publish (?:this )?immediately)\b[^.!?\n]*[.!?]?/gi;
 
 /**
  * Where in the ORIGINAL text a redaction landed. Display-only: the UI uses
@@ -28,6 +31,34 @@ export interface RedactionResult {
   text: string;
   removed: { kind: string; count: number }[];
   spans: RedactionSpan[];
+}
+
+/** Role-like From: labels must not eat "recruiter screen" out of a digest. */
+const GENERIC_NAMES = new Set([
+  "recruiter",
+  "recruiting",
+  "hiring",
+  "talent",
+  "team",
+  "hr",
+  "people",
+  "staff",
+  "careers",
+  "jobs",
+  "noreply",
+  "no-reply",
+  "notifications",
+  "admin",
+  "support",
+]);
+
+export function isSpecificName(name: string): boolean {
+  const trimmed = name.trim();
+  if (trimmed.length < 2) return false;
+  const words = trimmed.toLowerCase().split(/[\s,./_-]+/).filter(Boolean);
+  if (words.length === 0) return false;
+  if (words.every((word) => GENERIC_NAMES.has(word))) return false;
+  return true;
 }
 
 export function redact(input: string, opts: { knownNames?: string[] } = {}): RedactionResult {
@@ -55,10 +86,16 @@ export function redact(input: string, opts: { knownNames?: string[] } = {}): Red
   tally("confidential", confidentialHits.length);
   text = text.replace(new RegExp(CONFIDENTIAL_SENTENCE.source, "gi"), "[confidential]");
 
+  const instructionRe = new RegExp(INSTRUCTION_OVERRIDE.source, "gi");
+  const instructionHits = text.match(instructionRe) ?? [];
+  tally("instruction", instructionHits.length);
+  text = text.replace(new RegExp(INSTRUCTION_OVERRIDE.source, "gi"), "[ignored]");
+
+  const names = (opts.knownNames ?? []).filter(isSpecificName);
+
   // Names the app already knows for this account: the candidate's own name,
   // their current employer, anyone they listed as a reference.
-  for (const name of opts.knownNames ?? []) {
-    if (name.trim().length < 2) continue;
+  for (const name of names) {
     const re = new RegExp(escapeRegExp(name.trim()), "gi");
     tally("known_name", (text.match(re) ?? []).length);
     text = text.replace(re, "[redacted]");
@@ -67,7 +104,7 @@ export function redact(input: string, opts: { knownNames?: string[] } = {}): Red
   return {
     text,
     removed: Object.entries(removed).map(([kind, count]) => ({ kind, count })),
-    spans: locateSpans(input, opts.knownNames ?? []),
+    spans: locateSpans(input, names),
   };
 }
 
@@ -84,8 +121,9 @@ function locateSpans(input: string, knownNames: string[]): RedactionSpan[] {
     { kind: "url", re: new RegExp(URL.source, "g"), replacement: "[url]" },
     { kind: "handle", re: new RegExp(HANDLE.source, "g"), replacement: "[handle]", group: 1 },
     { kind: "confidential", re: new RegExp(CONFIDENTIAL_SENTENCE.source, "gi"), replacement: "[confidential]" },
+    { kind: "instruction", re: new RegExp(INSTRUCTION_OVERRIDE.source, "gi"), replacement: "[ignored]" },
     ...knownNames
-      .filter((n) => n.trim().length >= 2)
+      .filter((n) => isSpecificName(n))
       .map((n) => ({
         kind: "known_name",
         re: new RegExp(escapeRegExp(n.trim()), "gi"),

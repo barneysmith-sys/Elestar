@@ -3,14 +3,12 @@
 import { useEffect, useState } from "react";
 import AppNav from "../components/AppNav";
 import { PipelineEvidence } from "../components/PipelineEvidence";
+import { PipelineRail } from "../components/PipelineRail";
 import { fetchStatus, type StatusPayload } from "../elestar-api";
 import { usePipeline } from "../usePipeline";
 import { LAB_SCENARIOS, type LabScenario } from "../../../lib/ingest/scenarios";
 import { FIXTURE_CATALOG } from "../../../lib/ingest/fixtureCatalog";
 import {
-  STEP_EVENT,
-  STEP_ORDER,
-  STEP_TITLE,
   type AuditStepData,
   type IdentifyStepData,
   type MatchStepData,
@@ -94,45 +92,25 @@ export default function System() {
             <p className="font-mono text-[10px] uppercase tracking-[0.16em] mb-5" style={{ color: "var(--ink-3)" }}>
               {meta?.simulation ? "Simulated inbound · " : ""}{meta?.engineLabel ?? "Waiting"} · expect {current.expect.replace(/_/g, " ")}
             </p>
-            {STEP_ORDER.filter((step) => stages[step] || active === step).map((step) => {
-              const stage = stages[step];
-              const statusNow = stage?.message.status ?? (active === step ? "running" : undefined);
-              const event = stage?.message.event ?? (statusNow === "running" ? STEP_EVENT[step].running : STEP_EVENT[step].settled);
-              const duration = stage?.message.durationMs;
-              return (
-                <div key={step} className="mb-5">
-                  <div className="flex items-baseline justify-between gap-3">
-                    <p className="font-display text-[18px]" style={{ color: "var(--navy)" }}>{STEP_TITLE[step]}</p>
-                    <p className="font-mono text-[10px] uppercase tracking-[0.12em]" style={{ color: "var(--ink-3)" }}>
-                      {event}
-                      {duration != null ? ` · ${duration}ms` : ""}
-                    </p>
-                  </div>
-                  <p className="font-mono text-[11px] mt-1" style={{ color: "var(--muted-foreground)" }}>
-                    {stage?.message.message ?? "…"}
-                  </p>
-                </div>
-              );
-            })}
+            {meta || running || done || questions || error ? (
+              <PipelineRail stages={stages} active={active} done={done ?? undefined} questions={Boolean(questions && !done)} error={error} />
+            ) : (
+              <p className="font-display text-[22px] leading-tight" style={{ color: "var(--navy)" }}>
+                Pick a scenario. The live pipeline runs over SSE.
+              </p>
+            )}
             <PipelineEvidence
               identify={stages.identify?.message.data as IdentifyStepData | undefined}
               research={research}
               match={match}
               audit={audit}
             />
-            {error && <p className="text-[14px] mt-4">{error}</p>}
             {questions && !done && (
               <p className="text-[14px] mt-4" style={{ color: "var(--muted-foreground)" }}>
                 The agent stopped to ask rather than guess. {questions.questions[0]}
               </p>
             )}
-            {done && (
-              <div className="mt-6">
-                <p className="edn-stamp text-[28px]" style={{ color: "var(--navy)" }}>{done.outcome.replace(/_/g, " ")}</p>
-                <p className="text-[14px] mt-2" style={{ color: "var(--muted-foreground)" }}>{done.reason}</p>
-                {done.recordId && <p className="font-mono text-[12px] mt-3">{done.recordId}</p>}
-              </div>
-            )}
+            {done?.recordId && <p className="font-mono text-[12px] mt-4">{done.recordId}</p>}
           </div>
         </div>
 

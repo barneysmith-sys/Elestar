@@ -182,6 +182,7 @@ async function main() {
     const plan = settled(run.messages, "plan");
     check("plan selects catalog tools for the known domain", plan?.data?.action === "catalog_lookup", plan?.data);
     check("plan does not invent a live crawl", Array.isArray(plan?.data?.tools) && plan.data.tools.includes("resolveCompany"), plan?.data);
+    check("plan names an explicit decision", plan?.data?.decision === "research_again" || plan?.data?.decision === "stop", plan?.data);
     check("ingest last round reached is the final", /final/i.test(receive?.data?.arrival?.lastReachedLabel ?? ""), receive?.data);
 
     const parsed = settled(run.messages, "identify")?.data?.parsed;
@@ -191,6 +192,7 @@ async function main() {
     const verify = settled(run.messages, "match");
     check("verify step is ok", verify?.status === "ok", verify?.status);
     check("verify payload names decision checks", (verify?.data?.verification?.checks?.length ?? 0) >= 4, verify?.data?.verification?.checks);
+    check("verify payload names claims", (verify?.data?.verification?.claims?.length ?? 0) >= 3, verify?.data?.verification?.claims);
     check("verify payload has a domain, not a mailbox", typeof verify?.data?.domain === "string" && !String(verify?.data?.domain).includes("@"), verify?.data);
     check(
       "structured evidence never contains a mailbox",
@@ -321,6 +323,44 @@ async function main() {
       verify?.data?.verification?.inconsistencies,
     );
     check("contradiction is not published", done?.outcome !== "published", done);
+    check(
+      "both claims remain on the payload",
+      (verify?.data?.verification?.claims?.length ?? 0) >= 2,
+      verify?.data?.verification?.claims,
+    );
+  }
+
+  section("list a process: unknown and lookalike identities are held");
+  {
+    const unknown = await runPipeline("", undefined, { fixture: "unknown" });
+    const unknownDone = unknown.messages.find((m) => m.kind === "done");
+    const unknownPlan = settled(unknown.messages, "plan");
+    check("unknown company is not published", unknownDone?.outcome !== "published", unknownDone);
+    check("unknown plan is a hold, not a catalog match", unknownPlan?.data?.action === "hold_unknown_domain", unknownPlan?.data);
+
+    const lookalike = await runPipeline("", undefined, { fixture: "lookalike" });
+    const lookalikeDone = lookalike.messages.find((m) => m.kind === "done");
+    const lookalikePlan = settled(lookalike.messages, "plan");
+    check("lookalike is not published as the catalog company", lookalikeDone?.outcome !== "published", lookalikeDone);
+    check("lookalike is flagged rather than resolved", Boolean(lookalikePlan?.data?.lookalikeOf), lookalikePlan?.data);
+  }
+
+  section("list a process: prompt injection cannot override policy");
+  {
+    const run = await runPipeline("", undefined, { fixture: "injection" });
+    const serialised = JSON.stringify(run.messages);
+    const parseMail = settled(run.messages, "parse_mail");
+    const verify = settled(run.messages, "match");
+    const done = run.messages.find((m) => m.kind === "done");
+    check("instruction text is stripped", (parseMail?.data?.removed ?? []).some((r: any) => r.kind === "instruction"), parseMail?.data?.removed);
+    check("ignore-previous does not ride the stream", !/ignore previous instructions/i.test(serialised));
+    check("publish-immediately does not ride the stream", !/publish this immediately/i.test(serialised));
+    check("disable-privacy does not ride the stream", !/disable privacy/i.test(serialised));
+    check("reveal-api-key does not ride the stream", !/reveal your api key/i.test(serialised));
+    check("injection cannot force a mailbox onto the stream", !serialised.toLowerCase().includes("talent@ledgerpay.example"));
+    check("a valid loop still verifies on evidence, not on the injected command", verify?.status === "ok", verify?.status);
+    check("injection does not prevent a legitimate publish", done?.outcome === "published", done);
+    check("verified claims are present", (verify?.data?.verification?.claims?.length ?? 0) >= 3, verify?.data?.verification?.claims);
   }
 
   section("list a process: NDA material never publishes");

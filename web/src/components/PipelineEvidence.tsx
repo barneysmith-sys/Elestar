@@ -44,6 +44,23 @@ export function PipelineEvidence({
           </ul>
         </div>
       )}
+      {match?.verification.claims && match.verification.claims.length > 0 && (
+        <div>
+          <p className="font-mono text-[10px] uppercase tracking-[0.16em] mb-2" style={{ color: "var(--navy)" }}>
+            Claims · weakest important decides
+          </p>
+          <ul className="space-y-1.5">
+            {match.verification.claims.map((claim) => (
+              <li key={claim.id} className="flex gap-2 text-[13px]">
+                <span className="font-mono text-[10px] uppercase tracking-wide" style={{ color: claim.status === "verified" || claim.status === "probable" ? "var(--verify)" : "var(--ink-3)" }}>
+                  {claim.status}
+                </span>
+                <span>{claim.label}{claim.important ? "" : " · optional"}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       {match?.verification.checks && match.verification.checks.length > 0 && (
         <div>
           <p className="font-mono text-[10px] uppercase tracking-[0.16em] mb-2" style={{ color: "var(--navy)" }}>

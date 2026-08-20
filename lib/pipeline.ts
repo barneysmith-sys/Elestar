@@ -15,7 +15,7 @@ import {
 import { cohortCount, insertDossier, insertProcess } from "./store";
 import { assertNoRecruiterEmail, maskEmail, parseRecruiterSignal } from "./verify/email";
 import { addEvidence, emptyLedger, summarise, type EvidenceLedger } from "./evidence";
-import { collectPublicEvidence, planResearch, resolveCompany, type ResolvedCompany } from "./verify/resolve";
+import { collectPublicEvidence, MAX_RESEARCH_ATTEMPTS, planResearch, resolveCompany, type ResolvedCompany } from "./verify/resolve";
 import { verificationChecks } from "./verify/types";
 import { logPipeline, newPipelineId } from "./observe";
 import type {
@@ -201,7 +201,10 @@ export async function* runPipeline(args: RunPipelineArgs): AsyncGenerator<Pipeli
     return;
   }
 
-  const parseInput = mail.digest ? `${mail.digest}\n\n${redactedNotes}` : redactedNotes;
+  const parseSource = mail.digest ? `${mail.digest}\n\n${redactedNotes}` : redactedNotes;
+  const parseSafe = redact(parseSource, { knownNames });
+  assertRedacted(parseSafe.text);
+  const parseInput = parseSafe.text;
 
   // ---- 3. identify company + role (structure the loop) -------------------
   yield emit("identify", "running", "Identifying company, role and how far the loop got…");
@@ -294,33 +297,40 @@ export async function* runPipeline(args: RunPipelineArgs): AsyncGenerator<Pipeli
   let attempt = 1;
   let plan = planResearch(researchDomain, { attempt });
 
-  while (attempt <= 2) {
+  while (attempt <= MAX_RESEARCH_ATTEMPTS) {
     const planStarted = Date.now();
     yield emit("plan", "running", attempt === 1 ? "Deciding what still needs evidence…" : "Updating the plan from the evidence so far…");
-    yield emit(
-      "plan",
-      "ok",
-      plan.action === "catalog_lookup"
-        ? plan.tools.length
-          ? `Catalog lookup for ${plan.domain}. Tools: ${plan.tools.join(", ")}.`
-          : `Enough catalog evidence for ${plan.domain}. Skipping further research.`
-        : plan.action === "skip_no_domain"
-          ? "No recruiter domain — skipping company research rather than inventing one."
-          : `No catalog evidence for ${plan.domain}. Holding that gap rather than crawling a guess.`,
-      {
+    const planLine =
+      plan.decision === "stop"
+        ? `Enough catalog evidence for ${plan.domain}. Stopping research.`
+        : plan.decision === "hold"
+          ? plan.lookalikeOf
+            ? `Lookalike of ${plan.lookalikeOf} — holding rather than matching.`
+            : plan.missing.includes("conflict_resolution")
+              ? "Sources disagree. Preserving both claims and holding."
+              : plan.action === "skip_no_domain"
+                ? "No recruiter domain — skipping company research rather than inventing one."
+                : `No catalog evidence for ${plan.domain}. Holding that gap rather than crawling a guess.`
+          : plan.tools.length
+            ? `Catalog lookup for ${plan.domain}. Tools: ${plan.tools.join(", ")}.`
+            : `Need more evidence for ${plan.domain}.`;
+    yield emit("plan", "ok", planLine, {
         engine: "deterministic",
         durationMs: Date.now() - planStarted,
         trace: [
-          `Plan attempt ${attempt}: ${plan.action}.`,
+          `Plan attempt ${attempt}: ${plan.action} → ${plan.decision}.`,
           plan.tools.length ? `Tools: ${plan.tools.join(", ")}.` : "No research tools selected.",
           plan.missing.length ? `Missing: ${plan.missing.join(", ")}.` : "No required fields missing for a catalog check.",
+          plan.lookalikeOf ? `Near-miss of ${plan.lookalikeOf} is not a match.` : "No lookalike warning.",
         ],
         data: {
           action: plan.action,
+          decision: plan.decision,
           tools: plan.tools,
           missing: plan.missing,
           domain: plan.domain,
           attempt,
+          lookalikeOf: plan.lookalikeOf ?? null,
         } satisfies PlanStepData,
       },
     );
@@ -391,7 +401,7 @@ export async function* runPipeline(args: RunPipelineArgs): AsyncGenerator<Pipeli
       overall: summarised.overall,
       conflicts,
       attempt,
-      plan: { action: plan.action, tools: plan.tools, missing: plan.missing },
+      plan: { action: plan.action, decision: plan.decision, tools: plan.tools, missing: plan.missing },
     };
     yield emit(
       "research",
@@ -420,7 +430,7 @@ export async function* runPipeline(args: RunPipelineArgs): AsyncGenerator<Pipeli
       evidenceCount: publicEvidence.length,
       conflicts,
     });
-    if (next.tools.length === 0) break;
+    if (next.decision !== "research_again" || next.tools.length === 0) break;
     plan = next;
     attempt += 1;
   }

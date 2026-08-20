@@ -77,7 +77,7 @@ export default function Signals() {
           What the pool is teaching.
         </h1>
         <p className="text-[16px] max-w-[46ch] mb-8" style={{ color: "var(--muted-foreground)" }}>
-          Counted only from records that already cleared publication. Company names are not an input.
+          Counted only from records that already cleared publication. Every claim below has a basis. Company names are not an input.
         </p>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">

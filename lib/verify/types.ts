@@ -5,6 +5,10 @@
  * and the app share one shape. Recruiter email is intentionally absent.
  */
 
+import type { ClaimStatus, ConfidenceFactors, VerificationClaim } from "./claims";
+
+export type { ClaimStatus, ConfidenceFactors, VerificationClaim } from "./claims";
+
 export type VerificationStatus = "verified" | "needs_review" | "failed";
 export type PrivacyGate = "passed" | "failed" | "pending";
 
@@ -37,6 +41,8 @@ export interface VerificationResult {
   domain: string;
   companyLabel: string;
   evidenceKind: "catalog" | "live_public" | "none";
+  claims?: VerificationClaim[];
+  factors?: ConfidenceFactors;
 }
 
 export function verificationChecks(args: {

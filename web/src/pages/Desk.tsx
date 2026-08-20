@@ -6,7 +6,9 @@ import { fetchBrief, PROVE_INBOX, requestIntro, searchRole } from "../elestar-ap
 import { usePipeline, OUTCOME_HEADLINE } from "../usePipeline";
 import type { DossierRecord } from "../../../lib/records";
 import { describeEmployer, furthestRoundLabel } from "../../../lib/records";
-import type { InterviewBrief, MatchResult } from "../../../src/types";
+import { InterviewBriefView } from "../components/InterviewBriefView";
+import type { AnnotatedBrief } from "../../../lib/reasoners/brief";
+import type { MatchResult } from "../../../src/types";
 import { FIXTURE_CATALOG, FIXTURE_IDS, type FixtureId } from "../../../lib/ingest/fixtureCatalog";
 import { STEP_TITLE, type IdentifyStepData, type PublishStepData } from "../../../lib/pipelineWire";
 
@@ -27,7 +29,7 @@ function HiringDesk() {
   const [matches, setMatches] = useState<{ match: MatchResult; record: DossierRecord }[]>([]);
   const [engineLabel, setEngineLabel] = useState("");
   const [active, setActive] = useState<string | null>(null);
-  const [brief, setBrief] = useState<InterviewBrief | null>(null);
+  const [brief, setBrief] = useState<AnnotatedBrief | null>(null);
   const [briefError, setBriefError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -74,6 +76,12 @@ function HiringDesk() {
         </div>
         <p className="text-[16px] leading-relaxed max-w-[42ch]" style={{ color: "var(--muted-foreground)" }}>
           The desk ranks published anonymous records. Company names are not in the pool. A brief exists only after the candidate approves an intro.
+        </p>
+        <p className="font-mono text-[11px] mt-4 uppercase tracking-[0.12em]" style={{ color: "var(--ink-3)" }}>
+          <a href="/wall" className="mr-4">Wall</a>
+          <a href="/circuit" className="mr-4">Circuit</a>
+          <a href="/signals" className="mr-4">Signals</a>
+          <a href="/intros">Intros</a>
         </p>
       </div>
 
@@ -135,7 +143,7 @@ function HiringDesk() {
                         <FitMark n={m.match.fitScore} />
                       </div>
                       <p className="font-mono text-[10px] uppercase tracking-[0.1em] mt-1.5" style={{ color: "var(--muted-foreground)" }}>
-                        {String(i + 1).padStart(2, "0")} · {describeEmployer(m.record.parsed)} · {furthestRoundLabel(m.record.parsed)}
+                        {String(i + 1).padStart(2, "0")} · {describeEmployer(m.record.parsed)} · {furthestRoundLabel(m.record.parsed)} · {m.record.evidence} · {m.record.tier}
                       </p>
                       <p className="text-[14px] leading-relaxed mt-2" style={{ color: "var(--muted-foreground)" }}>{m.match.rationale}</p>
                     </div>
@@ -187,37 +195,7 @@ function HiringDesk() {
                   </button>
                 </div>
                 {briefError && <p className="text-[14px] mb-4" style={{ color: "var(--muted-foreground)" }}>{briefError}</p>}
-                {brief && (
-                  <div className="space-y-5">
-                    <p className="font-mono text-[10px] uppercase tracking-[0.16em]" style={{ color: "var(--navy)" }}>Already assessed</p>
-                    <ul className="space-y-1.5">
-                      {brief.alreadyAssessed.map((a) => (
-                        <li key={a.competency} className="text-[15px]">{a.competency}
-                          <span className="font-mono text-[10px] uppercase tracking-wide ml-2" style={{ color: "var(--muted-foreground)" }}>{a.depth} · {a.format}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    <p className="font-mono text-[10px] uppercase tracking-[0.16em]" style={{ color: "var(--navy)" }}>Safe to skip</p>
-                    {brief.safeToSkip.length ? (
-                      <ul className="space-y-1.5">
-                        {brief.safeToSkip.map((s) => (
-                          <li key={s.round} className="text-[15px]">{s.round}
-                            <span className="block text-[13px] mt-0.5" style={{ color: "var(--muted-foreground)" }}>{s.redundantWith}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="text-[15px]" style={{ color: "var(--muted-foreground)" }}>Nothing is safe to skip. Do not over-claim.</p>
-                    )}
-                    <p className="font-mono text-[10px] uppercase tracking-[0.16em]" style={{ color: "var(--navy)" }}>Probe instead</p>
-                    <ul className="space-y-1.5">
-                      {brief.probeInstead.map((p) => <li key={p} className="text-[15px]">{p}</li>)}
-                    </ul>
-                    <p className="font-mono text-[10px] uppercase tracking-[0.16em]" style={{ color: "var(--navy)" }}>Never skip</p>
-                    <p className="text-[15px]">{brief.neverSkip.join(" · ")}</p>
-                    <p className="text-[15px] leading-relaxed" style={{ color: "var(--muted-foreground)" }}>{brief.outcomeContext}</p>
-                  </div>
-                )}
+                {brief && <InterviewBriefView brief={brief} />}
               </>
             )}
           </div>

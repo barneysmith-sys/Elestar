@@ -762,7 +762,10 @@ export default function Landing() {
             I'm hiring
           </button>
         </div>
-        <p className="fade-up mt-5 font-mono text-[11px] uppercase tracking-[0.14em]" style={{ color: "var(--ink-3)", animationDelay: "0.72s" }}>
+        <p className="fade-up mt-5 text-[15px] max-w-[36rem] mx-auto leading-relaxed" style={{ color: "var(--muted-foreground)", animationDelay: "0.72s" }}>
+          Elestar is verified interview history for people who didn't get the job — and the next company that needs that signal. Forward the original recruiter email to prove@elestar.ai.
+        </p>
+        <p className="fade-up mt-3 font-mono text-[11px] uppercase tracking-[0.14em]" style={{ color: "var(--ink-3)", animationDelay: "0.8s" }}>
           A-1842 · reached a final · email proved
         </p>
         </div>

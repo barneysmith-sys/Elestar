@@ -3,11 +3,12 @@
 import { useEffect, useState } from "react";
 import AppNav from "../components/AppNav";
 import { fetchStatus, PROVE_INBOX } from "../elestar-api";
-import { usePipeline, OUTCOME_HEADLINE } from "../usePipeline";
-import { STEP_ACTIVITY, STEP_ORDER, STEP_TITLE, type AuditStepData, type IdentifyStepData, type MatchStepData, type PublishStepData, type ResearchStepData } from "../../../lib/pipelineWire";
+import { usePipeline } from "../usePipeline";
+import { type AuditStepData, type IdentifyStepData, type MatchStepData, type PublishStepData, type ResearchStepData } from "../../../lib/pipelineWire";
 import { describeEmployer, furthestRoundLabel } from "../../../lib/records";
 import { FIXTURE_CATALOG, FIXTURE_IDS, type FixtureId } from "../../../lib/ingest/fixtureCatalog";
 import { PipelineEvidence } from "../components/PipelineEvidence";
+import { PipelineRail } from "../components/PipelineRail";
 
 export default function Verify() {
   const { running, meta, stages, active, questions, done, error, run, answer } = usePipeline();
@@ -130,28 +131,23 @@ export default function Verify() {
 
         <div className="border p-6 md:p-8 min-h-[420px]" style={{ borderColor: "var(--border)", background: "color-mix(in srgb, var(--background) 70%, var(--card))" }}>
           {meta && (
-            <p className="font-mono text-[10px] uppercase tracking-[0.16em] mb-5" style={{ color: "var(--ink-3)" }}>
-              {meta.simulation ? "Simulated inbound · " : ""}{meta.engineLabel} · {meta.persistenceLabel}
+            <p className="font-mono text-[10px] uppercase tracking-[0.16em] mb-6" style={{ color: "var(--ink-3)" }}>
+              {meta.simulation ? "Simulated inbound · " : "Live inbound · "}{meta.engineLabel} · {meta.persistenceLabel}
             </p>
           )}
-          {STEP_ORDER.filter((step) => stages[step] || active === step).map((step) => {
-            const stage = stages[step];
-            return (
-              <div key={step} className="mb-4">
-                <p className="font-display text-[18px]" style={{ color: "var(--navy)" }}>{STEP_TITLE[step]}</p>
-                <p className="font-mono text-[11px] mt-1" style={{ color: "var(--muted-foreground)" }}>
-                  {stage?.message.message ?? STEP_ACTIVITY[step]}
-                </p>
-              </div>
-            );
-          })}
+          {meta || running ? (
+            <PipelineRail stages={stages} active={active} done={done ?? undefined} questions={Boolean(questions && !done)} error={error} compact />
+          ) : (
+            <p className="font-display text-[22px] leading-tight" style={{ color: "var(--navy)" }}>
+              Waiting for inbound.
+            </p>
+          )}
           <PipelineEvidence
             identify={stages.identify?.message.data as IdentifyStepData | undefined}
             research={research}
             match={match}
             audit={audit}
           />
-          {error && <p className="text-[14px] mt-4">{error}</p>}
           {questions && !done && (
             <div className="mt-6 space-y-3">
               {questions.questions.map((q) => (
@@ -175,24 +171,13 @@ export default function Verify() {
               </button>
             </div>
           )}
-          {done && (
-            <div className="mt-6">
-              <p className="edn-stamp text-[28px]" style={{ color: "var(--navy)" }}>{OUTCOME_HEADLINE[done.outcome]}</p>
-              <p className="text-[14px] mt-2" style={{ color: "var(--muted-foreground)" }}>{done.reason}</p>
-              {published && (
-                <p className="font-mono text-[12px] mt-3">
-                  {published.id} · {describeEmployer(published.parsed)} · {furthestRoundLabel(published.parsed)}
-                </p>
-              )}
-              {parsed && !published && (
-                <p className="font-mono text-[12px] mt-3">{describeEmployer(parsed)} · {furthestRoundLabel(parsed)}</p>
-              )}
-            </div>
-          )}
-          {!meta && !running && (
-            <p className="font-display text-[22px] leading-tight" style={{ color: "var(--navy)" }}>
-              Waiting for inbound.
+          {done && published && (
+            <p className="font-mono text-[12px] mt-4">
+              {published.id} · {describeEmployer(published.parsed)} · {furthestRoundLabel(published.parsed)}
             </p>
+          )}
+          {done && parsed && !published && (
+            <p className="font-mono text-[12px] mt-4">{describeEmployer(parsed)} · {furthestRoundLabel(parsed)}</p>
           )}
         </div>
       </div>

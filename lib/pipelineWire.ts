@@ -160,6 +160,7 @@ export interface ResearchStepData {
   attempt?: number;
   plan?: {
     action: "catalog_lookup" | "skip_no_domain" | "hold_unknown_domain";
+    decision?: "stop" | "research_again" | "hold";
     tools: string[];
     missing: string[];
   };
@@ -167,10 +168,12 @@ export interface ResearchStepData {
 
 export interface PlanStepData {
   action: "catalog_lookup" | "skip_no_domain" | "hold_unknown_domain";
+  decision?: "stop" | "research_again" | "hold";
   tools: string[];
   missing: string[];
   domain: string;
   attempt?: number;
+  lookalikeOf?: string | null;
 }
 
 export interface MatchStepData {

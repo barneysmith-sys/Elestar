@@ -23,6 +23,7 @@ export const LAB_SCENARIOS: LabScenario[] = [
   { id: "conflict", title: "Conflicting sources", intent: "Mail and notes that disagree are held, not silently resolved.", fixture: "contradiction", expect: "pending_review" },
   { id: "insufficient", title: "Insufficient evidence", intent: "No public catalog hit means insufficient evidence, not a verify.", fixture: "unknown", expect: "pending_review" },
   { id: "privacy", title: "Privacy failure", intent: "A too-specific small-company loop is withheld by k-anonymity.", fixture: "crypto", expect: "withheld" },
+  { id: "inject", title: "Prompt injection", intent: "Untrusted mail cannot disable privacy, force a verify, or publish.", fixture: "injection", expect: "published" },
   { id: "verified", title: "Successful verification", intent: "Independent mail + catalog evidence can verify.", fixture: "canonical", expect: "published" },
   { id: "model", title: "Model failure", intent: "If the model is missing or fails, deterministic reasoners still run and say so.", fixture: "canonical", expect: "published" },
   { id: "tool", title: "Tool failure", intent: "Empty catalog research does not invent evidence.", fixture: "unknown", expect: "pending_review" },

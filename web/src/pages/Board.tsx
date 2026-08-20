@@ -11,6 +11,14 @@ import { describeEmployer, describeScope, furthestRoundLabel, TIER_MEANING } fro
 
 const TIER_FILTERS = ["All", "apex", "elite", "verified", "standard"] as const;
 
+function recencyLabel(iso: string): string {
+  const days = (Date.now() - new Date(iso).getTime()) / 86_400_000;
+  if (!Number.isFinite(days) || days < 0) return "";
+  if (days < 7) return "this week";
+  if (days < 45) return "recent";
+  return "";
+}
+
 function paperTone(id: string): { hue: number; height: number } {
   let n = 0;
   for (const c of id) n = (n * 33 + c.charCodeAt(0)) >>> 0;
@@ -83,6 +91,10 @@ function RecordModal({
               Privacy · {record.audit.decision} · k={record.audit.kAnonymity}
             </p>
           )}
+          <p className="font-mono text-[10px] uppercase tracking-[0.14em]" style={{ color: "var(--ink-3)" }}>
+            {record.evidence} · {record.tier}
+            {recencyLabel(record.createdAt) ? ` · ${recencyLabel(record.createdAt)}` : ""}
+          </p>
           <button
             type="button"
             onClick={onIntro}
@@ -128,6 +140,7 @@ function PinCard({
           </p>
           <p className="font-mono text-[10px] mt-1.5 truncate" style={{ color: "var(--ink-3)" }}>
             {furthestRoundLabel(record.parsed)} · {record.parsed.roundsCleared} rounds cleared
+            {record.demo ? " · demo" : ""} · {record.evidence}
           </p>
         </div>
       </button>
@@ -185,8 +198,8 @@ export default function Board() {
         <h1 className="font-display font-extralight leading-none" style={{ fontSize: "clamp(2.6rem, 6.5vw, 4.8rem)", letterSpacing: "-0.045em", color: "var(--navy)" }}>
           The wall.
         </h1>
-        <p className="mt-4 text-[17px] max-w-[40ch]" style={{ color: "var(--muted-foreground)" }}>
-          Anonymous verified loops. No names, no faces, no company brands. Identity only after an approved intro.
+        <p className="mt-4 text-[17px] max-w-[46ch]" style={{ color: "var(--muted-foreground)" }}>
+          Anonymous verified loops. Privacy already applied. Confidence is on the record. Identity only after an approved intro.
         </p>
       </section>
 

@@ -138,11 +138,15 @@ export function catalogDomain(domain: string): string | null {
   return null;
 }
 
+export type ResearchDecision = "stop" | "research_again" | "hold";
+
 export type ResearchPlan = {
   action: "catalog_lookup" | "skip_no_domain" | "hold_unknown_domain";
+  decision: ResearchDecision;
   tools: ("resolveCompany" | "collectPublicEvidence")[];
   missing: string[];
   domain: string;
+  lookalikeOf?: string | null;
 };
 
 export interface ResearchState {
@@ -152,35 +156,119 @@ export interface ResearchState {
   conflicts?: string[];
 }
 
+export const MAX_RESEARCH_ATTEMPTS = 2;
+
 /**
  * Choose tools from what is still missing.
  *
  * Unknown domains never get a crawl or a guess. A second attempt never
  * repeats a tool that already returned. Conflicts stop further catalog
  * fetches so the verifier sees both claims instead of overwriting one.
+ * Lookalikes are held, never folded into the nearest catalog company.
  */
 export function planResearch(domain: string, state: ResearchState = {}): ResearchPlan {
   const trimmed = domain.trim();
   const attempt = state.attempt ?? 1;
   if (!trimmed) {
-    return { action: "skip_no_domain", tools: [], missing: ["recruiter_domain"], domain: "" };
-  }
-  const key = catalogDomain(trimmed);
-  if (!key) {
     return {
-      action: "hold_unknown_domain",
-      tools: attempt === 1 ? ["resolveCompany"] : [],
-      missing: ["public_company_evidence"],
-      domain: trimmed.toLowerCase(),
+      action: "skip_no_domain",
+      decision: "hold",
+      tools: [],
+      missing: ["recruiter_domain"],
+      domain: "",
     };
   }
+  const key = catalogDomain(trimmed);
+  const lookalikeOf = key ? null : catalogNearMiss(trimmed);
+  if (!key) {
+    const again = attempt === 1;
+    return {
+      action: "hold_unknown_domain",
+      decision: again ? "research_again" : "hold",
+      tools: again ? ["resolveCompany"] : [],
+      missing: lookalikeOf ? ["lookalike_identity"] : ["public_company_evidence"],
+      domain: trimmed.toLowerCase(),
+      lookalikeOf,
+    };
+  }
+  if (attempt > MAX_RESEARCH_ATTEMPTS) {
+    return { action: "catalog_lookup", decision: "stop", tools: [], missing: [], domain: key };
+  }
   if (state.conflicts && state.conflicts.length > 0) {
-    return { action: "catalog_lookup", tools: [], missing: ["conflict_resolution"], domain: key };
+    return {
+      action: "catalog_lookup",
+      decision: "hold",
+      tools: [],
+      missing: ["conflict_resolution"],
+      domain: key,
+    };
   }
   if (state.companyFound && (state.evidenceCount ?? 0) > 0) {
-    return { action: "catalog_lookup", tools: [], missing: [], domain: key };
+    return { action: "catalog_lookup", decision: "stop", tools: [], missing: [], domain: key };
   }
-  return { action: "catalog_lookup", tools: ["resolveCompany", "collectPublicEvidence"], missing: [], domain: key };
+  if (state.companyFound === false) {
+    return {
+      action: "hold_unknown_domain",
+      decision: "hold",
+      tools: [],
+      missing: ["public_company_evidence"],
+      domain: key,
+    };
+  }
+  return {
+    action: "catalog_lookup",
+    decision: "research_again",
+    tools: ["resolveCompany", "collectPublicEvidence"],
+    missing: [],
+    domain: key,
+  };
+}
+
+/**
+ * Spoof / near-miss detector. Never used to resolve a company — only to hold.
+ */
+export function catalogNearMiss(domain: string): string | null {
+  if (catalogDomain(domain)) return null;
+  const label = registrableLabel(domain);
+  if (label.length < 5) return null;
+  for (const entry of CATALOG) {
+    const other = registrableLabel(entry.domain);
+    if (oneEdit(label, other)) return entry.domain;
+    if (label.length >= 6 && other.length >= 6 && (label.includes(other) || other.includes(label))) {
+      return entry.domain;
+    }
+  }
+  return null;
+}
+
+function registrableLabel(domain: string): string {
+  const parts = domain.trim().toLowerCase().replace(/^www\./, "").split(".");
+  return parts.length >= 2 ? parts[parts.length - 2]! : parts[0]!;
+}
+
+function oneEdit(a: string, b: string): boolean {
+  if (a === b) return false;
+  if (Math.abs(a.length - b.length) > 1) return false;
+  let i = 0;
+  let j = 0;
+  let edits = 0;
+  while (i < a.length && j < b.length) {
+    if (a[i] === b[j]) {
+      i += 1;
+      j += 1;
+      continue;
+    }
+    edits += 1;
+    if (edits > 1) return false;
+    if (a.length > b.length) i += 1;
+    else if (b.length > a.length) j += 1;
+    else {
+      i += 1;
+      j += 1;
+    }
+  }
+  if (i < a.length || j < b.length) edits += 1;
+  return edits === 1;
 }
 
 export function resolveCompany(domain: string): ResolvedCompany {

@@ -17,6 +17,7 @@ import {
   HEALTHTECH_FORWARDS,
   LOOKALIKE_FORWARDS,
   MALFORMED_FORWARDS,
+  INJECTION_FORWARDS,
   MISMATCH_FORWARDS,
   SCREEN_ONLY_FORWARDS,
   UNKNOWN_FORWARDS,
@@ -45,6 +46,7 @@ export const INBOUND_FIXTURES: Record<FixtureId, InboundFixture> = {
   unknown: { ...FIXTURE_CATALOG.unknown, raw: UNKNOWN_FORWARDS },
   lookalike: { ...FIXTURE_CATALOG.lookalike, raw: LOOKALIKE_FORWARDS },
   malformed: { ...FIXTURE_CATALOG.malformed, raw: MALFORMED_FORWARDS },
+  injection: { ...FIXTURE_CATALOG.injection, raw: INJECTION_FORWARDS },
 };
 
 export interface ReceivedInbound {
