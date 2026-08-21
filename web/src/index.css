@@ -584,7 +584,10 @@ html.dark .logo-mark:not(.logo-mark-on-dark) {
   -webkit-mask-image: radial-gradient(ellipse, #000 58%, transparent 100%);
   mask-image: radial-gradient(ellipse, #000 58%, transparent 100%);
   opacity: 0;
-  animation: hero-film-in 400ms ease-out 1100ms forwards;
+}
+
+.hero-film-stage .mark-film.is-in {
+  animation: hero-film-in 400ms ease-out forwards;
 }
 
 .hero-film-stage .mark-film-still {
@@ -651,7 +654,11 @@ html.dark .logo-mark:not(.logo-mark-on-dark) {
   }
 
   .hero-film-stage .mark-film {
-    animation: hero-film-in 400ms ease-out 1100ms forwards;
+    opacity: 0;
+  }
+
+  .hero-film-stage .mark-film.is-in {
+    animation: hero-film-in 400ms ease-out forwards;
   }
 
   .hero-resolve .cta-row {

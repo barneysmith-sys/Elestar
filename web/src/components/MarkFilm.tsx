@@ -5,6 +5,7 @@ import { reduceMotion } from "../lib/motion"
 
 const SRC = "/elestar-mark.mp4"
 const POSTER = "/elestar-mark.jpg"
+const FILM_IN_MS = 1100
 
 function narrowViewport() {
   return window.matchMedia("(max-width: 640px)").matches
@@ -32,69 +33,144 @@ export default function MarkFilm() {
     el.setAttribute("webkit-playsinline", "true")
     el.loop = false
     el.playbackRate = 1
+    el.defaultPlaybackRate = 1
+    el.preload = "auto"
     el.removeAttribute("autoplay")
 
     let started = false
     let inflight = false
-    let retried = false
+    let visible = false
+    let retries = 0
     let retryTimer = 0
+    let startTimer = 0
+    const clock = performance.now()
     const hero = document.getElementById("enter") ?? el.closest("section") ?? el
 
-    function kick() {
+    function armInline() {
       el.muted = true
+      el.playsInline = true
+      el.loop = false
+      el.playbackRate = 1
+    }
+
+    function toStart() {
+      if (el.currentTime !== 0) el.currentTime = 0
+    }
+
+    function reveal() {
+      el.classList.add("is-in")
+    }
+
+    function kick() {
+      armInline()
+      toStart()
       const play = el.play()
       if (!play) {
         started = true
         inflight = false
+        reveal()
         io.disconnect()
         return
       }
       void play
         .then(() => {
+          el.playbackRate = 1
+          el.loop = false
+          if (el.currentTime > 0.2) el.currentTime = 0
           started = true
           inflight = false
+          reveal()
           io.disconnect()
         })
         .catch(() => {
           inflight = false
-          if (retried) {
-            started = false
-            return
-          }
-          retried = true
+          el.classList.remove("is-in")
+          if (retries >= 8) return
+          retries += 1
           const again = () => {
             inflight = true
             kick()
           }
           if (el.readyState >= 2) {
-            retryTimer = window.setTimeout(again, 160)
+            retryTimer = window.setTimeout(again, 180)
           } else {
             el.addEventListener("canplay", again, { once: true })
-            el.load()
+            try {
+              el.load()
+            } catch {
+              retryTimer = window.setTimeout(again, 240)
+            }
           }
         })
     }
 
     function tryPlay() {
-      if (started || inflight) return
+      if (started || inflight || !visible) return
+      const wait = Math.max(0, FILM_IN_MS - (performance.now() - clock))
+      if (wait > 16) {
+        window.clearTimeout(startTimer)
+        startTimer = window.setTimeout(() => {
+          if (started || inflight || !visible) return
+          inflight = true
+          kick()
+        }, wait)
+        return
+      }
       inflight = true
       kick()
+    }
+
+    function see() {
+      visible = true
+      tryPlay()
+    }
+
+    function paintStart() {
+      if (started || inflight || !el.paused) return
+      toStart()
+    }
+
+    el.addEventListener("loadeddata", paintStart)
+    el.addEventListener("loadedmetadata", paintStart)
+    try {
+      el.load()
+    } catch {
+      /* preload=auto still fetches from frame 0 */
     }
 
     const io = new IntersectionObserver(
       ([entry]) => {
         if (!entry?.isIntersecting) return
-        tryPlay()
+        see()
       },
       { threshold: narrowViewport() ? 0.02 : 0.4 },
     )
-
     io.observe(hero)
-    if (onScreen(hero)) tryPlay()
+    if (onScreen(hero)) see()
+
+    const retryOnWake = () => {
+      if (started || document.visibilityState === "hidden") return
+      tryPlay()
+    }
+    document.addEventListener("visibilitychange", retryOnWake)
+    window.addEventListener("pageshow", retryOnWake)
+    hero.addEventListener("pointerdown", retryOnWake)
 
     return () => {
       io.disconnect()
       window.clearTimeout(retryTimer)
+      window.clearTimeout(startTimer)
+      el.removeEventListener("loadeddata", paintStart)
+      el.removeEventListener("loadedmetadata", paintStart)
+      document.removeEventListener("visibilitychange", retryOnWake)
+      window.removeEventListener("pageshow", retryOnWake)
+      hero.removeEventListener("pointerdown", retryOnWake)
+      try {
+        el.pause()
+      } catch {
+        /* unmount */
+      }
+      el.classList.remove("is-in")
     }
   }, [still])
 
@@ -110,7 +186,7 @@ export default function MarkFilm() {
       poster={POSTER}
       muted
       playsInline
-      preload="none"
+      preload="auto"
       aria-hidden="true"
       {...{ "webkit-playsinline": "true" }}
     />
