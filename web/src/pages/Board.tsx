@@ -2,9 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import AppNav from "../components/AppNav";
-import Seal from "../components/Seal";
+import DepthGlyph from "../components/DepthGlyph";
 import VerifyRound from "../components/VerifyRound";
 import { fetchCircuit, requestIntro } from "../elestar-api";
+import { publicRoundLabel, roundKind } from "../lib/rounds";
 import { useRouter } from "../router";
 import type { DossierRecord } from "../../../lib/records";
 import { describeEmployer, describeScope, furthestRoundLabel, TIER_MEANING } from "../../../lib/records";
@@ -17,12 +18,6 @@ function recencyLabel(iso: string): string {
   if (days < 7) return "this week";
   if (days < 45) return "recent";
   return "";
-}
-
-function paperTone(id: string): { hue: number; height: number } {
-  let n = 0;
-  for (const c of id) n = (n * 33 + c.charCodeAt(0)) >>> 0;
-  return { hue: n % 360, height: 160 + (n % 140) };
 }
 
 function RecordModal({
@@ -116,35 +111,33 @@ function PinCard({
   record: DossierRecord;
   onOpen: () => void;
 }) {
-  const tone = paperTone(record.id);
+  const round = furthestRoundLabel(record.parsed);
+  const kind = roundKind(round);
   return (
-    <article className="relative mb-3 break-inside-avoid group">
+    <li className="wall-card">
       <button type="button" onClick={onOpen} className="block w-full text-left">
-        <div className="relative overflow-hidden" style={{ background: `hsl(${tone.hue} 14% 78%)`, height: tone.height }}>
-          <div className="absolute inset-0 opacity-40" style={{ background: "linear-gradient(160deg, transparent, rgba(21,34,56,.28))" }} />
-          <Seal tier={record.tier} size={40} side="left" />
-          <div className="absolute bottom-0 left-0 right-0 p-3">
-            <div className="flex flex-wrap gap-1">
-              {record.parsed.competencies.slice(0, 3).map((c) => (
-                <span key={c.name} className="font-mono text-[9px] uppercase tracking-wide px-1.5 py-0.5 text-white border border-white/30 bg-white/10">
-                  {c.name}
-                </span>
-              ))}
-            </div>
+        <div className="work-field" aria-hidden="true">
+          <div className="work-field-grain" />
+        </div>
+        <dl className="record record-tight">
+          <div className="record-row">
+            <dt className="type-label">Company</dt>
+            <dd className="type-value">{describeEmployer(record.parsed)}</dd>
           </div>
-        </div>
-        <div className="pt-2.5 px-0.5">
-          <p className="font-display font-normal text-[15px] truncate leading-tight" style={{ color: "var(--navy)" }}>{record.id}</p>
-          <p className="font-mono text-[10px] truncate uppercase tracking-[0.08em]" style={{ color: "var(--muted-foreground)" }}>
-            {describeEmployer(record.parsed)}
-          </p>
-          <p className="font-mono text-[10px] mt-1.5 truncate" style={{ color: "var(--ink-3)" }}>
-            {furthestRoundLabel(record.parsed)} · {record.parsed.roundsCleared} rounds cleared
-            {record.demo ? " · demo" : ""} · {record.evidence}
-          </p>
-        </div>
+          <div className="record-row">
+            <dt className="type-label">Round</dt>
+            <dd className="type-value wall-round">
+              <DepthGlyph kind={kind} />
+              <span>{publicRoundLabel(round)}</span>
+            </dd>
+          </div>
+        </dl>
+        <p className="type-caption" style={{ marginTop: 8 }}>
+          {record.tier}
+          {record.demo ? " · demo" : ""} · {record.evidence}
+        </p>
       </button>
-    </article>
+    </li>
   );
 }
 
@@ -192,15 +185,15 @@ export default function Board() {
   }, [records, committed, filter]);
 
   return (
-    <div style={{ background: "transparent", color: "var(--foreground)", minHeight: "100dvh" }}>
+    <div className="site" data-page="board">
       <AppNav />
-      <section className="max-w-[1440px] mx-auto px-5 md:px-7 pt-10 pb-6">
-        <h1 className="font-display font-extralight leading-none" style={{ fontSize: "clamp(2.6rem, 6.5vw, 4.8rem)", letterSpacing: "-0.045em", color: "var(--navy)" }}>
-          The wall.
-        </h1>
-        <p className="mt-4 text-[17px] max-w-[46ch]" style={{ color: "var(--muted-foreground)" }}>
-          Anonymous verified loops. Privacy already applied. Confidence is on the record. Identity only after an approved intro.
-        </p>
+      <section className="hero hero-solo">
+        <div className="hero-copy">
+          <h1 className="type-hero">The wall.</h1>
+          <p className="type-lede">
+            Anonymous verified loops. Privacy already applied. Identity only after an approved intro.
+          </p>
+        </div>
       </section>
 
       <div className="sticky z-30 border-y" style={{ top: 58, background: "color-mix(in srgb, var(--background) 88%, transparent)", borderColor: "var(--border)" }}>
@@ -249,14 +242,22 @@ export default function Board() {
         </button>
       </div>
 
-      <main className="max-w-[1440px] mx-auto px-3 sm:px-5 md:px-7 mt-4 mb-[90px] columns-2 sm:columns-3 md:columns-4 xl:columns-5 gap-3">
-        {loading
-          ? Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="break-inside-avoid mb-3 overflow-hidden" style={{ background: "var(--secondary)", height: 180 + ((i * 47) % 140) }} />
-            ))
-          : list.map((record) => (
-              <PinCard key={record.rowId} record={record} onOpen={() => setModal(record)} />
-            ))}
+      <main className="site-section">
+        <div className="wall-scroll">
+          <ul className="wall-grid">
+            {loading
+              ? Array.from({ length: 6 }).map((_, i) => (
+                  <li key={i} className="wall-card">
+                    <div className="work-field" aria-hidden="true">
+                      <div className="work-field-grain" />
+                    </div>
+                  </li>
+                ))
+              : list.map((record) => (
+                  <PinCard key={record.rowId} record={record} onOpen={() => setModal(record)} />
+                ))}
+          </ul>
+        </div>
       </main>
 
       {!loading && !list.length && !error && (

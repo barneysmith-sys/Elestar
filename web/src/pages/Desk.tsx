@@ -69,26 +69,16 @@ function HiringDesk() {
     <div className="max-w-[1400px] mx-auto px-5 md:px-7 pt-10 pb-[90px]">
       <div className="grid lg:grid-cols-[1.05fr_0.95fr] gap-10 lg:gap-16 items-end mb-10">
         <div>
-          <p className="font-mono text-[11px] uppercase tracking-[0.16em] mb-3" style={{ color: "var(--navy)" }}>Desk · Hiring</p>
-          <h1 className="font-display font-extralight leading-none" style={{ fontSize: "clamp(2.6rem, 6.5vw, 4.8rem)", letterSpacing: "-0.045em", color: "var(--navy)" }}>
-            A role in sentences.
-          </h1>
+          <p className="type-label mb-3">Desk · Hiring</p>
+          <h1 className="type-hero">A role in sentences.</h1>
         </div>
-        <p className="text-[16px] leading-relaxed max-w-[42ch]" style={{ color: "var(--muted-foreground)" }}>
+        <p className="type-lede" style={{ marginBottom: 0 }}>
           The desk ranks published anonymous records. Company names are not in the pool. A brief exists only after the candidate approves an intro.
-        </p>
-        <p className="font-mono text-[11px] mt-4 uppercase tracking-[0.12em]" style={{ color: "var(--ink-3)" }}>
-          <a href="/wall" className="mr-4">Wall</a>
-          <a href="/circuit" className="mr-4">Circuit</a>
-          <a href="/signals" className="mr-4">Signals</a>
-          <a href="/intros">Intros</a>
         </p>
       </div>
 
-      <div className="border p-4 md:p-5 mb-8" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
-        <label className="block font-mono text-[10px] uppercase tracking-[0.16em] mb-2" style={{ color: "var(--muted-foreground)" }}>
-          The req
-        </label>
+      <div className="desk-compose mb-8">
+        <label className="block type-label mb-2">The req</label>
         <textarea
           value={role}
           onChange={(e) => setRole(e.target.value)}
@@ -103,8 +93,7 @@ function HiringDesk() {
           <button
             type="button"
             onClick={() => void run()}
-            className="ml-auto font-mono text-[11px] uppercase tracking-[0.12em] px-4 py-2.5 text-[var(--primary-foreground)] active:translate-y-px active:scale-[0.99]"
-            style={{ background: "var(--navy)" }}
+            className="btn ml-auto"
           >
             {phase === "reading" ? "Reading the wall" : "Read the wall"}
           </button>
@@ -220,10 +209,8 @@ function ListingDesk() {
     <div className="max-w-[1400px] mx-auto px-5 md:px-7 pt-10 pb-[90px]">
       <div className="grid lg:grid-cols-[1.05fr_0.95fr] gap-10 lg:gap-16 items-end mb-10">
         <div>
-          <p className="font-mono text-[11px] uppercase tracking-[0.16em] mb-3" style={{ color: "var(--navy)" }}>Desk · Candidate</p>
-          <h1 className="font-display font-extralight leading-none" style={{ fontSize: "clamp(2.6rem, 6.5vw, 4.8rem)", letterSpacing: "-0.045em", color: "var(--navy)" }}>
-            Two paragraphs. Not a form.
-          </h1>
+          <p className="type-label mb-3">Desk · Candidate</p>
+          <h1 className="type-hero">Two paragraphs. Not a form.</h1>
         </div>
         <p className="text-[16px] leading-relaxed max-w-[42ch]" style={{ color: "var(--muted-foreground)" }}>
           Notes help the parser. Publication still requires forwarded mail at {PROVE_INBOX}. This desk runs the real pipeline, including privacy audit.

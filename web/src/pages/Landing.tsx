@@ -14,7 +14,7 @@ import { wallPeople } from "../data"
 const WALL_COUNT = wallPeople().length
 
 export default function Landing() {
-  const { signIn } = useRouter()
+  const { navigate } = useRouter()
 
   useEffect(() => {
     const hash = window.location.hash.replace(/^#/, "")
@@ -89,7 +89,7 @@ export default function Landing() {
             <h2 className="type-section">You sat the rounds.</h2>
             <p className="type-lede">Forward one email. The company and the round go on your profile. The result does not.</p>
             <p className="type-label fork-flag">Free for candidates, always</p>
-            <button type="button" className="btn" onClick={() => signIn("creative")}>
+            <button type="button" className="btn" onClick={() => navigate("candidates")}>
               <span className="ink-resolve">I have interviews to prove</span>
             </button>
           </article>
@@ -97,7 +97,7 @@ export default function Landing() {
             <h2 className="type-section">You run the loop.</h2>
             <p className="type-lede">A round another company already ran is a round you can skip.</p>
             <p className="type-caption fork-flag">Access is open while the wall is 10. Price not set.</p>
-            <button type="button" className="btn" onClick={() => signIn("firm")}>
+            <button type="button" className="btn" onClick={() => navigate("hiring")}>
               <span className="ink-resolve">I'm hiring</span>
             </button>
           </article>
