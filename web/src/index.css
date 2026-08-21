@@ -474,8 +474,10 @@ html.dark .logo-mark:not(.logo-mark-on-dark) {
 .hero-resolve {
   position: relative;
   max-width: none;
+  height: calc(100vh - var(--nav-h));
   height: calc(100svh - var(--nav-h));
-  min-height: 0;
+  min-height: calc(100vh - var(--nav-h));
+  min-height: calc(100svh - var(--nav-h));
   display: flex;
   flex-direction: column;
   padding: 12px 0 16px;
@@ -625,6 +627,33 @@ html.dark .logo-mark:not(.logo-mark-on-dark) {
 }
 
 @media (max-width: 640px) {
+  .hero-resolve {
+    height: calc(100vh - var(--nav-h));
+    height: calc(100svh - var(--nav-h));
+    min-height: calc(100vh - var(--nav-h));
+    min-height: calc(100svh - var(--nav-h));
+  }
+
+  .hero-resolve-stack {
+    height: 100%;
+    min-height: 0;
+    grid-template-rows: auto auto minmax(160px, 1fr) auto auto;
+  }
+
+  .hero-film-stage {
+    height: 100%;
+    min-height: 160px;
+  }
+
+  .hero-film-frame {
+    min-width: 80px;
+    min-height: 52px;
+  }
+
+  .hero-film-stage .mark-film {
+    animation: hero-film-in 400ms ease-out 1100ms forwards;
+  }
+
   .hero-resolve .cta-row {
     flex-direction: row;
     flex-wrap: wrap;
@@ -643,11 +672,20 @@ html.dark .logo-mark:not(.logo-mark-on-dark) {
 @media (max-width: 480px) {
   .hero-resolve {
     padding: 8px 0 12px;
+    height: calc(100vh - var(--nav-h));
+    height: calc(100svh - var(--nav-h));
+    min-height: calc(100vh - var(--nav-h));
+    min-height: calc(100svh - var(--nav-h));
   }
 
   .hero-resolve-stack {
     gap: 6px;
     width: min(94vw, 1040px);
+    grid-template-rows: auto auto minmax(140px, 1fr) auto auto;
+  }
+
+  .hero-film-stage {
+    min-height: 140px;
   }
 
   .hero-title {
