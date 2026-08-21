@@ -47,6 +47,7 @@ export default function Access() {
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
+    if (accounts === false) return
     setError(null)
     setBusy(true)
     try {
@@ -62,12 +63,9 @@ export default function Access() {
   }
 
   return (
-    <div className="min-h-[100dvh] grid lg:grid-cols-[1.05fr_0.95fr]" style={{ background: "var(--stock)", color: "var(--ink)" }}>
-      <div
-        className="relative hidden lg:flex items-center justify-center p-8 xl:p-10 border-r"
-        style={{ borderColor: "var(--rule)", background: "var(--stock)" }}
-      >
-        <div className="panel w-full max-w-[440px]">
+    <div className="access-stage">
+      <div className="access-exhibit">
+        <div className="access-lockup">
           <ResolveCanvas />
           <ResolveRecord />
         </div>

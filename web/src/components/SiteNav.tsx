@@ -2,17 +2,25 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import Logo from "../brand"
 import { useRouter } from "../router"
 import DotIcon from "./DotIcon"
 
 const LINKS = [
-  { label: "Candidates", href: "/candidates", intent: "creative" as const },
-  { label: "Hiring", href: "/hiring", intent: "firm" as const },
+  { label: "Candidates", href: "/candidates" },
+  { label: "Hiring", href: "/hiring" },
+]
+
+const MENU_LINKS = [
+  ...LINKS,
+  { label: "The Wall", href: "/wall" },
+  { label: "Desk", href: "/desk" },
 ]
 
 export default function SiteNav() {
   const { signedIn, setWallView } = useRouter()
+  const pathname = usePathname() ?? "/"
   const [open, setOpen] = useState(false)
 
   useEffect(() => {
@@ -37,6 +45,7 @@ export default function SiteNav() {
               key={link.label}
               href={link.href}
               className="type-nav"
+              data-active={pathname.startsWith(link.href) ? "" : undefined}
             >
               {link.label}
             </Link>
@@ -65,7 +74,7 @@ export default function SiteNav() {
             aria-controls="site-menu"
             onClick={() => setOpen((v) => !v)}
           >
-            <span className="type-label">{open ? "Close" : "Menu"}</span>
+            <span className="type-label">{open ? "Close" : "MENU"}</span>
             <DotIcon name={open ? "close" : "menu"} />
           </button>
         </div>
@@ -74,7 +83,7 @@ export default function SiteNav() {
       {open ? (
         <nav id="site-menu" className="site-nav-mobile" aria-label="Menu">
           <dl className="record">
-            {LINKS.map((link) => (
+            {MENU_LINKS.map((link) => (
               <div key={link.label} className="record-row">
                 <dt className="type-label">Go</dt>
                 <dd>

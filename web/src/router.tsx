@@ -33,6 +33,7 @@ type RouterCtx = {
   signedIn: boolean;
   email: string | null;
   applySession: (session: AuthSession) => void;
+  enterProduct: (role?: Role) => void;
   signIn: (role: Role) => void;
   signOut: () => void;
   intent: Role;
@@ -137,7 +138,13 @@ export function RouterProvider({ children }: { children: ReactNode }) {
       const nextRole: Role =
         session.role === "candidate" ? "creative" : session.role === "employer" ? "firm" : intent;
       setMode(nextRole);
-      nextRouter.push(nextRole === "creative" ? "/verify" : "/search");
+      nextRouter.push(nextRole === "creative" ? "/wall" : "/desk");
+    },
+    enterProduct: (nextRole) => {
+      const next = nextRole ?? mode;
+      setMode(next);
+      setIntent(next);
+      nextRouter.push(next === "creative" ? "/wall" : "/desk");
     },
     signIn: (role) => {
       setMode(role);

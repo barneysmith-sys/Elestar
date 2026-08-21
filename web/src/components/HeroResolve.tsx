@@ -6,7 +6,7 @@ import HeroField from "./HeroField"
 import MarkFilm from "./MarkFilm"
 
 export default function HeroResolve() {
-  const { signIn } = useRouter()
+  const { navigate } = useRouter()
   const still = reduceMotion()
 
   return (
@@ -27,10 +27,10 @@ export default function HeroResolve() {
           </div>
         </div>
         <div className="cta-row hero-ctas">
-          <button type="button" className="btn" onClick={() => signIn("creative")}>
+          <button type="button" className="btn" onClick={() => navigate("candidates")}>
             <span className="ink-resolve">I have interviews to prove</span>
           </button>
-          <button type="button" className="btn" onClick={() => signIn("firm")}>
+          <button type="button" className="btn" onClick={() => navigate("hiring")}>
             <span className="ink-resolve">I'm hiring</span>
           </button>
         </div>

@@ -403,12 +403,10 @@ html.dark .logo-mark:not(.logo-mark-on-dark) {
 }
 
 .site-nav-desk {
-  display: none;
+  display: flex;
   align-items: center;
   gap: 22px;
   min-width: 0;
-  overflow-x: auto;
-  scrollbar-width: none;
 }
 
 .site-nav-desk::-webkit-scrollbar {
@@ -439,9 +437,9 @@ html.dark .logo-mark:not(.logo-mark-on-dark) {
   background: color-mix(in srgb, var(--stock) 94%, transparent);
 }
 
-@media (min-width: 768px) {
+@media (max-width: 639px) {
   .site-nav-desk {
-    display: flex;
+    display: none;
   }
 }
 
@@ -769,9 +767,6 @@ html.dark .xerox-field img {
 }
 
 @media (max-width: 480px) {
-  .site-nav-account {
-    display: none;
-  }
   .logo {
     height: 22px !important;
   }
@@ -1785,8 +1780,39 @@ html.dark .land-field img {
   .hero-actions { opacity: 1; pointer-events: auto; }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .fade-in {
-    animation: fade-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+.access-stage {
+  min-height: 100dvh;
+  display: grid;
+  background: var(--stock);
+  color: var(--ink);
+}
+
+.access-exhibit {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 28px;
+  border-right: 1px solid var(--rule);
+  background: var(--stock);
+}
+
+.access-lockup {
+  width: 100%;
+  max-width: 440px;
+}
+
+@media (min-width: 1024px) {
+  .access-stage {
+    grid-template-columns: 1.05fr 0.95fr;
   }
+  .access-exhibit {
+    display: flex;
+  }
+}
+
+.desk-compose {
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  padding: 20px 0;
+  background: transparent;
 }
