@@ -14,6 +14,7 @@ const LINKS = [
 
 const MENU_LINKS = [
   ...LINKS,
+  { label: "Verify", href: "/verify" },
   { label: "The Wall", href: "/wall" },
   { label: "Desk", href: "/desk" },
 ]
@@ -53,14 +54,19 @@ export default function SiteNav() {
         </nav>
 
         <div className="site-nav-end">
-          {signedIn ? (
-            <button
-              type="button"
-              className="type-nav site-nav-account"
-              onClick={() => setWallView("desk")}
-            >
-              Desk
-            </button>
+        {signedIn ? (
+            <>
+              <Link href="/verify" className="type-nav site-nav-account">
+                Verify
+              </Link>
+              <button
+                type="button"
+                className="type-nav site-nav-account"
+                onClick={() => setWallView("desk")}
+              >
+                Desk
+              </button>
+            </>
           ) : (
             <Link href="/signup" className="type-nav site-nav-account">
               Sign in

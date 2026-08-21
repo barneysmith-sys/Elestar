@@ -180,6 +180,9 @@ async function main() {
     publishedId = done?.recordId ?? null;
 
     const receive = settled(run.messages, "receive");
+    const parseMail = settled(run.messages, "parse_mail");
+    check("parse_mail reports a seal from headers", parseMail?.data?.auth?.sealHolds === true, parseMail?.data?.auth);
+    check("canonical seal is pass/pass/pass", parseMail?.data?.auth?.spf === "pass" && parseMail?.data?.auth?.dkim === "pass", parseMail?.data?.auth);
     check("receive is at prove@elestar.ai", receive?.data?.arrival?.to === "prove@elestar.ai", receive?.data);
     check("canonical run is labelled a simulation", receive?.data?.arrival?.simulation === true, receive?.data);
     const plan = settled(run.messages, "plan");

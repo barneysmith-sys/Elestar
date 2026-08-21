@@ -3,30 +3,41 @@ import { createSupabaseRequestClient } from "../../../lib/supabaseServer";
 import { persistOwnProfile } from "../../../lib/accountStore";
 import { parseAccountRole } from "../../../lib/account";
 import { originFromRequest } from "../../../lib/siteUrl";
+import type { EmailOtpType } from "@supabase/supabase-js";
 
 export const dynamic = "force-dynamic";
 
-/**
- * PKCE return from the confirmation email.
- * The Site URL used to be localhost, so the code landed on `/`. Middleware
- * forwards that here without touching the landing page.
- */
+const OTP_TYPES: EmailOtpType[] = ["signup", "invite", "magiclink", "recovery", "email_change", "email"];
+
+function destination(role: ReturnType<typeof parseAccountRole>, next: string | null): string {
+  if (next) return next;
+  return role === "candidate" ? "/verify" : "/desk";
+}
+
 export async function GET(request: NextRequest): Promise<Response> {
   const origin = originFromRequest(request);
   const code = request.nextUrl.searchParams.get("code");
+  const tokenHash = request.nextUrl.searchParams.get("token_hash");
+  const type = request.nextUrl.searchParams.get("type");
   const nextParam = request.nextUrl.searchParams.get("next");
   const next = nextParam && nextParam.startsWith("/") && !nextParam.startsWith("//") ? nextParam : null;
-
-  if (!code) {
-    return NextResponse.redirect(`${origin}/signup?mode=signin&reason=missing-code`);
-  }
 
   const supabase = await createSupabaseRequestClient();
   if (!supabase) {
     return NextResponse.redirect(`${origin}/signup?mode=signin&reason=auth-offline`);
   }
 
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  let error: { message: string } | null = null;
+  if (code) {
+    const exchanged = await supabase.auth.exchangeCodeForSession(code);
+    error = exchanged.error;
+  } else if (tokenHash && type && OTP_TYPES.includes(type as EmailOtpType)) {
+    const verified = await supabase.auth.verifyOtp({ type: type as EmailOtpType, token_hash: tokenHash });
+    error = verified.error;
+  } else {
+    return NextResponse.redirect(`${origin}/signup?mode=signin&reason=missing-code`);
+  }
+
   if (error) {
     return NextResponse.redirect(`${origin}/signup?mode=signin&reason=confirm-failed`);
   }
@@ -44,6 +55,5 @@ export async function GET(request: NextRequest): Promise<Response> {
     }
   }
 
-  const dest = next ?? (role === "candidate" ? "/wall" : "/desk");
-  return NextResponse.redirect(`${origin}${dest}`);
+  return NextResponse.redirect(`${origin}${destination(role, next)}`);
 }

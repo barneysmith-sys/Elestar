@@ -1,16 +1,19 @@
 "use client"
 
+import { useRouter as useNextRouter } from "next/navigation"
 import { useRouter } from "../router"
 import RecordRows from "../components/RecordRows"
 import SiteShell from "../components/SiteShell"
 import UnresolvedField from "../components/UnresolvedField"
 
 export default function Candidates() {
-  const { navigate, setIntent } = useRouter()
+  const { navigate, setIntent, signedIn } = useRouter()
+  const nextRouter = useNextRouter()
 
   const prove = () => {
     setIntent("creative")
-    navigate("signup")
+    if (signedIn) nextRouter.push("/verify")
+    else navigate("signup")
   }
 
   return (
@@ -39,15 +42,15 @@ export default function Candidates() {
           rows={[
             {
               label: "01",
-              value: "Name the interview. Company, role, date, farthest round.",
+              value: "Forward the original recruiter email as an attachment to prove@elestar.ai, or drop the .eml on Verify.",
             },
             {
               label: "02",
-              value: "Forward the original as an attachment, or drop the .eml file. A normal forward breaks the signature.",
+              value: "The pipeline reads SPF, DKIM, and DMARC from that original. A missing seal is unknown, never assumed pass.",
             },
             {
               label: "03",
-              value: "If the seal holds, two facts post. That is the whole public record.",
+              value: "If the seal holds, company and farthest round publish. The outcome stays off the profile.",
             },
           ]}
         />
@@ -59,6 +62,7 @@ export default function Candidates() {
           rows={[
             { label: "Company", value: "The firm that sent the mail." },
             { label: "Round", value: "The farthest round you sat, named in plain language." },
+            { label: "Seal", value: "spf / dkim / dmarc as they appeared on the original mail." },
             { label: "Work", value: "The portfolio you already made. That sits first." },
           ]}
         />

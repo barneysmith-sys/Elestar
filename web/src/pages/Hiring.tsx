@@ -77,8 +77,8 @@ export default function Hiring() {
         <RecordRows
           rows={[
             { label: "01", value: "Open the wall. Work first." },
-            { label: "02", value: "Open the person. Company and farthest round sit next to the work." },
-            { label: "03", value: "Skip that round in your loop. You still run chemistry and the decision conversation." },
+            { label: "02", value: "Hire Scout ranks published records with the same match reasoner, then places them on the Circuit from overlapping evidence." },
+            { label: "03", value: "Skip suggestions name only rounds already on the record. A brief exists only after they approve an intro." },
           ]}
         />
       </section>

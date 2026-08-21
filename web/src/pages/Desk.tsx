@@ -10,7 +10,10 @@ import { InterviewBriefView } from "../components/InterviewBriefView";
 import type { AnnotatedBrief } from "../../../lib/reasoners/brief";
 import type { MatchResult } from "../../../src/types";
 import { FIXTURE_CATALOG, FIXTURE_IDS, type FixtureId } from "../../../lib/ingest/fixtureCatalog";
-import { STEP_TITLE, type IdentifyStepData, type PipelineMessage, type PublishStepData } from "../../../lib/pipelineWire";
+import { STEP_TITLE, type AuditStepData, type IdentifyStepData, type MatchStepData, type ParseMailStepData, type PipelineMessage, type PipelineStep, type PublishStepData, type ResearchStepData, type StepMessage } from "../../../lib/pipelineWire";
+import { PipelineRail } from "../components/PipelineRail";
+import { MailAuthPanel } from "../components/MailAuthPanel";
+import { PipelineEvidence } from "../components/PipelineEvidence";
 
 const SAMPLE_ROLE = "Senior backend engineer. Distributed systems, API design, and production ownership at a Series B or later company.";
 
@@ -26,8 +29,10 @@ function HiringDesk() {
   const { showToast } = useRouter();
   const [role, setRole] = useState(SAMPLE_ROLE);
   const [phase, setPhase] = useState<"compose" | "reading" | "list">("compose");
-  const [matches, setMatches] = useState<{ match: MatchResult; record: DossierRecord }[]>([]);
+  const [matches, setMatches] = useState<{ match: MatchResult; record: DossierRecord; alreadySampled?: string[]; stillUnknown?: string[] }[]>([]);
   const [engineLabel, setEngineLabel] = useState("");
+  const [scoutStages, setScoutStages] = useState<Partial<Record<PipelineStep, { message: StepMessage }>>>({});
+  const [scoutActive, setScoutActive] = useState<PipelineStep | null>(null);
   const [active, setActive] = useState<string | null>(null);
   const [brief, setBrief] = useState<AnnotatedBrief | null>(null);
   const [briefError, setBriefError] = useState<string | null>(null);
@@ -43,17 +48,21 @@ function HiringDesk() {
     setBriefError(null);
     setError(null);
     setScoutLine("Reading the role…");
+    setScoutStages({});
+    setScoutActive(null);
     try {
-      const next: { match: MatchResult; record: DossierRecord }[] = [];
+      const next: { match: MatchResult; record: DossierRecord; alreadySampled?: string[]; stillUnknown?: string[] }[] = [];
       let label = "";
       const stream = await startScout(role.trim());
       await readSse(stream, (msg: PipelineMessage) => {
         if (msg.kind === "meta") label = msg.engineLabel;
         if (msg.kind === "step") {
           setScoutLine(msg.message);
+          setScoutActive(msg.status === "running" ? msg.step : null);
+          setScoutStages((prev) => ({ ...prev, [msg.step]: { message: msg } }));
           if (msg.step === "match" && msg.status === "ok") {
             const data = msg.data as {
-              results?: { match: MatchResult; record: DossierRecord }[];
+              results?: { match: MatchResult; record: DossierRecord; alreadySampled?: string[]; stillUnknown?: string[] }[];
             } | undefined;
             next.length = 0;
             next.push(...(data?.results ?? []));
@@ -63,6 +72,7 @@ function HiringDesk() {
       setMatches(next);
       setEngineLabel(label);
       setActive(next[0]?.record.id ?? null);
+      setScoutActive(null);
       setPhase("list");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Search failed.");
@@ -123,6 +133,13 @@ function HiringDesk() {
 
       {error && <p className="font-mono text-[12px] mb-6">{error}</p>}
 
+      {phase === "reading" && (
+        <div className="border p-6 md:p-8 mb-8" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+          <p className="type-label mb-4">Hire Scout</p>
+          <PipelineRail stages={scoutStages} active={scoutActive} compact />
+        </div>
+      )}
+
       {phase === "list" && (
         <div className="grid lg:grid-cols-[0.92fr_1.08fr] gap-8 lg:gap-10">
           <div>
@@ -179,6 +196,16 @@ function HiringDesk() {
                   {describeEmployer(row.record.parsed)}
                 </p>
                 <p className="text-[15px] leading-relaxed mb-6" style={{ color: "var(--muted-foreground)" }}>{row.match.rationale}</p>
+                {row.alreadySampled && row.alreadySampled.length > 0 && (
+                  <p className="text-[14px] mb-4" style={{ color: "var(--muted-foreground)" }}>
+                    Already sampled on the record: {row.alreadySampled.join(" · ")}
+                  </p>
+                )}
+                {row.stillUnknown && row.stillUnknown.length > 0 && (
+                  <p className="text-[14px] mb-6" style={{ color: "var(--muted-foreground)" }}>
+                    Still untested: {row.stillUnknown.join(" · ")}
+                  </p>
+                )}
                 {row.match.gaps.length > 0 && (
                   <p className="text-[14px] mb-6" style={{ color: "var(--muted-foreground)" }}>Gap on this req: {row.match.gaps.join(" ")}</p>
                 )}
@@ -217,13 +244,14 @@ function HiringDesk() {
 
 function ListingDesk() {
   const { showToast, setWallView } = useRouter();
-  const { running, meta, stages, questions, done, error, run, answer } = usePipeline();
+  const { running, meta, stages, active, questions, done, error, run, answer } = usePipeline();
   const [text, setText] = useState("");
   const [fixture, setFixture] = useState<FixtureId>("canonical");
   const [answers, setAnswers] = useState<Record<string, string>>({});
 
   const parsed = (stages.identify?.message.data as IdentifyStepData | undefined)?.parsed ?? null;
   const published = (stages.publish?.message.data as PublishStepData | undefined)?.record;
+  const mail = stages.parse_mail?.message.data as ParseMailStepData | undefined;
   const visible = useMemo(() => Object.keys(stages), [stages]);
 
   return (
@@ -310,16 +338,18 @@ function ListingDesk() {
         </div>
 
         <div>
+          <PipelineRail stages={stages} active={active} done={done ?? undefined} questions={Boolean(questions && !done)} error={error} compact />
+          <MailAuthPanel auth={mail?.auth} />
+          <PipelineEvidence
+            identify={stages.identify?.message.data as IdentifyStepData | undefined}
+            research={stages.research?.message.data as ResearchStepData | undefined}
+            match={stages.match?.message.data as MatchStepData | undefined}
+            audit={stages.audit?.message.data as AuditStepData | undefined}
+          />
           {!parsed && !done && !error && (
-            <div className="border border-dashed p-6 md:p-8 min-h-[280px]" style={{ borderColor: "var(--border-2)" }}>
-              <p className="font-mono text-[10px] uppercase tracking-[0.16em] mb-4" style={{ color: "var(--ink-3)" }}>Pipeline</p>
-              <p className="font-display font-normal text-[26px] leading-[1.1] mb-3" style={{ color: "var(--navy)", letterSpacing: "-0.03em" }}>
-                Nothing is issued until verification finishes.
-              </p>
-              <p className="text-[15px] leading-relaxed" style={{ color: "var(--muted-foreground)" }}>
-                {visible.map((step) => STEP_TITLE[step as keyof typeof STEP_TITLE] ?? step).join(" → ") || "Waiting for inbound."}
-              </p>
-            </div>
+            <p className="font-mono text-[11px] mt-4" style={{ color: "var(--ink-3)" }}>
+              {visible.map((step) => STEP_TITLE[step as keyof typeof STEP_TITLE] ?? step).join(" → ") || "Waiting for inbound."}
+            </p>
           )}
           {error && <p className="text-[14px] mb-4">{error}</p>}
           {(parsed || done) && (

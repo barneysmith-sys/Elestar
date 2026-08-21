@@ -86,7 +86,9 @@ export function splitForwardedMessages(raw: string): string[] {
   const chunks = text.split(
     /\n(?=From:\s)|-{5,}\s*\n(?:Begin forwarded message:?\s*\n)?|\n-{3,} Forwarded message -{3,}\n/i,
   );
-  return chunks.map((c) => c.trim()).filter((c) => c.length > 0);
+  return chunks
+    .map((c) => c.trim())
+    .filter((c) => c.length > 0 && /^From:\s/im.test(c));
 }
 
 function header(block: string, name: string): string | null {

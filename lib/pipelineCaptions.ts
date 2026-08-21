@@ -36,8 +36,12 @@ export function productCaption(step: PipelineStep, message: StepMessage | undefi
   switch (step) {
     case "receive":
       return message.message;
-    case "parse_mail":
+    case "parse_mail": {
+      const d = data as { lastReachedLabel?: string | null; auth?: { sealHolds?: boolean; summary?: string } } | undefined;
+      if (d?.auth?.sealHolds) return `Seal holds · ${d.lastReachedLabel ?? "rounds parsed"}`;
+      if (d?.auth?.summary) return d.auth.summary;
       return message.message;
+    }
     case "identify": {
       const d = data as IdentifyStepData | undefined;
       if (!d?.recruiterDomain) return "No company domain on the mail";

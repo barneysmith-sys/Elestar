@@ -4,11 +4,12 @@ import { useEffect, useState } from "react";
 import AppNav from "../components/AppNav";
 import { fetchStatus, PROVE_INBOX } from "../elestar-api";
 import { usePipeline } from "../usePipeline";
-import { type AuditStepData, type IdentifyStepData, type MatchStepData, type PublishStepData, type ResearchStepData } from "../../../lib/pipelineWire";
+import { type AuditStepData, type IdentifyStepData, type MatchStepData, type ParseMailStepData, type PublishStepData, type ResearchStepData } from "../../../lib/pipelineWire";
 import { describeEmployer, furthestRoundLabel } from "../../../lib/records";
 import { FIXTURE_CATALOG, FIXTURE_IDS, type FixtureId } from "../../../lib/ingest/fixtureCatalog";
 import { PipelineEvidence } from "../components/PipelineEvidence";
 import { PipelineRail } from "../components/PipelineRail";
+import { MailAuthPanel } from "../components/MailAuthPanel";
 
 export default function Verify() {
   const { running, meta, stages, active, questions, done, error, run, answer } = usePipeline();
@@ -24,6 +25,7 @@ export default function Verify() {
   const research = stages.research?.message.data as ResearchStepData | undefined;
   const match = stages.match?.message.data as MatchStepData | undefined;
   const audit = stages.audit?.message.data as AuditStepData | undefined;
+  const mail = stages.parse_mail?.message.data as ParseMailStepData | undefined;
 
   useEffect(() => {
     void fetchStatus()
@@ -142,6 +144,7 @@ export default function Verify() {
               Waiting for inbound.
             </p>
           )}
+          <MailAuthPanel auth={mail?.auth} />
           <PipelineEvidence
             identify={stages.identify?.message.data as IdentifyStepData | undefined}
             research={research}

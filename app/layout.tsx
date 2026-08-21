@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "../web/src/index.css";
 import { ProductShell } from "../web/src/shell";
+import { AuthReturn } from "../web/src/components/AuthReturn";
 
 const SITE_TITLE = "Elestar — The round happened. Prove it once.";
 const SITE_DESCRIPTION =
@@ -33,7 +34,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body>
-        <ProductShell>{children}</ProductShell>
+        <ProductShell>
+          <AuthReturn />
+          {children}
+        </ProductShell>
       </body>
     </html>
   );

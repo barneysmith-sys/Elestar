@@ -155,6 +155,19 @@ async function authRequest(path: string, body?: unknown): Promise<AuthSession> {
   return json;
 }
 
+export function resendConfirmation(email: string): Promise<{ sent: boolean; email: string }> {
+  return fetch("/api/auth/resend", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ email }),
+  }).then(async (res) => {
+    const json = (await res.json().catch(() => ({}))) as { error?: string; sent?: boolean; email?: string };
+    if (!res.ok) throw new Error(json.error ?? "Could not resend.");
+    return { sent: Boolean(json.sent), email: json.email ?? email };
+  });
+}
+
 export function fetchAuth(): Promise<AuthSession> {
   return authRequest("/api/auth/me");
 }

@@ -6,7 +6,11 @@
  * shows how far the loop actually got.
  */
 
-export const CANONICAL_FORWARDS = `From: Maya Chen <talent@ledgerpay.example>
+export const CANONICAL_FORWARDS = `Authentication-Results: mx.elestar.ai;
+       dkim=pass header.d=ledgerpay.example header.s=selector;
+       spf=pass smtp.mailfrom=talent@ledgerpay.example;
+       dmarc=pass header.from=ledgerpay.example
+From: Maya Chen <talent@ledgerpay.example>
 Date: Mon, 3 Mar 2026 10:12:00 -0500
 Subject: Recruiter screen — Senior Backend Engineer
 

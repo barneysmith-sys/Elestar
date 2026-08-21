@@ -138,7 +138,7 @@ export function RouterProvider({ children }: { children: ReactNode }) {
       const nextRole: Role =
         session.role === "candidate" ? "creative" : session.role === "employer" ? "firm" : intent;
       setMode(nextRole);
-      nextRouter.push(nextRole === "creative" ? "/wall" : "/desk");
+      nextRouter.push(nextRole === "creative" ? "/verify" : "/desk");
     },
     enterProduct: (nextRole) => {
       const next = nextRole ?? mode;

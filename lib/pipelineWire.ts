@@ -136,6 +136,14 @@ export interface ParseMailStepData {
   removed: { kind: string; count: number }[];
   spans: RedactionSpan[];
   originalLength: number;
+  auth: {
+    spf: "pass" | "fail" | "softfail" | "neutral" | "none" | "unknown";
+    dkim: "pass" | "fail" | "softfail" | "neutral" | "none" | "unknown";
+    dmarc: "pass" | "fail" | "softfail" | "neutral" | "none" | "unknown";
+    source: "authentication-results" | "received-spf" | "dkim-signature" | "absent";
+    sealHolds: boolean;
+    summary: string;
+  };
 }
 
 export interface IdentifyStepData {

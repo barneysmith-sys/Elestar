@@ -6,7 +6,7 @@ import { useRouter, type Role } from "../router"
 import Logo from "../brand"
 import ResolveCanvas from "../components/ResolveCanvas"
 import ResolveRecord from "../components/ResolveRecord"
-import { createAccount, fetchAuth, signInAccount } from "../elestar-api"
+import { createAccount, fetchAuth, resendConfirmation, signInAccount } from "../elestar-api"
 
 export default function Access() {
   const { intent, setIntent, applySession, navigate } = useRouter()
@@ -90,16 +90,34 @@ export default function Access() {
           {pendingEmail ? (
             <>
               <p className="type-lede" style={{ marginTop: 22 }}>
-                Account created. Confirm <span className="font-mono">{pendingEmail}</span>. The link
-                returns you to Elestar signed in — not to localhost.
+                Account created. Confirm <span className="font-mono">{pendingEmail}</span>. The
+                link returns you to Elestar signed in. After that, candidates land on Verify
+                with the live email pipeline.
               </p>
               <button
                 type="button"
                 className="btn btn-fill w-full mt-6"
+                disabled={busy}
+                onClick={() => {
+                  setBusy(true);
+                  void resendConfirmation(pendingEmail)
+                    .then(() => setError("Another confirmation email is on the way."))
+                    .catch((err: unknown) => setError(err instanceof Error ? err.message : "Could not resend."))
+                    .finally(() => setBusy(false));
+                }}
+              >
+                {busy ? "Sending…" : "Resend confirmation"}
+              </button>
+              <button
+                type="button"
+                className="btn w-full mt-3"
                 onClick={() => { setPendingEmail(null); setMode("signin") }}
               >
                 I already confirmed — sign in
               </button>
+              {error ? (
+                <p className="type-caption mt-3" style={{ color: "var(--ink)" }}>{error}</p>
+              ) : null}
             </>
           ) : (
             <>

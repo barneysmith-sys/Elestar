@@ -16,6 +16,7 @@ import { cohortCount, insertDossier, insertProcess, listPublishedDossiers } from
 import { assertNoRecruiterEmail, maskEmail, parseRecruiterSignal } from "./verify/email";
 import { addEvidence, emptyLedger, summarise, type EvidenceLedger } from "./evidence";
 import { collectPublicEvidence, MAX_RESEARCH_ATTEMPTS, planResearch, resolveCompany, type ResolvedCompany } from "./verify/resolve";
+import { parseMailAuth } from "./verify/mailAuth";
 import { verificationChecks } from "./verify/types";
 import { logPipeline, newPipelineId } from "./observe";
 import { buildCircuitGraph } from "./circuitGraph";
@@ -191,6 +192,7 @@ export async function* runPipeline(args: RunPipelineArgs): AsyncGenerator<Pipeli
       removed: r.removed,
       spans: r.spans,
       originalLength: sourceText.length,
+      auth: parseMailAuth(sourceText),
     };
     yield emit(
       "parse_mail",

@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { PROVE_INBOX } from "../elestar-api";
 import { usePipeline, OUTCOME_HEADLINE } from "../usePipeline";
-import { STEP_ACTIVITY, STEP_ORDER, STEP_TITLE, type IdentifyStepData, type PublishStepData } from "../../../lib/pipelineWire";
+import { STEP_ACTIVITY, STEP_ORDER, STEP_TITLE, type IdentifyStepData, type ParseMailStepData, type PublishStepData } from "../../../lib/pipelineWire";
+import { MailAuthPanel } from "./MailAuthPanel";
 import { describeEmployer, furthestRoundLabel } from "../../../lib/records";
 import { useRouter } from "../router";
 
@@ -29,6 +30,7 @@ export default function VerifyRound({ open, onClose }: { open: boolean; onClose:
   const started = running || Boolean(meta) || Boolean(done) || Boolean(error) || Boolean(questions);
   const parsed = (stages.identify?.message.data as IdentifyStepData | undefined)?.parsed ?? null;
   const published = (stages.publish?.message.data as PublishStepData | undefined)?.record;
+  const mail = stages.parse_mail?.message.data as ParseMailStepData | undefined;
   const visibleSteps = useMemo(
     () => STEP_ORDER.filter((step) => stages[step] || active === step),
     [stages, active],
@@ -149,6 +151,8 @@ export default function VerifyRound({ open, onClose }: { open: boolean; onClose:
                   </div>
                 );
               })}
+
+              <MailAuthPanel auth={mail?.auth} />
 
               {error && (
                 <p className="mt-2 text-[13px]" style={{ color: "var(--stop, #6b3030)" }}>{error}</p>
