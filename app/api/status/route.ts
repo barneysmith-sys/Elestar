@@ -47,6 +47,8 @@ export async function GET(): Promise<Response> {
       "Forwarded-mail ingest at prove@elestar.ai (lib/ingest/inbound.ts)",
       "Recruiter-email isolation (lib/verify/email.ts assertNoRecruiterEmail)",
       "Signals aggregation over published records (lib/signals.ts)",
+      "Circuit placement from overlapping evidence (lib/circuitGraph.ts)",
+      "Hire scout ranking of published records (lib/scout.ts)",
     ],
     /** Judgement stages that fall back to rules when no model is configured. */
     degradesToDeterministic: [

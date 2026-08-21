@@ -1,5 +1,6 @@
 import { listPublishedDossiers } from "../../../lib/store";
 import { getCapabilities, engineLabel, persistenceLabel, reasoningEngine } from "../../../lib/capabilities";
+import { buildCircuitGraph } from "../../../lib/circuitGraph";
 
 export const dynamic = "force-dynamic";
 
@@ -16,14 +17,17 @@ export async function GET(): Promise<Response> {
 
   try {
     const records = await listPublishedDossiers();
+    const graph = buildCircuitGraph(records);
     return Response.json({
       records,
+      graph,
       meta: {
         engine: reasoningEngine(),
         engineLabel: engineLabel(reasoningEngine()),
         persistence: capabilities.persistence,
         persistenceLabel: persistenceLabel(capabilities.persistence),
         total: records.length,
+        edges: graph.edges.length,
       },
     });
   } catch (err) {

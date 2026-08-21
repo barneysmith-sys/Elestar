@@ -12,12 +12,13 @@ import {
   receiveInbound,
   type FixtureId,
 } from "./ingest/inbound";
-import { cohortCount, insertDossier, insertProcess } from "./store";
+import { cohortCount, insertDossier, insertProcess, listPublishedDossiers } from "./store";
 import { assertNoRecruiterEmail, maskEmail, parseRecruiterSignal } from "./verify/email";
 import { addEvidence, emptyLedger, summarise, type EvidenceLedger } from "./evidence";
 import { collectPublicEvidence, MAX_RESEARCH_ATTEMPTS, planResearch, resolveCompany, type ResolvedCompany } from "./verify/resolve";
 import { verificationChecks } from "./verify/types";
 import { logPipeline, newPipelineId } from "./observe";
+import { buildCircuitGraph } from "./circuitGraph";
 import type {
   AuditStepData,
   DoneMessage,
@@ -28,6 +29,7 @@ import type {
   PipelineStatus,
   PipelineStep,
   PlanStepData,
+  PlaceStepData,
   PublishStepData,
   ReceiveStepData,
   ResearchStepData,
@@ -670,6 +672,29 @@ export async function* runPipeline(args: RunPipelineArgs): AsyncGenerator<Pipeli
   yield emit("publish", "ok", `Verified and published as ${record.id} — anonymised, live in the Circuit.`, {
     data: { record } satisfies PublishStepData,
   });
+
+  yield emit("place", "running", "Placing the record on the Circuit from overlapping evidence…");
+  const published = await listPublishedDossiers();
+  const graph = buildCircuitGraph(published);
+  const neighbors = graph.edges
+    .filter((edge) => edge.from === record.id || edge.to === record.id)
+    .map((edge) => ({
+      id: edge.from === record.id ? edge.to : edge.from,
+      relationship: edge.relationship,
+      confidence: edge.confidence,
+      evidence: edge.evidence,
+    }));
+  const placeData: PlaceStepData = { recordId: record.id, pool: published.length, neighbors };
+  leakCheck(placeData);
+  yield emit(
+    "place",
+    "ok",
+    neighbors.length > 0
+      ? `Placed next to ${neighbors.length} evidenced neighbor${neighbors.length === 1 ? "" : "s"} in a pool of ${published.length}.`
+      : `Live in the Circuit. No evidenced neighbor yet in this pool of ${published.length}.`,
+    { engine: "deterministic", data: placeData },
+  );
+
   yield finish("published", record.rowId, record.id, parsed.proposedTier, "Live in the Circuit, fully anonymised.");
 }
 

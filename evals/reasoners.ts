@@ -23,9 +23,11 @@ import { parseAccountRole, parseEmail, parseLoginPassword, parsePassword } from 
 import { getCapabilities } from "../lib/capabilities";
 import { buildClaims, weakestImportant } from "../lib/verify/claims";
 import { buildCircuitGraph } from "../lib/circuitGraph";
+import { circuitAdvice } from "../lib/circuitAdvice";
 import { parseInboundPayload, inboundReplayOk, rememberInbound, inboundContentKey } from "../lib/ingest/webhook";
 import { addEvidence, claimStatusFromVerification, emptyLedger, summarise } from "../lib/evidence";
 import type { DossierRecord } from "../lib/records";
+import { ROUND_LABEL } from "../lib/records";
 import {
   CANONICAL_FORWARDS,
   GMAIL_FORWARDS,
@@ -612,6 +614,21 @@ section("circuit graph: only evidenced overlap");
     graph.edges,
   );
   check("every edge carries evidence", graph.edges.every((e) => e.evidence.length > 0 && e.confidence > 0), graph.edges);
+}
+
+section("circuit advice: never invents a round");
+{
+  const parsed = stubRecord({ id: "A-1", sector: "fintech", competency: "Distributed systems", round: "system_design", publish: true, demo: false }).parsed;
+  const advice = circuitAdvice(parsed);
+  check("every sampled label matches a cleared round", advice.alreadySampled.every((label) => parsed.rounds.some((r) => r.cleared && (ROUND_LABEL[r.type] ?? r.label) === label)), advice.alreadySampled);
+  check("does not invent a panel round", !advice.alreadySampled.some((l) => /panel/i.test(l)), advice.alreadySampled);
+  check("assessed names come from the record", advice.assessed.every((name) => parsed.competencies.some((c) => c.name === name)));
+  const empty = circuitAdvice({
+    ...parsed,
+    rounds: [],
+    competencies: [],
+  });
+  check("empty record yields no invented samples", empty.alreadySampled.length === 0, empty);
 }
 
 section("inbound webhook: fixtures cannot sneak in");

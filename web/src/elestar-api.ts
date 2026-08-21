@@ -9,13 +9,15 @@ import type { MatchResult } from "../../src/types";
 import type { AnnotatedBrief } from "../../lib/reasoners/brief";
 import type { FixtureId } from "../../lib/ingest/fixtureCatalog";
 import { PROVE_INBOX } from "../../lib/ingest/types";
+import type { CircuitGraph } from "../../lib/circuitGraph";
 import type { PipelineMessage } from "../../lib/pipelineWire";
 
 export { PROVE_INBOX };
 
 export async function fetchCircuit(): Promise<{
   records: DossierRecord[];
-  meta: { engine: string; engineLabel: string; persistenceLabel: string; total: number };
+  graph?: CircuitGraph;
+  meta: { engine: string; engineLabel: string; persistenceLabel: string; total: number; edges?: number };
 }> {
   const res = await fetch("/api/circuit", { cache: "no-store", credentials: "same-origin" });
   if (!res.ok) throw new Error("Circuit could not be loaded.");
@@ -165,6 +167,19 @@ export function signInAccount(input: { email: string; password: string }): Promi
 
 export function signOutAccount(): Promise<AuthSession> {
   return authRequest("/api/auth/logout", {});
+}
+
+export async function startScout(role: string): Promise<ReadableStream<Uint8Array>> {
+  const res = await fetch("/api/scout", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ role }),
+  });
+  if (!res.ok || !res.body) {
+    throw new Error(res.status === 400 ? "Describe the role in sentences." : "The scout couldn't start.");
+  }
+  return res.body;
 }
 
 export async function startPipeline(body: PipelineBody): Promise<ReadableStream<Uint8Array>> {

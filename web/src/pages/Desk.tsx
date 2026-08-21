@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "../router";
-import { fetchBrief, PROVE_INBOX, requestIntro, searchRole } from "../elestar-api";
+import { fetchBrief, PROVE_INBOX, requestIntro, readSse, startScout } from "../elestar-api";
 import { usePipeline, OUTCOME_HEADLINE } from "../usePipeline";
 import type { DossierRecord } from "../../../lib/records";
 import { describeEmployer, furthestRoundLabel } from "../../../lib/records";
@@ -10,7 +10,7 @@ import { InterviewBriefView } from "../components/InterviewBriefView";
 import type { AnnotatedBrief } from "../../../lib/reasoners/brief";
 import type { MatchResult } from "../../../src/types";
 import { FIXTURE_CATALOG, FIXTURE_IDS, type FixtureId } from "../../../lib/ingest/fixtureCatalog";
-import { STEP_TITLE, type IdentifyStepData, type PublishStepData } from "../../../lib/pipelineWire";
+import { STEP_TITLE, type IdentifyStepData, type PipelineMessage, type PublishStepData } from "../../../lib/pipelineWire";
 
 const SAMPLE_ROLE = "Senior backend engineer. Distributed systems, API design, and production ownership at a Series B or later company.";
 
@@ -33,6 +33,8 @@ function HiringDesk() {
   const [briefError, setBriefError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const [scoutLine, setScoutLine] = useState("");
+
   const run = async () => {
     if (!role.trim()) return;
     setPhase("reading");
@@ -40,11 +42,27 @@ function HiringDesk() {
     setBrief(null);
     setBriefError(null);
     setError(null);
+    setScoutLine("Reading the role…");
     try {
-      const data = await searchRole(role.trim());
-      setMatches(data.results);
-      setEngineLabel(data.meta.engineLabel);
-      setActive(data.results[0]?.record.id ?? null);
+      const next: { match: MatchResult; record: DossierRecord }[] = [];
+      let label = "";
+      const stream = await startScout(role.trim());
+      await readSse(stream, (msg: PipelineMessage) => {
+        if (msg.kind === "meta") label = msg.engineLabel;
+        if (msg.kind === "step") {
+          setScoutLine(msg.message);
+          if (msg.step === "match" && msg.status === "ok") {
+            const data = msg.data as {
+              results?: { match: MatchResult; record: DossierRecord }[];
+            } | undefined;
+            next.length = 0;
+            next.push(...(data?.results ?? []));
+          }
+        }
+      });
+      setMatches(next);
+      setEngineLabel(label);
+      setActive(next[0]?.record.id ?? null);
       setPhase("list");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Search failed.");
@@ -75,7 +93,10 @@ function HiringDesk() {
           </h1>
         </div>
         <p className="text-[16px] leading-relaxed max-w-[42ch]" style={{ color: "var(--muted-foreground)" }}>
-          The desk ranks published anonymous records. Company names are not in the pool. A brief exists only after the candidate approves an intro.
+          The desk runs the same match reasoner as search, then places the
+          shortlist on the Circuit from overlapping evidence. Company names
+          are not in the pool. A full brief exists only after the candidate
+          approves an intro.
         </p>
         <p className="font-mono text-[11px] mt-4 uppercase tracking-[0.12em]" style={{ color: "var(--ink-3)" }}>
           <a href="/wall" className="mr-4">Wall</a>
@@ -106,7 +127,7 @@ function HiringDesk() {
             className="ml-auto font-mono text-[11px] uppercase tracking-[0.12em] px-4 py-2.5 text-[var(--primary-foreground)] active:translate-y-px active:scale-[0.99]"
             style={{ background: "var(--navy)" }}
           >
-            {phase === "reading" ? "Reading the wall" : "Read the wall"}
+            {phase === "reading" ? scoutLine || "Reading the wall" : "Read the wall"}
           </button>
         </div>
       </div>

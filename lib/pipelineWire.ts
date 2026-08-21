@@ -25,7 +25,8 @@ export type PipelineStep =
   | "research"
   | "match"
   | "audit"
-  | "publish";
+  | "publish"
+  | "place";
 
 export type PipelineStatus = "running" | "ok" | "error" | "blocked";
 
@@ -38,6 +39,7 @@ export const STEP_ORDER: PipelineStep[] = [
   "match",
   "audit",
   "publish",
+  "place",
 ];
 
 export const STEP_TITLE: Record<PipelineStep, string> = {
@@ -49,6 +51,7 @@ export const STEP_TITLE: Record<PipelineStep, string> = {
   match: "Verifying interview stage",
   audit: "Running privacy audit",
   publish: "Verification complete",
+  place: "Placing on the Circuit",
 };
 
 export const STEP_EVENT: Record<PipelineStep, { running: string; settled: string }> = {
@@ -60,6 +63,7 @@ export const STEP_EVENT: Record<PipelineStep, { running: string; settled: string
   match: { running: "matching", settled: "verified" },
   audit: { running: "privacy_checked", settled: "privacy_checked" },
   publish: { running: "publishing", settled: "published" },
+  place: { running: "placing", settled: "placed" },
 };
 
 export const STEP_ACTIVITY: Record<PipelineStep, string> = {
@@ -71,6 +75,7 @@ export const STEP_ACTIVITY: Record<PipelineStep, string> = {
   match: "Comparing the mail, the stated experience and the public record…",
   audit: "Measuring re-identification risk and cohort size…",
   publish: "Deciding whether the anonymous record can go live…",
+  place: "Finding evidenced neighbors in the published pool…",
 };
 
 export interface StepMessage {
@@ -94,7 +99,7 @@ export interface QuestionsMessage {
 
 export interface DoneMessage {
   kind: "done";
-  outcome: "published" | "pending_review" | "withheld" | "needs_clarification";
+  outcome: "published" | "pending_review" | "withheld" | "needs_clarification" | "scouted";
   dossierId?: string;
   recordId?: string;
   tier?: Tier;
@@ -202,9 +207,34 @@ export interface PublishStepData {
   record: DossierRecord;
 }
 
+export interface PlaceStepData {
+  recordId: string;
+  pool: number;
+  neighbors: Array<{
+    id: string;
+    relationship: string;
+    confidence: number;
+    evidence: string[];
+  }>;
+}
+
+export interface ScoutMatchData {
+  results: Array<{
+    recordId: string;
+    fitScore: number;
+    matched: string[];
+    gaps: string[];
+    rationale: string;
+    alreadySampled: string[];
+    stillUnknown: string[];
+  }>;
+  pool: number;
+}
+
 export const OUTCOME_HEADLINE: Record<DoneMessage["outcome"], string> = {
   published: "Published to the wall",
   pending_review: "Held for human review",
   withheld: "Held private",
   needs_clarification: "Needs clarification",
+  scouted: "Ranked against the Circuit",
 };

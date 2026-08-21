@@ -19,6 +19,8 @@
  *   npm run eval:flow                      # in another
  */
 
+import { ROUND_LABEL } from "../lib/records";
+
 const BASE = process.env.ELESTAR_BASE_URL ?? "http://127.0.0.1:3111";
 
 let passed = 0;
@@ -167,8 +169,8 @@ async function main() {
 
     check("emits a meta frame before the work", Boolean(meta), meta);
     check(
-      "runs receive, parse_mail, identify, plan, research, match, audit, publish",
-      ["receive", "parse_mail", "identify", "plan", "research", "match", "audit", "publish"].every((s) =>
+      "runs receive, parse_mail, identify, plan, research, match, audit, publish, place",
+      ["receive", "parse_mail", "identify", "plan", "research", "match", "audit", "publish", "place"].every((s) =>
         steps.some((m) => m.step === s),
       ),
       steps.map((s) => s.step),
@@ -204,6 +206,11 @@ async function main() {
     const audit = settled(run.messages, "audit");
     check("measures a real cohort against the floor", typeof audit?.data?.cohortCount === "number", audit?.data);
     check("cohort clears the floor before publishing", (audit?.data?.cohortCount ?? 0) >= 8, audit?.data?.cohortCount);
+
+    const place = settled(run.messages, "place");
+    check("place runs after publish", place?.status === "ok", place?.status);
+    check("place reports a published pool", typeof place?.data?.pool === "number", place?.data);
+    check("neighbors are an array, never invented identity", Array.isArray(place?.data?.neighbors), place?.data);
 
     const serialised = JSON.stringify(run.messages);
     check("no company name survives anywhere in the stream", !/\bacme|stripe|monzo\b/i.test(serialised));
@@ -397,6 +404,7 @@ async function main() {
     const { status, json } = await api("/api/circuit");
     check("circuit responds", status === 200, status);
     check("has records to show", (json.records?.length ?? 0) > 0, json.records?.length);
+    check("returns an evidenced graph", Array.isArray(json.graph?.nodes) && Array.isArray(json.graph?.edges), json.graph);
     check("the record we just published is on the wall", json.records?.some((r: any) => r.id === publishedId), publishedId);
     check(
       "a simulated publish is labelled demo",
@@ -457,6 +465,59 @@ async function main() {
 
     const empty = await api("/api/search", { role: "" });
     check("an empty query is rejected", empty.status === 400, empty.status);
+  }
+
+  section("hire scout: same reasoners, streamed, no invented rounds");
+  {
+    const res = await fetch(`${BASE}/api/scout`, {
+      method: "POST",
+      headers: { "content-type": "application/json", ...cookieHeader() },
+      body: JSON.stringify({ role: "Senior backend engineer at a Series B fintech, system design heavy" }),
+    });
+    check("scout streams", res.ok && Boolean(res.body), res.status);
+    const messages: any[] = [];
+    if (res.body) {
+      let buffer = "";
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      for (;;) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const chunks = buffer.split("\n\n");
+        buffer = chunks.pop() ?? "";
+        for (const chunk of chunks) {
+          for (const line of chunk.split("\n")) {
+            if (line.startsWith("data:")) {
+              try {
+                messages.push(JSON.parse(line.slice(5).trim()));
+              } catch {
+                /* ignore */
+              }
+            }
+          }
+        }
+      }
+    }
+    const match = settled(messages, "match");
+    const place = settled(messages, "place");
+    const done = messages.find((m) => m.kind === "done");
+    check("scout identify, match, and place all run", ["identify", "match", "place"].every((s) => messages.some((m) => m.kind === "step" && m.step === s)));
+    check("scout match is ok", match?.status === "ok", match?.status);
+    check("scout ranks published records", (match?.data?.results?.length ?? 0) > 0, match?.data?.results?.length);
+    check(
+      "sampled rounds come from the record, not the job spec",
+      (match?.data?.results ?? []).every((row: any) => {
+        const labels = row.alreadySampled ?? [];
+        const rounds = row.record?.parsed?.rounds ?? [];
+        return labels.every((label: string) =>
+          rounds.some((r: any) => (ROUND_LABEL[r.type] ?? r.label) === label),
+        );
+      }),
+      match?.data?.results?.[0]?.alreadySampled,
+    );
+    check("place attaches neighbors as an array", Array.isArray(place?.data?.neighbors), place?.data);
+    check("scout finishes as scouted", done?.outcome === "scouted", done);
   }
 
   section("intro: identity is gated on the candidate's approval");
@@ -577,6 +638,7 @@ async function main() {
       ["unknown record on brief", "/api/brief", { recordId: "A-0000", roleDescription: "x" }, 404],
       ["malformed search", "/api/search", { nope: true }, 400],
       ["malformed pipeline", "/api/pipeline", { nope: true }, 400],
+      ["malformed scout", "/api/scout", { nope: true }, 400],
     ];
     for (const [name, path, payload, expected] of cases) {
       const { status, json } = await api(path, payload);

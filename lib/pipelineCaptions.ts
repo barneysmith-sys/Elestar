@@ -16,6 +16,7 @@ export const HERO_RAIL: { step: PipelineStep; label: string }[] = [
   { step: "match", label: "Verifying" },
   { step: "audit", label: "Privacy check" },
   { step: "publish", label: "Decision" },
+  { step: "place", label: "Circuit" },
 ];
 
 export type OutcomeStamp =
@@ -80,6 +81,12 @@ export function productCaption(step: PipelineStep, message: StepMessage | undefi
     }
     case "publish":
       return message.status === "ok" ? "Publication approved" : "Held — not published";
+    case "place": {
+      const d = data as { neighbors?: unknown[]; pool?: number } | undefined;
+      const n = d?.neighbors?.length ?? 0;
+      if (n === 0) return "No evidenced neighbor yet";
+      return `${n} evidenced neighbor${n === 1 ? "" : "s"}`;
+    }
     default:
       return message.message;
   }
