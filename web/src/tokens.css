@@ -1,7 +1,7 @@
-/* Elestar tokens. Warm paper, midnight navy. Ported from the product UI system. */
+/* Elestar tokens. Mark-film paper, midnight navy. Ported from the product UI system. */
 
 :root {
-  --stock: #f5f0e6;
+  --stock: #f2f1ed;
   --ink: #152238;
   --ink-mid: #4e4a42;
   --rule: rgba(21, 34, 56, 0.14);
