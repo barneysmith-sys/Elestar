@@ -3,6 +3,7 @@ import { parseAccountRole, parseEmail, parsePassword } from "../../../../lib/acc
 import { persistOwnProfile, provisionAccount } from "../../../../lib/accountStore";
 import { getSupabaseAdmin, hasSupabaseAdmin } from "../../../../lib/supabaseAdmin";
 import { createSupabaseRequestClient } from "../../../../lib/supabaseServer";
+import { emailRedirectTo } from "../../../../lib/siteUrl";
 
 export const dynamic = "force-dynamic";
 
@@ -59,7 +60,10 @@ export async function POST(request: Request): Promise<Response> {
     const signedUp = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { role } },
+      options: {
+        data: { role },
+        emailRedirectTo: emailRedirectTo(request),
+      },
     });
     if (signedUp.error || !signedUp.data.user) {
       const duplicate = /already been registered|already exists|already registered/i.test(signedUp.error?.message ?? "");
@@ -68,19 +72,28 @@ export async function POST(request: Request): Promise<Response> {
         { status: duplicate ? 409 : 400 },
       );
     }
+    const alreadyRegistered = (signedUp.data.user.identities?.length ?? 1) === 0;
+    if (alreadyRegistered) {
+      return Response.json(
+        { error: "An account with that email already exists. Sign in instead." },
+        { status: 409 },
+      );
+    }
   }
 
   const signedIn = await supabase.auth.signInWithPassword({ email, password });
-  if (signedIn.error || !signedIn.data.user) {
-    return Response.json(
-      {
-        authenticated: false,
-        created: true,
-        role,
-        error: "Account created. Sign in with the same email and password.",
-      },
-      { status: 200 },
-    );
+  if (signedIn.error || !signedIn.data.session || !signedIn.data.user) {
+    const needsConfirm = /confirm|not confirmed|email not confirmed/i.test(signedIn.error?.message ?? "");
+    return Response.json({
+      authenticated: false,
+      created: true,
+      pendingConfirmation: true,
+      email,
+      role,
+      ...(needsConfirm || !hasSupabaseAdmin()
+        ? {}
+        : { error: "Account created. Confirm the email we sent, then you are in." }),
+    });
   }
 
   try {

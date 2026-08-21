@@ -20,6 +20,7 @@ import { parseForwardedMail } from "../lib/verify/forwardedMail";
 import { aggregateSignals, filterSignalRecords } from "../lib/signals";
 import { catalogDomain, catalogNearMiss, planResearch, resolveCompany } from "../lib/verify/resolve";
 import { parseAccountRole, parseEmail, parseLoginPassword, parsePassword } from "../lib/account";
+import { originFromHeaders, emailRedirectTo, PRODUCTION_ORIGIN } from "../lib/siteUrl";
 import { getCapabilities } from "../lib/capabilities";
 import { buildClaims, weakestImportant } from "../lib/verify/claims";
 import { buildCircuitGraph } from "../lib/circuitGraph";
@@ -715,6 +716,23 @@ section("accounts");
   check("login does not re-apply the signup length rule to empty input", parseLoginPassword("") === null);
   check("login accepts a stored password", Boolean(parseLoginPassword("password123")));
   check("accounts stay off without supabase keys", getCapabilities().accounts === false);
+}
+
+section("auth origins: confirmation never defaults to localhost in production");
+{
+  check(
+    "a Vercel host becomes https origin",
+    originFromHeaders({ host: "elestar.vercel.app", proto: "https", forwardedHost: "elestar.vercel.app", origin: null }) === "https://elestar.vercel.app",
+  );
+  check(
+    "Origin header wins for the signup host",
+    originFromHeaders({ host: "localhost:3000", proto: "http", origin: "https://elestar.vercel.app" }) === "https://elestar.vercel.app",
+  );
+  const fake = new Request("https://elestar.vercel.app/api/auth/signup", {
+    headers: { origin: "https://elestar.vercel.app", host: "elestar.vercel.app" },
+  });
+  check("signup redirect lands on /auth/callback", emailRedirectTo(fake) === "https://elestar.vercel.app/auth/callback");
+  check("production origin is not localhost", !/localhost/.test(PRODUCTION_ORIGIN));
 }
 
 // ---------------------------------------------------------------------------

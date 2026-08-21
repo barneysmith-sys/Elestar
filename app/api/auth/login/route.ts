@@ -33,7 +33,16 @@ export async function POST(request: Request): Promise<Response> {
 
   const signedIn = await supabase.auth.signInWithPassword({ email, password });
   if (signedIn.error || !signedIn.data.user) {
-    return Response.json({ error: "Email or password is wrong." }, { status: 401 });
+    const needsConfirm = /confirm|not confirmed|email not confirmed/i.test(signedIn.error?.message ?? "");
+    return Response.json(
+      {
+        error: needsConfirm
+          ? "Confirm the email we sent before signing in. The link returns you here, signed in."
+          : "Email or password is wrong.",
+        pendingConfirmation: needsConfirm,
+      },
+      { status: needsConfirm ? 403 : 401 },
+    );
   }
 
   let role: AccountRole | null = null;

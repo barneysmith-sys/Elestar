@@ -727,6 +727,9 @@ async function main() {
     check("/api/auth/me reports account capability", typeof me.json.accounts === "boolean", me.json);
     const badSignup = await api("/api/auth/signup", { email: "not-an-email", password: "x", role: "creative" });
     check("signup refuses a bad email before talking to Auth", [400, 503].includes(badSignup.status), badSignup);
+    const callback = await fetch(`${BASE}/auth/callback`, { redirect: "manual" });
+    check("auth callback exists", [200, 302, 303, 307, 308].includes(callback.status), callback.status);
+    check("auth callback without a code does not 404", callback.status !== 404, callback.status);
   }
 
   console.log(`\n${passed}/${passed + failed} checks passed.`);

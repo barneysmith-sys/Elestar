@@ -18,6 +18,7 @@ export default function Access() {
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [accounts, setAccounts] = useState<boolean | null>(null)
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null)
 
   useEffect(() => {
     const next = search.get("intent")
@@ -30,6 +31,9 @@ export default function Access() {
       setRole("creative")
     }
     if (nextMode === "signin") setMode("signin")
+    const reason = search.get("reason")
+    if (reason === "confirm-failed") setError("That confirmation link could not finish sign-in. Request a new email or try signing in.")
+    if (reason === "missing-code") setMode("signin")
   }, [search, setIntent])
 
   useEffect(() => {
@@ -54,6 +58,10 @@ export default function Access() {
       const session = mode === "create"
         ? await createAccount({ email, password, role })
         : await signInAccount({ email, password })
+      if (session.pendingConfirmation) {
+        setPendingEmail(session.email ?? email)
+        return
+      }
       applySession(session)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not continue.")
@@ -79,6 +87,22 @@ export default function Access() {
           <h1 className="type-section">
             {mode === "create" ? "Create an account" : "Sign in"}
           </h1>
+          {pendingEmail ? (
+            <>
+              <p className="type-lede" style={{ marginTop: 22 }}>
+                Account created. Confirm <span className="font-mono">{pendingEmail}</span>. The link
+                returns you to Elestar signed in — not to localhost.
+              </p>
+              <button
+                type="button"
+                className="btn btn-fill w-full mt-6"
+                onClick={() => { setPendingEmail(null); setMode("signin") }}
+              >
+                I already confirmed — sign in
+              </button>
+            </>
+          ) : (
+            <>
           <p className="type-lede">
             {mode === "signin"
               ? "Come back to the work and the proved round. The result stays off the profile."
@@ -86,7 +110,6 @@ export default function Access() {
                 ? "Show the work. Prove how far you got with one original email. The result stays private."
                 : "Look at the work. Then the company and how far they already got. You do not see the outcome."}
           </p>
-
           {mode === "create" ? (
             <div className="flex p-[3px] border mt-[22px] mb-3" style={{ background: "var(--stock)", borderColor: "var(--rule)" }}>
               {([
@@ -177,6 +200,8 @@ export default function Access() {
           <p className="type-caption text-center mt-3.5">
             Employers see company and farthest round. Not the result. Not the assignment.
           </p>
+            </>
+          )}
         </form>
       </div>
     </div>

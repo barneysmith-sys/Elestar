@@ -135,6 +135,7 @@ export type AuthSession = {
   authenticated: boolean;
   accounts?: boolean;
   created?: boolean;
+  pendingConfirmation?: boolean;
   userId?: string;
   email?: string | null;
   role?: AccountRole | null;
@@ -148,6 +149,7 @@ async function authRequest(path: string, body?: unknown): Promise<AuthSession> {
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   const json = (await res.json().catch(() => ({}))) as AuthSession & { error?: string };
+  if (json.pendingConfirmation) return json;
   if (!res.ok) throw new Error(json.error ?? "Could not continue.");
   if (json.error && !json.authenticated) throw new Error(json.error);
   return json;
