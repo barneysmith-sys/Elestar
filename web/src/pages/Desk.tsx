@@ -10,10 +10,11 @@ import { InterviewBriefView } from "../components/InterviewBriefView";
 import type { AnnotatedBrief } from "../../../lib/reasoners/brief";
 import type { MatchResult } from "../../../src/types";
 import { FIXTURE_CATALOG, FIXTURE_IDS, type FixtureId } from "../../../lib/ingest/fixtureCatalog";
-import { STEP_TITLE, type AuditStepData, type IdentifyStepData, type MatchStepData, type ParseMailStepData, type PipelineMessage, type PipelineStep, type PublishStepData, type ResearchStepData, type StepMessage } from "../../../lib/pipelineWire";
+import { STEP_TITLE, type AuditStepData, type IdentifyStepData, type MatchStepData, type ParseMailStepData, type PipelineMessage, type PipelineStep, type PublishStepData, type ResearchStepData, type ReviewStepData, type StepMessage } from "../../../lib/pipelineWire";
 import { PipelineRail } from "../components/PipelineRail";
 import { MailAuthPanel } from "../components/MailAuthPanel";
 import { PipelineEvidence } from "../components/PipelineEvidence";
+import { PatternReviewPanel } from "../components/PatternReviewPanel";
 
 const SAMPLE_ROLE = "Senior backend engineer. Distributed systems, API design, and production ownership at a Series B or later company.";
 
@@ -133,9 +134,9 @@ function HiringDesk() {
 
       {error && <p className="font-mono text-[12px] mb-6">{error}</p>}
 
-      {phase === "reading" && (
+      {(phase === "reading" || phase === "list") && Object.keys(scoutStages).length > 0 && (
         <div className="border p-6 md:p-8 mb-8" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
-          <p className="type-label mb-4">Hire Scout</p>
+          <p className="type-label mb-4">Hire Scout · same match reasoner, no invented rounds</p>
           <PipelineRail stages={scoutStages} active={scoutActive} compact />
         </div>
       )}
@@ -252,7 +253,14 @@ function ListingDesk() {
   const parsed = (stages.identify?.message.data as IdentifyStepData | undefined)?.parsed ?? null;
   const published = (stages.publish?.message.data as PublishStepData | undefined)?.record;
   const mail = stages.parse_mail?.message.data as ParseMailStepData | undefined;
+  const review = stages.review?.message.data as ReviewStepData | undefined;
   const visible = useMemo(() => Object.keys(stages), [stages]);
+  const [hot, setHot] = useState(false);
+
+  const startFile = async (file: File) => {
+    const forwardedEmails = await file.text();
+    void run({ forwardedEmails, description: text.trim() || "Original recruiter email dropped on the desk." });
+  };
 
   return (
     <div className="max-w-[1400px] mx-auto px-5 md:px-7 pt-10 pb-[90px]">
@@ -262,7 +270,7 @@ function ListingDesk() {
           <h1 className="type-hero">Two paragraphs. Not a form.</h1>
         </div>
         <p className="text-[16px] leading-relaxed max-w-[42ch]" style={{ color: "var(--muted-foreground)" }}>
-          Notes help the parser. Publication still requires forwarded mail at {PROVE_INBOX}. This desk runs the real pipeline, including privacy audit.
+          Notes help the parser. Publication still requires forwarded mail at {PROVE_INBOX}. This desk runs the same verification pipeline as Verify, including mail auth, privacy audit, Circuit placement, and pattern review.
         </p>
       </div>
 
@@ -307,6 +315,24 @@ function ListingDesk() {
               </div>
             </div>
           </div>
+          <div
+            className="rounded-[13px] p-6 text-center border-[1.5px] border-dashed mt-4"
+            style={{
+              borderColor: hot ? "var(--accent)" : "var(--border-2)",
+              background: hot ? "var(--navy-light)" : "var(--card)",
+            }}
+            onDragOver={(e) => { e.preventDefault(); setHot(true); }}
+            onDragLeave={() => setHot(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setHot(false);
+              const file = e.dataTransfer.files[0];
+              if (file) void startFile(file);
+            }}
+          >
+            <div className="font-display font-normal text-[15px]">Or drop an original .eml</div>
+            <p className="text-xs mt-1.5" style={{ color: "var(--muted-foreground)" }}>Forward as attachment. A rewrite from your address will not verify.</p>
+          </div>
           <p className="font-mono text-[10px] mt-3 leading-relaxed" style={{ color: "var(--ink-3)" }}>
             Simulation is labelled. The pipeline that runs is the same one production uses.
           </p>
@@ -338,7 +364,7 @@ function ListingDesk() {
         </div>
 
         <div>
-          <PipelineRail stages={stages} active={active} done={done ?? undefined} questions={Boolean(questions && !done)} error={error} compact />
+          <PipelineRail stages={stages} active={active} done={done ?? undefined} questions={Boolean(questions && !done)} error={error} />
           <MailAuthPanel auth={mail?.auth} />
           <PipelineEvidence
             identify={stages.identify?.message.data as IdentifyStepData | undefined}
@@ -346,6 +372,7 @@ function ListingDesk() {
             match={stages.match?.message.data as MatchStepData | undefined}
             audit={stages.audit?.message.data as AuditStepData | undefined}
           />
+          <PatternReviewPanel review={review} />
           {!parsed && !done && !error && (
             <p className="font-mono text-[11px] mt-4" style={{ color: "var(--ink-3)" }}>
               {visible.map((step) => STEP_TITLE[step as keyof typeof STEP_TITLE] ?? step).join(" → ") || "Waiting for inbound."}

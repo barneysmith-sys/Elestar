@@ -3,7 +3,7 @@ import { redact, assertRedacted } from "../src/redact";
 import { computeTier } from "../src/parseProcess";
 import { K_FLOOR } from "../src/redactionAudit";
 import type { ParsedProcess, RedactionAudit, Tier } from "../src/types";
-import { reasonAudit, reasonParse, reasonVerify } from "./agents";
+import { reasonAudit, reasonParse, reasonPattern, reasonVerify } from "./agents";
 import { reasoningEngine, type Engine } from "./capabilities";
 import {
   isFixtureId,
@@ -34,6 +34,7 @@ import type {
   PublishStepData,
   ReceiveStepData,
   ResearchStepData,
+  ReviewStepData,
   StepMessage,
 } from "./pipelineWire";
 import { STEP_EVENT } from "./pipelineWire";
@@ -57,7 +58,7 @@ export interface RunPipelineArgs {
 
 /**
  * Orchestrates the verification pipeline:
- *   receive → parse_mail → identify → plan → research → match → audit → publish
+ *   receive → parse_mail → identify → plan → research → match → audit → publish → place → review
  *
  * Production trigger is an email arriving at prove@elestar.ai. The demo
  * calls the same function with a fixture id and `simulation: true`.
@@ -695,6 +696,19 @@ export async function* runPipeline(args: RunPipelineArgs): AsyncGenerator<Pipeli
       ? `Placed next to ${neighbors.length} evidenced neighbor${neighbors.length === 1 ? "" : "s"} in a pool of ${published.length}.`
       : `Live in the Circuit. No evidenced neighbor yet in this pool of ${published.length}.`,
     { engine: "deterministic", data: placeData },
+  );
+
+  yield emit("review", "running", "Inspecting the published pool for pattern flags. This cannot un-publish.");
+  const patterned = await reasonPattern({ recordId: record.id, record: parsed, pool: published });
+  const reviewData: ReviewStepData = { recordId: record.id, review: patterned.value };
+  leakCheck(reviewData);
+  yield emit(
+    "review",
+    "ok",
+    patterned.value.recommendation === "clear"
+      ? "No pattern flags against the published pool."
+      : patterned.value.reviewerNote,
+    { engine: patterned.engine, data: reviewData, trace: patterned.trace },
   );
 
   yield finish("published", record.rowId, record.id, parsed.proposedTier, "Live in the Circuit, fully anonymised.");

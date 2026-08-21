@@ -8,11 +8,16 @@ import { fetchStatus, type StatusPayload } from "../elestar-api";
 import { usePipeline } from "../usePipeline";
 import { LAB_SCENARIOS, type LabScenario } from "../../../lib/ingest/scenarios";
 import { FIXTURE_CATALOG } from "../../../lib/ingest/fixtureCatalog";
+import { AgentRoster } from "../components/AgentRoster";
+import { PatternReviewPanel } from "../components/PatternReviewPanel";
+import { MailAuthPanel } from "../components/MailAuthPanel";
 import {
   type AuditStepData,
   type IdentifyStepData,
   type MatchStepData,
+  type ParseMailStepData,
   type ResearchStepData,
+  type ReviewStepData,
 } from "../../../lib/pipelineWire";
 
 export default function System() {
@@ -105,6 +110,8 @@ export default function System() {
               match={match}
               audit={audit}
             />
+            <MailAuthPanel auth={(stages.parse_mail?.message.data as ParseMailStepData | undefined)?.auth} />
+            <PatternReviewPanel review={stages.review?.message.data as ReviewStepData | undefined} />
             {questions && !done && (
               <p className="text-[14px] mt-4" style={{ color: "var(--muted-foreground)" }}>
                 The agent stopped to ask rather than guess. {questions.questions[0]}
@@ -134,6 +141,8 @@ export default function System() {
             </div>
           </div>
         )}
+
+        <AgentRoster />
       </div>
     </div>
   );

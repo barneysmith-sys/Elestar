@@ -26,6 +26,7 @@ import { getCapabilities } from "../lib/capabilities";
 import { buildClaims, weakestImportant } from "../lib/verify/claims";
 import { buildCircuitGraph } from "../lib/circuitGraph";
 import { circuitAdvice } from "../lib/circuitAdvice";
+import { reviewPatternDeterministic } from "../lib/reasoners/pattern";
 import { parseInboundPayload, inboundReplayOk, rememberInbound, inboundContentKey } from "../lib/ingest/webhook";
 import { addEvidence, claimStatusFromVerification, emptyLedger, summarise } from "../lib/evidence";
 import type { DossierRecord } from "../lib/records";
@@ -621,6 +622,26 @@ section("circuit graph: only evidenced overlap");
     graph.edges,
   );
   check("every edge carries evidence", graph.edges.every((e) => e.evidence.length > 0 && e.confidence > 0), graph.edges);
+}
+
+section("pattern review: inspects, never un-publishes");
+{
+  const a = stubRecord({ id: "A-1", sector: "fintech", competency: "Distributed systems", round: "system_design", publish: true, demo: true });
+  const b = stubRecord({ id: "A-2", sector: "fintech", competency: "Distributed systems", round: "system_design", publish: true, demo: false });
+  const clear = reviewPatternDeterministic({ recordId: "Z-9", record: stubRecord({ id: "Z-9", sector: "healthtech", competency: "Applied ML", round: "technical", publish: true, demo: false }).parsed, pool: [a] });
+  check("disjoint loops are clear", clear.review.recommendation === "clear", clear.review);
+  check("clear note says it cannot un-publish", /cannot un-publish/i.test(clear.review.reviewerNote), clear.review.reviewerNote);
+  const twin = reviewPatternDeterministic({ recordId: a.id, record: a.parsed, pool: [a, b] });
+  check("near-duplicate is flagged, not retracted", twin.review.recommendation === "flag" || twin.review.recommendation === "hold", twin.review);
+  check("duplicate flag names the other record", twin.review.signals.some((s) => /A-2/.test(s.evidence)), twin.review.signals);
+  const short = {
+    ...a.parsed,
+    loopLengthWeeks: 1,
+    roundsCleared: 6,
+  };
+  const rushed = reviewPatternDeterministic({ recordId: "A-1", record: short, pool: [a] });
+  check("short loop is a high flag", rushed.review.signals.some((s) => s.severity === "high"), rushed.review);
+  check("short loop still does not retract", /does not retract|already published|cannot un-publish/i.test(rushed.review.reviewerNote), rushed.review.reviewerNote);
 }
 
 section("circuit advice: never invents a round");

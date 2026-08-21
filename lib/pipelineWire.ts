@@ -11,7 +11,7 @@
  */
 
 import type { RedactionSpan } from "../src/redact";
-import type { ParsedProcess, RedactionAudit, Tier } from "../src/types";
+import type { ParsedProcess, PatternReview, RedactionAudit, Tier } from "../src/types";
 import type { Engine } from "./capabilities";
 import type { InboxArrival } from "./ingest/types";
 import type { DossierRecord } from "./records";
@@ -26,7 +26,8 @@ export type PipelineStep =
   | "match"
   | "audit"
   | "publish"
-  | "place";
+  | "place"
+  | "review";
 
 export type PipelineStatus = "running" | "ok" | "error" | "blocked";
 
@@ -40,6 +41,7 @@ export const STEP_ORDER: PipelineStep[] = [
   "audit",
   "publish",
   "place",
+  "review",
 ];
 
 export const STEP_TITLE: Record<PipelineStep, string> = {
@@ -52,6 +54,7 @@ export const STEP_TITLE: Record<PipelineStep, string> = {
   audit: "Running privacy audit",
   publish: "Verification complete",
   place: "Placing on the Circuit",
+  review: "Pattern review",
 };
 
 export const STEP_EVENT: Record<PipelineStep, { running: string; settled: string }> = {
@@ -64,6 +67,7 @@ export const STEP_EVENT: Record<PipelineStep, { running: string; settled: string
   audit: { running: "privacy_checked", settled: "privacy_checked" },
   publish: { running: "publishing", settled: "published" },
   place: { running: "placing", settled: "placed" },
+  review: { running: "reviewing", settled: "reviewed" },
 };
 
 export const STEP_ACTIVITY: Record<PipelineStep, string> = {
@@ -76,6 +80,7 @@ export const STEP_ACTIVITY: Record<PipelineStep, string> = {
   audit: "Measuring re-identification risk and cohort size…",
   publish: "Deciding whether the anonymous record can go live…",
   place: "Finding evidenced neighbors in the published pool…",
+  review: "Inspecting the published pool for pattern flags — cannot un-publish…",
 };
 
 export interface StepMessage {
@@ -224,6 +229,11 @@ export interface PlaceStepData {
     confidence: number;
     evidence: string[];
   }>;
+}
+
+export interface ReviewStepData {
+  recordId: string;
+  review: PatternReview;
 }
 
 export interface ScoutMatchData {

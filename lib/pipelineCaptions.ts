@@ -10,6 +10,7 @@ import type { AuditStepData, IdentifyStepData, MatchStepData, PlanStepData, Rese
 
 export const HERO_RAIL: { step: PipelineStep; label: string }[] = [
   { step: "receive", label: "Received" },
+  { step: "parse_mail", label: "Mail parsed" },
   { step: "identify", label: "Identified" },
   { step: "plan", label: "Planned" },
   { step: "research", label: "Researching" },
@@ -17,6 +18,7 @@ export const HERO_RAIL: { step: PipelineStep; label: string }[] = [
   { step: "audit", label: "Privacy check" },
   { step: "publish", label: "Decision" },
   { step: "place", label: "Circuit" },
+  { step: "review", label: "Pattern" },
 ];
 
 export type OutcomeStamp =
@@ -90,6 +92,13 @@ export function productCaption(step: PipelineStep, message: StepMessage | undefi
       const n = d?.neighbors?.length ?? 0;
       if (n === 0) return "No evidenced neighbor yet";
       return `${n} evidenced neighbor${n === 1 ? "" : "s"}`;
+    }
+    case "review": {
+      const d = data as { review?: { recommendation?: string; signals?: unknown[] } } | undefined;
+      const rec = d?.review?.recommendation;
+      if (rec === "clear") return "No pattern flags — cannot un-publish";
+      if (rec) return `Pattern ${rec} — a person should look; record stays published`;
+      return message.message;
     }
     default:
       return message.message;

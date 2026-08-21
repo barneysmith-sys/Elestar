@@ -49,6 +49,8 @@ export async function GET(): Promise<Response> {
       "Signals aggregation over published records (lib/signals.ts)",
       "Circuit placement from overlapping evidence (lib/circuitGraph.ts)",
       "Hire scout ranking of published records (lib/scout.ts)",
+      "SPF/DKIM/DMARC from Authentication-Results, never invented (lib/verify/mailAuth.ts)",
+      "Pattern review after publish — flags cannot un-publish (lib/reasoners/pattern.ts)",
     ],
     /** Judgement stages that fall back to rules when no model is configured. */
     degradesToDeterministic: [
@@ -57,6 +59,7 @@ export async function GET(): Promise<Response> {
       "Matching (lib/reasoners/match.ts)",
       "Interview brief (lib/reasoners/brief.ts)",
       "Recruiter-domain verification (lib/reasoners/verify.ts)",
+      "Pattern review inspects the pool; it is not a publish gate",
     ],
   });
 }

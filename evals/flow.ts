@@ -169,8 +169,8 @@ async function main() {
 
     check("emits a meta frame before the work", Boolean(meta), meta);
     check(
-      "runs receive, parse_mail, identify, plan, research, match, audit, publish, place",
-      ["receive", "parse_mail", "identify", "plan", "research", "match", "audit", "publish", "place"].every((s) =>
+      "runs receive, parse_mail, identify, plan, research, match, audit, publish, place, review",
+      ["receive", "parse_mail", "identify", "plan", "research", "match", "audit", "publish", "place", "review"].every((s) =>
         steps.some((m) => m.step === s),
       ),
       steps.map((s) => s.step),
@@ -214,6 +214,11 @@ async function main() {
     check("place runs after publish", place?.status === "ok", place?.status);
     check("place reports a published pool", typeof place?.data?.pool === "number", place?.data);
     check("neighbors are an array, never invented identity", Array.isArray(place?.data?.neighbors), place?.data);
+
+    const review = settled(run.messages, "review");
+    check("pattern review runs after place", review?.status === "ok", review?.status);
+    check("pattern review cannot un-publish the already-published record", done?.outcome === "published", done);
+    check("pattern recommendation is a note, not a retract", ["clear", "flag", "hold"].includes(review?.data?.review?.recommendation ?? ""), review?.data?.review);
 
     const serialised = JSON.stringify(run.messages);
     check("no company name survives anywhere in the stream", !/\bacme|stripe|monzo\b/i.test(serialised));

@@ -47,6 +47,7 @@ const DWELL_MS: Record<PipelineStep, number> = {
   audit: 1900,
   publish: 1200,
   place: 1400,
+  review: 1200,
 };
 
 interface StageState {

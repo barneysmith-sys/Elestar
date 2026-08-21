@@ -20,15 +20,17 @@ import { auditRedaction } from "../src/redactionAudit";
 import { buildInterviewBrief } from "../src/interviewBrief";
 import { matchRecords } from "../src/matchRecords";
 import { parseProcess } from "../src/parseProcess";
-import type { MatchResult, ParsedProcess, RedactionAudit } from "../src/types";
+import type { MatchResult, ParsedProcess, PatternReview, RedactionAudit } from "../src/types";
 import { getCapabilities, type Engine } from "./capabilities";
 import { auditRedactionDeterministic } from "./reasoners/audit";
 import { buildInterviewBriefDeterministic, type AnnotatedBrief } from "./reasoners/brief";
 import { matchRecordsDeterministic } from "./reasoners/match";
 import { parseProcessDeterministic, modelParseIsWorthIt } from "./reasoners/parse";
+import { reviewPatternDeterministic } from "./reasoners/pattern";
 import { verifyProcessDeterministic } from "./reasoners/verify";
 import type { RecruiterSignal } from "./verify/email";
 import type { VerificationResult } from "./verify/types";
+import type { DossierRecord } from "./records";
 
 export interface Reasoned<T> {
   value: T;
@@ -165,4 +167,20 @@ export async function reasonVerify(args: {
     publicEvidence: args.publicEvidence,
   });
   return { value: verification, engine: "deterministic", trace };
+}
+
+/**
+ * Inspect a published record against the pool.
+ *
+ * Never a publish gate. A hold/flag is a note for a person; the record stays
+ * in the Circuit. Model path exists in src/patternReview.ts and is not used
+ * on the write path.
+ */
+export async function reasonPattern(args: {
+  recordId: string;
+  record: ParsedProcess;
+  pool: DossierRecord[];
+}): Promise<Reasoned<PatternReview>> {
+  const { review, trace } = reviewPatternDeterministic(args);
+  return { value: review, engine: "deterministic", trace };
 }

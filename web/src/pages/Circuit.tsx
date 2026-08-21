@@ -57,7 +57,7 @@ export default function Circuit() {
           Real overlap. Nothing invented.
         </h1>
         <p className="text-[16px] leading-relaxed max-w-[48ch] mb-4" style={{ color: "var(--muted-foreground)" }}>
-          Edges exist only when two published records share a company type or an assessed competency. Confidence is the overlap, not a guess.
+          After Verify publishes, Place puts the record here from overlapping sector and competency evidence. Pattern review can flag a neighbor. It cannot invent an edge or retract the record.
         </p>
         <p className="font-mono text-[11px] mb-10" style={{ color: "var(--ink-3)" }}>
           {error ?? `${graph.nodes.length} records · ${graph.edges.length} evidenced links · ${meta}`}
